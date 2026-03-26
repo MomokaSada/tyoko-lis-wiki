@@ -44,6 +44,7 @@ async function seedSessions() {
       authorId: adminId,
       maxEdits: 50,
       editsUsed: 0,
+      isActive: true,
       endAt: oneYearLater,
     });
     console.log(`  ✅ edit_sessions にテストトークンを作成しました`);
@@ -56,6 +57,7 @@ async function seedSessions() {
     await db.insert(accountCreateSessions).values({
       uuid: ACCOUNT_SESSION_UUID,
       authorId: adminId,
+      isActive: true,
       endAt: oneYearLater,
     });
     console.log(`  ✅ account_create_sessions にテストトークンを作成しました`);
