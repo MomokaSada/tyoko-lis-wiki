@@ -23,7 +23,7 @@ async function verifyEditSession(token: string): Promise<boolean> {
     .where(
       and(
         eq(editSessions.uuid, token),
-        isNull(editSessions.revokedAt),
+        eq(editSessions.isActive, true),
         gt(editSessions.endAt, now),
         lt(editSessions.editsUsed, editSessions.maxEdits),
       ),
@@ -47,7 +47,7 @@ async function verifyAccountCreateSession(token: string): Promise<boolean> {
     .where(
       and(
         eq(accountCreateSessions.uuid, token),
-        isNull(accountCreateSessions.revokedAt),
+        eq(accountCreateSessions.isActive, true),
         gt(accountCreateSessions.endAt, now),
       ),
     )
