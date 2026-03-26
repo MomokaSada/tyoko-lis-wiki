@@ -1,7 +1,7 @@
 export default function HomePage() {
   return (
     <main style={{ padding: '2rem' }}>
-      <h1>Home / Wiki 記事一覧</h1>
+      <h1>ちょこちょこ大百科</h1>
       <p>このページは誰でもアクセス可能です。</p>
       <ul>
         <li><a href="/auth/login" style={{ color: 'blue' }}>ログインページへ (/auth/login)</a></li>
