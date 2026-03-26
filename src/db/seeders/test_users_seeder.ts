@@ -4,14 +4,6 @@ import path from 'path';
 // .env.local を明示的に読み込む（import hoisting より先に実行させるため動的import前に配置）
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 
-// Docker外（ホスト）から実行する場合、host.docker.internal → 127.0.0.1 に自動置換
-if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
-  process.env.NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL.replace('host.docker.internal', '127.0.0.1');
-}
-if (process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = process.env.DATABASE_URL.replace('host.docker.internal', '127.0.0.1');
-}
-
 /**
  * Proxy テスト用ユーザーシーダー
  *
@@ -79,14 +71,16 @@ async function seed() {
   console.log('🌱 テストユーザーのシーディングを開始します...');
   console.log(`   Supabase URL: ${SUPABASE_URL}\n`);
 
+  // 全ユーザーを1回だけ取得してキャッシュ（ループ内で毎回取得しない）
+  const { data: listData } = await supabase.auth.admin.listUsers();
+  const existingAuthUsers = listData?.users ?? [];
+
   for (const tu of TEST_USERS) {
     const dummyEmail = `${tu.username}@test.com`;
     // ---- 1. auth.users への upsert (既存ならスキップ) ----
     console.log(`📧 ${tu.username} を処理中...`);
 
-    // listUsers でIDを取得して存在確認
-    const { data: listData } = await supabase.auth.admin.listUsers();
-    const existing = listData?.users.find((u) => u.email === dummyEmail);
+    const existing = existingAuthUsers.find((u) => u.email === dummyEmail) ?? null;
 
     if (existing) {
       console.log(`  ⏭️  auth.users に既に存在 — メタデータを更新します`);

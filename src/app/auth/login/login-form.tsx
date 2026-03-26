@@ -1,51 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { useActionState } from 'react';
+import { loginAction } from '@/server/actions/authActions';
 
 export default function LoginForm() {
-  const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    try {
-      const supabase = createClient();
-      // Supabase Auth はメール/電話番号ベースのため、裏側でダミーのドメインを付与してやり取りする
-      const dummyEmail = `${username}@test.com`;
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: dummyEmail,
-        password,
-      });
-
-      if (signInError) {
-        setError(signInError.message);
-        return;
-      }
-
-      // ログイン成功 → ホームにリダイレクト
-      router.push('/');
-      router.refresh();
-    } catch {
-      setError('予期しないエラーが発生しました');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [state, formAction, isPending] = useActionState(loginAction, { error: null });
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-5">
+    <form action={formAction} className="w-full max-w-sm space-y-5">
       {/* エラー表示 */}
-      {error && (
+      {state.error && (
         <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+          {state.error}
         </div>
       )}
 
@@ -56,10 +22,9 @@ export default function LoginForm() {
         </label>
         <input
           id="username"
+          name="username"
           type="text"
           required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
           placeholder="admin"
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm
                      shadow-sm transition-colors
@@ -75,10 +40,9 @@ export default function LoginForm() {
         </label>
         <input
           id="password"
+          name="password"
           type="password"
           required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
           placeholder="password123"
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm
                      shadow-sm transition-colors
@@ -90,13 +54,13 @@ export default function LoginForm() {
       {/* 送信ボタン */}
       <button
         type="submit"
-        disabled={loading}
+        disabled={isPending}
         className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white
                    shadow-sm transition-all
                    hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50
                    disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? 'ログイン中...' : 'ログイン'}
+        {isPending ? 'ログイン中...' : 'ログイン'}
       </button>
 
       {/* テスト用ヒント */}
