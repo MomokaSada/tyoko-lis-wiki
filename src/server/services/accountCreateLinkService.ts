@@ -1,9 +1,13 @@
 import { randomUUID } from 'crypto';
 import {
+    deactivateAccountCreateSession,
     findAccountCreateSessions,
     insertAccountCreateSession,
 } from '@/server/repositories/accountCreateLinkRepository';
-import type { CreateAccountCreateLinkInput } from '@/server/schemas/accountCreateLinkSchemas';
+import type {
+    CreateAccountCreateLinkInput,
+    DeactivateAccountCreateLinkInput,
+} from '@/server/schemas/accountCreateLinkSchemas';
 
 type Actor = {
     id: number;
@@ -106,4 +110,27 @@ export async function getAccountCreateLinks(actor: Actor): Promise<AccountCreate
               ? 'expired'
               : 'active',
     }));
+}
+
+export async function deactivateAccountCreateLink(
+    actor: Actor,
+    input: DeactivateAccountCreateLinkInput,
+): Promise<{ success: true } | { success: false; error: string }> {
+    if (actor.role !== 'owner' && actor.role !== 'admin') {
+        return {
+            success: false,
+            error: 'リンク無効化権限がありません',
+        };
+    }
+
+    const updated = await deactivateAccountCreateSession(input.uuid);
+
+    if (!updated) {
+        return {
+            success: false,
+            error: '対象のリンクが見つかりません',
+        };
+    }
+
+    return { success: true };
 }

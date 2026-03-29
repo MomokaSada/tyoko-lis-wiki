@@ -1,4 +1,5 @@
 import { AccountCreateLinkForm } from './account-create-link-form';
+import { deactivateAccountCreateLinkAction } from '@/server/actions/accountCreateLinkActions';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
 
@@ -49,6 +50,14 @@ export default async function AccountCreateLinksPage() {
                   <strong>リンク:</strong>{' '}
                   <code>{`/auth/register?session=${link.uuid}`}</code>
                 </p>
+                {link.status === 'active' && (
+                  <form action={deactivateAccountCreateLinkAction} style={{ marginTop: '0.75rem' }}>
+                    <input type="hidden" name="uuid" value={link.uuid} />
+                    <button type="submit" style={{ padding: '0.4rem 0.75rem' }}>
+                      無効化
+                    </button>
+                  </form>
+                )}
               </article>
             ))}
           </div>
