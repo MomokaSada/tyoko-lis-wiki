@@ -216,3 +216,16 @@ export async function updateContentWithRevision(data: {
     return updatedContent;
   });
 }
+
+export async function deleteContentById(contentId: number) {
+  const [deleted] = await db
+    .delete(contents)
+    .where(eq(contents.id, contentId))
+    .returning({
+      id: contents.id,
+      slug: contents.slug,
+      title: contents.currentTitle,
+    });
+
+  return deleted ?? null;
+}

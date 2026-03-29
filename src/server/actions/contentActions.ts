@@ -4,10 +4,12 @@ import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import {
   createContentSchema,
+  deleteContentSchema,
   normalizeCreateContentInput,
   updateContentSchema,
 } from '@/server/schemas/contentSchemas';
-import { createContent, updateContent } from '@/server/services/contentService';
+import { createContent, deleteContent, updateContent } from '@/server/services/contentService';
+import { getCurrentActor } from '@/server/lib/currentActor';
 
 export type CreateContentActionState = {
   error: string | null;
@@ -116,5 +118,61 @@ export async function updateContentAction(
     error: null,
     updatedSlug: result.data.slug,
     updatedTitle: result.data.title,
+  };
+}
+
+export type DeleteContentActionState = {
+  error: string | null;
+  deletedSlug: string | null;
+  deletedTitle: string | null;
+};
+
+export async function deleteContentAction(
+  _prevState: DeleteContentActionState,
+  formData: FormData,
+): Promise<DeleteContentActionState> {
+  const parsed = deleteContentSchema.safeParse({
+    contentId: formData.get('contentId'),
+  });
+
+  if (!parsed.success) {
+    return {
+      error: getFirstZodErrorMessage(parsed.error),
+      deletedSlug: null,
+      deletedTitle: null,
+    };
+  }
+
+  const actor = await getCurrentActor();
+
+  if (!actor) {
+    return {
+      error: '記事削除権限がありません',
+      deletedSlug: null,
+      deletedTitle: null,
+    };
+  }
+
+  const result = await deleteContent(
+    {
+      type: 'actor',
+      actorId: actor.id,
+      role: actor.role,
+    },
+    parsed.data,
+  );
+
+  if (!result.success) {
+    return {
+      error: result.error,
+      deletedSlug: null,
+      deletedTitle: null,
+    };
+  }
+
+  return {
+    error: null,
+    deletedSlug: result.data.slug,
+    deletedTitle: result.data.title,
   };
 }

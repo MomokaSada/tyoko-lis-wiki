@@ -1,5 +1,6 @@
 import { requireEditSession } from '@/lib/auth/guards';
 import { getEditableContentDetail } from '@/server/services/contentService';
+import { DeletePostForm } from './delete-post-form';
 import { EditPostForm } from './edit-post-form';
 
 export default async function ModifyPostPage({
@@ -32,6 +33,7 @@ export default async function ModifyPostPage({
       {content ? (
         <div style={{ marginTop: '1.5rem' }}>
           <EditPostForm sessionToken={token ?? null} content={content} />
+          {user && <DeletePostForm contentId={content.id} />}
         </div>
       ) : (
         <p style={{ marginTop: '1rem' }}>編集対象の slug を指定するとフォームが表示されます。</p>

@@ -57,3 +57,9 @@ export const updateContentSchema = z.object({
 });
 
 export type UpdateContentInput = z.infer<typeof updateContentSchema>;
+
+export const deleteContentSchema = z.object({
+  contentId: z.coerce.number().int().positive('記事IDが不正です'),
+});
+
+export type DeleteContentInput = z.infer<typeof deleteContentSchema>;
