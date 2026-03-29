@@ -1,5 +1,9 @@
 import type { CreateContentInput } from '@/server/schemas/contentSchemas';
-import { createContentWithInitialRevision, findContentBySlug } from '@/server/repositories/contentRepository';
+import {
+  createContentWithInitialRevision,
+  findContentBySlug,
+  listPublishedContents,
+} from '@/server/repositories/contentRepository';
 import type { EditorContext } from '@/server/lib/currentEditor';
 
 export type CreateContentResult =
@@ -54,4 +58,14 @@ export async function createContent(
       title: created.currentTitle,
     },
   };
+}
+
+export async function getPublishedContentList() {
+  const rows = await listPublishedContents();
+
+  return rows.map((row) => ({
+    ...row,
+    excerpt:
+      row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
+  }));
 }
