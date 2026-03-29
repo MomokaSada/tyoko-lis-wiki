@@ -21,6 +21,9 @@ export default async function AdminPage() {
       <a href="/admin/ip-bans" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
         IP BAN 管理へ
       </a>
+      <a href="/admin/account-bans" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
+        アカウントBAN 管理へ
+      </a>
       <a href="/" style={{ color: 'blue' }}>ホームに戻る</a>
     </main>
   );
