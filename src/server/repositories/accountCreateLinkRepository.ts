@@ -1,5 +1,6 @@
+import { desc, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { accountCreateSessions } from '@/db/schema';
+import { accountCreateSessions, users } from '@/db/schema';
 
 export async function insertAccountCreateSession(data: {
     uuid: string;
@@ -18,4 +19,20 @@ export async function insertAccountCreateSession(data: {
     })
     .returning();
     return created;
+}
+
+export async function findAccountCreateSessions() {
+    return db
+        .select({
+            uuid: accountCreateSessions.uuid,
+            authorId: accountCreateSessions.authorId,
+            authorName: users.name,
+            isActive: accountCreateSessions.isActive,
+            startAt: accountCreateSessions.startAt,
+            endAt: accountCreateSessions.endAt,
+            createdAt: accountCreateSessions.createdAt,
+        })
+        .from(accountCreateSessions)
+        .leftJoin(users, eq(accountCreateSessions.authorId, users.id))
+        .orderBy(desc(accountCreateSessions.createdAt));
 }

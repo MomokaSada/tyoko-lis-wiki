@@ -1,5 +1,8 @@
 import { randomUUID } from 'crypto';
-import { insertAccountCreateSession } from '@/server/repositories/accountCreateLinkRepository';
+import {
+    findAccountCreateSessions,
+    insertAccountCreateSession,
+} from '@/server/repositories/accountCreateLinkRepository';
 import type { CreateAccountCreateLinkInput } from '@/server/schemas/accountCreateLinkSchemas';
 
 type Actor = {
@@ -20,6 +23,17 @@ type CreateAccountCreateLinkResult =
         success: false; 
         error: string 
     };
+
+type AccountCreateLinkListItem = {
+    uuid: string;
+    authorId: number;
+    authorName: string | null;
+    isActive: boolean;
+    startAt: Date;
+    endAt: Date;
+    createdAt: Date;
+    status: 'active' | 'expired' | 'inactive';
+};
 
 function isAccountCreateSessionUuidConflict(error: unknown): boolean {
     return (
@@ -74,4 +88,22 @@ export async function createAccountCreateLink(
         success: false, 
         error: 'Failed to create account create link' 
     };
+}
+
+export async function getAccountCreateLinks(actor: Actor): Promise<AccountCreateLinkListItem[]> {
+    if (actor.role !== 'owner' && actor.role !== 'admin') {
+        return [];
+    }
+
+    const rows = await findAccountCreateSessions();
+    const now = new Date();
+
+    return rows.map((row) => ({
+        ...row,
+        status: !row.isActive
+            ? 'inactive'
+            : row.endAt <= now
+              ? 'expired'
+              : 'active',
+    }));
 }
