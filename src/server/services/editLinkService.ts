@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { insertEditSession } from '@/server/repositories/editLinkRepository';
+import { findEditSessions, insertEditSession } from '@/server/repositories/editLinkRepository';
 import type { CreateEditLinkInput } from '@/server/schemas/editLinkSchemas';
 
 type Actor = {
@@ -90,4 +90,24 @@ export async function createEditLink(
     success: false,
     error: '編集リンクの生成に失敗しました',
   };
+}
+
+export async function getEditLinks(actor: Actor): Promise<EditLinkListItem[]> {
+  if (actor.role !== 'owner' && actor.role !== 'admin') {
+    return [];
+  }
+
+  const rows = await findEditSessions();
+  const now = new Date();
+
+  return rows.map((row) => ({
+    ...row,
+    status: !row.isActive
+      ? 'inactive'
+      : row.editsUsed >= row.maxEdits
+        ? 'limit-reached'
+        : row.endAt <= now
+          ? 'expired'
+          : 'active',
+  }));
 }
