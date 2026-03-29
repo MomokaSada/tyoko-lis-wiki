@@ -1,7 +1,13 @@
-import { getPublishedContentList } from '@/server/services/contentService';
+import { searchPublishedContentList } from '@/server/services/contentService';
 
-export default async function PostsPage() {
-  const posts = await getPublishedContentList();
+export default async function PostsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const sp = await searchParams;
+  const query = typeof sp.q === 'string' ? sp.q : '';
+  const posts = await searchPublishedContentList(query);
 
   return (
     <main style={{ padding: '2rem' }}>
@@ -9,8 +15,19 @@ export default async function PostsPage() {
         記事一覧
       </h1>
 
+      <form method="get" style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        <input
+          type="text"
+          name="q"
+          defaultValue={query}
+          placeholder="タイトル・本文・スラッグで検索"
+          style={{ minWidth: '20rem' }}
+        />
+        <button type="submit">検索</button>
+      </form>
+
       {posts.length === 0 ? (
-        <p>公開中の記事はまだありません。</p>
+        <p>{query ? '検索条件に一致する記事はありません。' : '公開中の記事はまだありません。'}</p>
       ) : (
         <div style={{ display: 'grid', gap: '1rem' }}>
           {posts.map((post) => (
