@@ -15,6 +15,9 @@ export default async function AdminPage() {
       <a href="/admin/account-create-links" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
         アカウント作成リンク生成へ
       </a>
+      <a href="/admin/edit-links" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
+        記事編集リンク管理へ
+      </a>
       <a href="/" style={{ color: 'blue' }}>ホームに戻る</a>
     </main>
   );
