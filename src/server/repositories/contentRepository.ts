@@ -129,3 +129,90 @@ export async function findPublishedContentBySlug(slug: string) {
 
   return content ?? null;
 }
+
+export async function findEditableContentBySlug(slug: string) {
+  const [content] = await db
+    .select({
+      id: contents.id,
+      slug: contents.slug,
+      title: contents.currentTitle,
+      content: contents.currentContent,
+      thumbnail: contents.currentThumbnail,
+      isPublished: contents.isPublished,
+      latestRevision: contents.latestRevision,
+      createdAt: contents.createdAt,
+      updatedAt: contents.updatedAt,
+    })
+    .from(contents)
+    .where(eq(contents.slug, slug))
+    .limit(1);
+
+  return content ?? null;
+}
+
+export async function updateContentWithRevision(data: {
+  contentId: number;
+  slug: string;
+  title: string;
+  content: string;
+  thumbnail: string;
+  isPublished: boolean;
+  userId: number | null;
+  sessionId: string | null;
+}) {
+  return db.transaction(async (tx) => {
+    const [current] = await tx
+      .select({
+        latestRevision: contents.latestRevision,
+      })
+      .from(contents)
+      .where(eq(contents.id, data.contentId))
+      .limit(1);
+
+    const nextRevision = (current?.latestRevision ?? 0) + 1;
+
+    const [updatedContent] = await tx
+      .update(contents)
+      .set({
+        slug: data.slug,
+        currentTitle: data.title,
+        currentContent: data.content,
+        currentThumbnail: data.thumbnail,
+        isPublished: data.isPublished,
+        latestRevision: nextRevision,
+        updatedAt: new Date(),
+      })
+      .where(eq(contents.id, data.contentId))
+      .returning({
+        id: contents.id,
+        slug: contents.slug,
+        title: contents.currentTitle,
+        latestRevision: contents.latestRevision,
+      });
+
+    await tx.insert(contentEditLogs).values({
+      contentId: updatedContent.id,
+      deviceSessionId: null,
+      userId: data.userId,
+      revisionNumber: nextRevision,
+      type: 'snapshot',
+      title: data.title,
+      data: data.content,
+      thumbnail: data.thumbnail,
+      tagChanged: false,
+      categoryChanged: false,
+    });
+
+    if (data.sessionId) {
+      await tx
+        .update(editSessions)
+        .set({
+          editsUsed: sql`${editSessions.editsUsed} + 1`,
+          updatedAt: new Date(),
+        })
+        .where(eq(editSessions.uuid, data.sessionId));
+    }
+
+    return updatedContent;
+  });
+}
