@@ -1,9 +1,14 @@
 'use server';
 
 import { createAccountCreateLinkSchema } from '@/server/schemas/accountCreateLinkSchemas';
-import { createAccountCreateLink } from '@/server/services/accountCreateLinkService';
+import { deactivateAccountCreateLinkSchema } from '@/server/schemas/accountCreateLinkSchemas';
+import {
+  createAccountCreateLink,
+  deactivateAccountCreateLink,
+} from '@/server/services/accountCreateLinkService';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
+import { revalidatePath } from 'next/cache';
 
 export type CreateAccountCreateLinkActionState = {
   error: string | null;
@@ -53,4 +58,27 @@ export async function createAccountCreateLinkAction(
         expiresAt: result.data.endAt.toISOString(),
     };
 }
-    
+
+export async function deactivateAccountCreateLinkAction(formData: FormData) {
+    const parsed = deactivateAccountCreateLinkSchema.safeParse({
+        uuid: formData.get('uuid'),
+    });
+
+    if (!parsed.success) {
+        throw new Error(getFirstZodErrorMessage(parsed.error));
+    }
+
+    const actor = await getCurrentActor();
+
+    if (!actor) {
+        throw new Error('リンク無効化権限がありません');
+    }
+
+    const result = await deactivateAccountCreateLink(actor, parsed.data);
+
+    if (!result.success) {
+        throw new Error(result.error);
+    }
+
+    revalidatePath('/admin/account-create-links');
+}

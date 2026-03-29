@@ -36,3 +36,18 @@ export async function findAccountCreateSessions() {
         .leftJoin(users, eq(accountCreateSessions.authorId, users.id))
         .orderBy(desc(accountCreateSessions.createdAt));
 }
+
+export async function deactivateAccountCreateSession(uuid: string) {
+    const [updated] = await db
+        .update(accountCreateSessions)
+        .set({
+            isActive: false,
+            updatedAt: new Date(),
+        })
+        .where(eq(accountCreateSessions.uuid, uuid))
+        .returning({
+            uuid: accountCreateSessions.uuid,
+        });
+
+    return updated ?? null;
+}

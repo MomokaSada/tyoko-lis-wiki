@@ -11,3 +11,11 @@ export const createAccountCreateLinkSchema = z.object({
 export type CreateAccountCreateLinkInput = z.infer<
     typeof createAccountCreateLinkSchema
 >;
+
+export const deactivateAccountCreateLinkSchema = z.object({
+  uuid: z.uuid('不正なリンクIDです'),
+});
+
+export type DeactivateAccountCreateLinkInput = z.infer<
+  typeof deactivateAccountCreateLinkSchema
+>;
