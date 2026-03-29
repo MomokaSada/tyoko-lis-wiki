@@ -2,11 +2,14 @@ import type { CreateContentInput } from '@/server/schemas/contentSchemas';
 import {
   createContentWithInitialRevision,
   findPublishedContentBySlug,
+  findEditableContentBySlug,
   findContentBySlug,
   listPublishedContents,
   searchPublishedContents,
+  updateContentWithRevision,
 } from '@/server/repositories/contentRepository';
 import type { EditorContext } from '@/server/lib/currentEditor';
+import type { UpdateContentInput } from '@/server/schemas/contentSchemas';
 
 export type CreateContentResult =
   | {
@@ -90,4 +93,58 @@ export async function searchPublishedContentList(query: string) {
 
 export async function getPublishedContentDetail(slug: string) {
   return findPublishedContentBySlug(slug);
+}
+
+export async function getEditableContentDetail(slug: string) {
+  return findEditableContentBySlug(slug);
+}
+
+export type UpdateContentResult =
+  | {
+      success: true;
+      data: {
+        id: number;
+        slug: string;
+        title: string;
+        latestRevision: number | null;
+      };
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export async function updateContent(
+  editor: EditorContext,
+  input: UpdateContentInput,
+): Promise<UpdateContentResult> {
+  const existing = await findEditableContentBySlug(input.slug);
+
+  if (existing && existing.id !== input.contentId) {
+    return {
+      success: false,
+      error: 'そのスラッグはすでに使われています',
+    };
+  }
+
+  const updated = await updateContentWithRevision({
+    contentId: input.contentId,
+    slug: input.slug,
+    title: input.title,
+    content: input.content,
+    thumbnail: input.thumbnail,
+    isPublished: input.isPublished,
+    userId: editor.type === 'actor' ? editor.actorId : null,
+    sessionId: editor.type === 'session' ? editor.sessionId : null,
+  });
+
+  return {
+    success: true,
+    data: {
+      id: updated.id,
+      slug: updated.slug,
+      title: updated.title,
+      latestRevision: updated.latestRevision,
+    },
+  };
 }

@@ -45,3 +45,15 @@ export function normalizeCreateContentInput(input: z.infer<typeof createContentS
     isPublished: input.isPublished,
   };
 }
+
+export const updateContentSchema = z.object({
+  session: z.string().optional().nullable(),
+  contentId: z.coerce.number().int().positive('記事IDが不正です'),
+  title: z.string().trim().min(1, 'タイトルを入力してください').max(255, 'タイトルは255文字以内で入力してください'),
+  slug: slugSchema,
+  content: z.string().trim().min(1, '本文を入力してください'),
+  thumbnail: z.string().trim().url('サムネイルURLは正しいURL形式で入力してください'),
+  isPublished: z.boolean(),
+});
+
+export type UpdateContentInput = z.infer<typeof updateContentSchema>;
