@@ -11,7 +11,8 @@ import { userTypeEnum } from './enums';
 export const users = pgTable('users', {
     id: serial('id').primaryKey(),
     accountCreateSessionId: uuid('account_create_session_id'),
-    name: varchar('name', { length: 255 }).notNull(),
+    authUserId: uuid('auth_user_id').unique(),
+    name: varchar('name', { length: 255 }).notNull().unique(),
     password: varchar('password', { length: 255 }).notNull(),
     type: userTypeEnum('type').notNull(),
     isActive: boolean('is_active').default(true).notNull(),
