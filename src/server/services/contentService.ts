@@ -1,6 +1,7 @@
 import type { CreateContentInput } from '@/server/schemas/contentSchemas';
 import {
   createContentWithInitialRevision,
+  deleteContentById,
   findPublishedContentBySlug,
   findEditableContentBySlug,
   findContentBySlug,
@@ -9,7 +10,7 @@ import {
   updateContentWithRevision,
 } from '@/server/repositories/contentRepository';
 import type { EditorContext } from '@/server/lib/currentEditor';
-import type { UpdateContentInput } from '@/server/schemas/contentSchemas';
+import type { DeleteContentInput, UpdateContentInput } from '@/server/schemas/contentSchemas';
 
 export type CreateContentResult =
   | {
@@ -146,5 +147,47 @@ export async function updateContent(
       title: updated.title,
       latestRevision: updated.latestRevision,
     },
+  };
+}
+
+type ActorOnlyEditor = Extract<EditorContext, { type: 'actor' }>;
+
+export type DeleteContentResult =
+  | {
+      success: true;
+      data: {
+        id: number;
+        slug: string;
+        title: string;
+      };
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+export async function deleteContent(
+  editor: ActorOnlyEditor,
+  input: DeleteContentInput,
+): Promise<DeleteContentResult> {
+  if (editor.role !== 'owner' && editor.role !== 'admin') {
+    return {
+      success: false,
+      error: '記事削除権限がありません',
+    };
+  }
+
+  const deleted = await deleteContentById(input.contentId);
+
+  if (!deleted) {
+    return {
+      success: false,
+      error: '対象の記事が見つかりません',
+    };
+  }
+
+  return {
+    success: true,
+    data: deleted,
   };
 }
