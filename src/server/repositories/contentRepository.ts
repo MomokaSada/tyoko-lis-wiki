@@ -110,3 +110,22 @@ export async function searchPublishedContents(query: string) {
     )
     .orderBy(desc(contents.updatedAt));
 }
+
+export async function findPublishedContentBySlug(slug: string) {
+  const [content] = await db
+    .select({
+      id: contents.id,
+      slug: contents.slug,
+      title: contents.currentTitle,
+      content: contents.currentContent,
+      thumbnail: contents.currentThumbnail,
+      latestRevision: contents.latestRevision,
+      createdAt: contents.createdAt,
+      updatedAt: contents.updatedAt,
+    })
+    .from(contents)
+    .where(and(eq(contents.slug, slug), eq(contents.isPublished, true)))
+    .limit(1);
+
+  return content ?? null;
+}

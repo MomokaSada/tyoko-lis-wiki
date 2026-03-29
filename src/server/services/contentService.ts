@@ -1,6 +1,7 @@
 import type { CreateContentInput } from '@/server/schemas/contentSchemas';
 import {
   createContentWithInitialRevision,
+  findPublishedContentBySlug,
   findContentBySlug,
   listPublishedContents,
   searchPublishedContents,
@@ -85,4 +86,8 @@ export async function searchPublishedContentList(query: string) {
     excerpt:
       row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
   }));
+}
+
+export async function getPublishedContentDetail(slug: string) {
+  return findPublishedContentBySlug(slug);
 }
