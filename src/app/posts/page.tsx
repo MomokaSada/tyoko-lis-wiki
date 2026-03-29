@@ -34,6 +34,7 @@ export default async function PostsPage({
             <article key={post.id} style={{ border: '1px solid #ddd', padding: '1rem', background: '#fff' }}>
               <p><strong>タイトル:</strong> {post.title}</p>
               <p><strong>スラッグ:</strong> <code>{post.slug}</code></p>
+              <p><strong>閲覧数:</strong> {post.viewCount}</p>
               <p><strong>抜粋:</strong> {post.excerpt}</p>
               <p><strong>最終更新:</strong> {post.updatedAt.toISOString()}</p>
               <a href={`/posts/${post.slug}`} style={{ color: 'blue' }}>
