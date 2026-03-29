@@ -3,6 +3,7 @@ import {
   createContentWithInitialRevision,
   findContentBySlug,
   listPublishedContents,
+  searchPublishedContents,
 } from '@/server/repositories/contentRepository';
 import type { EditorContext } from '@/server/lib/currentEditor';
 
@@ -62,6 +63,22 @@ export async function createContent(
 
 export async function getPublishedContentList() {
   const rows = await listPublishedContents();
+
+  return rows.map((row) => ({
+    ...row,
+    excerpt:
+      row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
+  }));
+}
+
+export async function searchPublishedContentList(query: string) {
+  const trimmedQuery = query.trim();
+
+  if (!trimmedQuery) {
+    return getPublishedContentList();
+  }
+
+  const rows = await searchPublishedContents(trimmedQuery);
 
   return rows.map((row) => ({
     ...row,

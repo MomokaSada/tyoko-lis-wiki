@@ -1,5 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
-import { desc } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { contentEditLogs, contents, editSessions } from '@/db/schema';
 
@@ -83,5 +82,31 @@ export async function listPublishedContents() {
     })
     .from(contents)
     .where(eq(contents.isPublished, true))
+    .orderBy(desc(contents.updatedAt));
+}
+
+export async function searchPublishedContents(query: string) {
+  return db
+    .select({
+      id: contents.id,
+      slug: contents.slug,
+      title: contents.currentTitle,
+      content: contents.currentContent,
+      thumbnail: contents.currentThumbnail,
+      latestRevision: contents.latestRevision,
+      createdAt: contents.createdAt,
+      updatedAt: contents.updatedAt,
+    })
+    .from(contents)
+    .where(
+      and(
+        eq(contents.isPublished, true),
+        or(
+          ilike(contents.currentTitle, `%${query}%`),
+          ilike(contents.currentContent, `%${query}%`),
+          ilike(contents.slug, `%${query}%`),
+        ),
+      ),
+    )
     .orderBy(desc(contents.updatedAt));
 }
