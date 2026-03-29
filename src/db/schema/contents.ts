@@ -15,6 +15,7 @@ export const contents = pgTable('contents', {
     currentContent: text('current_content').notNull(),
     currentThumbnail: varchar('current_thumbnail', { length: 512 }).notNull(),
     latestRevision: integer('latest_revision'),
+    viewCount: integer('view_count').default(0).notNull(),
     isPublished: boolean('is_published').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

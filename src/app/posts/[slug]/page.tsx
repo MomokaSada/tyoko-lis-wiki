@@ -20,6 +20,7 @@ export default async function PostDetailPage({
           <h1 style={{ fontSize: '2rem', fontWeight: 700 }}>{post.title}</h1>
           <p><strong>スラッグ:</strong> <code>{post.slug}</code></p>
           <p><strong>リビジョン:</strong> {post.latestRevision ?? 1}</p>
+          <p><strong>閲覧数:</strong> {post.viewCount}</p>
           <p><strong>最終更新:</strong> {post.updatedAt.toISOString()}</p>
         </header>
 

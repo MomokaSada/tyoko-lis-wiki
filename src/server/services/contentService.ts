@@ -5,6 +5,7 @@ import {
   findPublishedContentBySlug,
   findEditableContentBySlug,
   findContentBySlug,
+  incrementContentViewCount,
   listPublishedContents,
   searchPublishedContents,
   updateContentWithRevision,
@@ -93,7 +94,18 @@ export async function searchPublishedContentList(query: string) {
 }
 
 export async function getPublishedContentDetail(slug: string) {
-  return findPublishedContentBySlug(slug);
+  const content = await findPublishedContentBySlug(slug);
+
+  if (!content) {
+    return null;
+  }
+
+  const updated = await incrementContentViewCount(content.id);
+
+  return {
+    ...content,
+    viewCount: updated?.viewCount ?? content.viewCount,
+  };
 }
 
 export async function getEditableContentDetail(slug: string) {

@@ -77,6 +77,7 @@ export async function listPublishedContents() {
       content: contents.currentContent,
       thumbnail: contents.currentThumbnail,
       latestRevision: contents.latestRevision,
+      viewCount: contents.viewCount,
       createdAt: contents.createdAt,
       updatedAt: contents.updatedAt,
     })
@@ -94,6 +95,7 @@ export async function searchPublishedContents(query: string) {
       content: contents.currentContent,
       thumbnail: contents.currentThumbnail,
       latestRevision: contents.latestRevision,
+      viewCount: contents.viewCount,
       createdAt: contents.createdAt,
       updatedAt: contents.updatedAt,
     })
@@ -120,6 +122,7 @@ export async function findPublishedContentBySlug(slug: string) {
       content: contents.currentContent,
       thumbnail: contents.currentThumbnail,
       latestRevision: contents.latestRevision,
+      viewCount: contents.viewCount,
       createdAt: contents.createdAt,
       updatedAt: contents.updatedAt,
     })
@@ -140,6 +143,7 @@ export async function findEditableContentBySlug(slug: string) {
       thumbnail: contents.currentThumbnail,
       isPublished: contents.isPublished,
       latestRevision: contents.latestRevision,
+      viewCount: contents.viewCount,
       createdAt: contents.createdAt,
       updatedAt: contents.updatedAt,
     })
@@ -228,4 +232,19 @@ export async function deleteContentById(contentId: number) {
     });
 
   return deleted ?? null;
+}
+
+export async function incrementContentViewCount(contentId: number) {
+  const [updated] = await db
+    .update(contents)
+    .set({
+      viewCount: sql`${contents.viewCount} + 1`,
+    })
+    .where(eq(contents.id, contentId))
+    .returning({
+      id: contents.id,
+      viewCount: contents.viewCount,
+    });
+
+  return updated ?? null;
 }
