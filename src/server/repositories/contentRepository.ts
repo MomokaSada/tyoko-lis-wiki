@@ -1,4 +1,5 @@
 import { eq, sql } from 'drizzle-orm';
+import { desc } from 'drizzle-orm';
 import { db } from '@/db';
 import { contentEditLogs, contents, editSessions } from '@/db/schema';
 
@@ -66,4 +67,21 @@ export async function createContentWithInitialRevision(data: {
 
     return createdContent;
   });
+}
+
+export async function listPublishedContents() {
+  return db
+    .select({
+      id: contents.id,
+      slug: contents.slug,
+      title: contents.currentTitle,
+      content: contents.currentContent,
+      thumbnail: contents.currentThumbnail,
+      latestRevision: contents.latestRevision,
+      createdAt: contents.createdAt,
+      updatedAt: contents.updatedAt,
+    })
+    .from(contents)
+    .where(eq(contents.isPublished, true))
+    .orderBy(desc(contents.updatedAt));
 }
