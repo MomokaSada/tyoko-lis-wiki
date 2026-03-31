@@ -18,6 +18,9 @@ export default async function AdminPage() {
       <a href="/admin/edit-links" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
         記事編集リンク管理へ
       </a>
+      <a href="/admin/categories" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
+        カテゴリ管理へ
+      </a>
       <a href="/admin/ip-bans" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
         IP BAN 管理へ
       </a>

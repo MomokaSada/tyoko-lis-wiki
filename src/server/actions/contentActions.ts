@@ -29,6 +29,11 @@ export async function createContentAction(
     content: formData.get('content'),
     thumbnail: formData.get('thumbnail'),
     isPublished: formData.get('isPublished') === 'on',
+    tagIds: formData.getAll('tagIds'),
+    newTags: formData.get('newTags'),
+    categoryIds: formData.getAll('categoryIds'),
+    newCategoryName: formData.get('newCategoryName'),
+    newCategoryParentId: formData.get('newCategoryParentId'),
   });
 
   if (!parsed.success) {
@@ -85,6 +90,11 @@ export async function updateContentAction(
     content: formData.get('content'),
     thumbnail: formData.get('thumbnail'),
     isPublished: formData.get('isPublished') === 'on',
+    tagIds: formData.getAll('tagIds'),
+    newTags: formData.get('newTags'),
+    categoryIds: formData.getAll('categoryIds'),
+    newCategoryName: formData.get('newCategoryName'),
+    newCategoryParentId: formData.get('newCategoryParentId'),
   });
 
   if (!parsed.success) {

@@ -12,7 +12,22 @@ const initialState: CreateContentActionState = {
   createdTitle: null,
 };
 
-export function CreatePostForm({ sessionToken }: { sessionToken: string | null }) {
+type TaxonomyOption = {
+  id: number;
+  name: string;
+  label?: string;
+  parentId?: number | null;
+};
+
+export function CreatePostForm({
+  sessionToken,
+  availableTags,
+  availableCategories,
+}: {
+  sessionToken: string | null;
+  availableTags: TaxonomyOption[];
+  availableCategories: TaxonomyOption[];
+}) {
   const [state, action, isPending] = useActionState(createContentAction, initialState);
   const canPublish = sessionToken === null;
 
@@ -39,6 +54,57 @@ export function CreatePostForm({ sessionToken }: { sessionToken: string | null }
         <span>本文</span>
         <textarea name="content" rows={12} required />
       </label>
+
+      <fieldset style={{ display: 'grid', gap: '0.5rem' }}>
+        <legend>タグ</legend>
+        {availableTags.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            {availableTags.map((tag) => (
+              <label key={tag.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <input type="checkbox" name="tagIds" value={tag.id} />
+                <span>{tag.name}</span>
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p style={{ margin: 0, color: '#666' }}>登録済みタグはまだありません。</p>
+        )}
+        <label style={{ display: 'grid', gap: '0.25rem' }}>
+          <span>新規タグ（カンマ区切り）</span>
+          <input name="newTags" type="text" placeholder="例: 麻雀, 攻略, 初心者向け" />
+        </label>
+      </fieldset>
+
+      <fieldset style={{ display: 'grid', gap: '0.5rem' }}>
+        <legend>カテゴリ</legend>
+        {availableCategories.length > 0 ? (
+          <div style={{ display: 'grid', gap: '0.35rem' }}>
+            {availableCategories.map((category) => (
+              <label key={category.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <input type="checkbox" name="categoryIds" value={category.id} />
+                <span>{category.label ?? category.name}</span>
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p style={{ margin: 0, color: '#666' }}>登録済みカテゴリはまだありません。</p>
+        )}
+        <label style={{ display: 'grid', gap: '0.25rem' }}>
+          <span>新規カテゴリ名</span>
+          <input name="newCategoryName" type="text" placeholder="例: キャラクター" />
+        </label>
+        <label style={{ display: 'grid', gap: '0.25rem' }}>
+          <span>新規カテゴリの親カテゴリ</span>
+          <select name="newCategoryParentId" defaultValue="">
+            <option value="">親カテゴリなし</option>
+            {availableCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.label ?? category.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </fieldset>
 
       {canPublish ? (
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

@@ -1,5 +1,5 @@
 import { requireEditSession } from '@/lib/auth/guards';
-import { getEditableContentDetail } from '@/server/services/contentService';
+import { getEditableContentDetail, getTaxonomyOptions } from '@/server/services/contentService';
 import { DeletePostForm } from './delete-post-form';
 import { EditPostForm } from './edit-post-form';
 
@@ -15,6 +15,7 @@ export default async function ModifyPostPage({
   // Guard 実行: NG ならリダイレクトされる
   const { valid, user, token } = await requireEditSession(sessionToken);
   const content = slug ? await getEditableContentDetail(slug) : null;
+  const taxonomy = await getTaxonomyOptions();
 
   return (
     <main style={{ padding: '2rem' }}>
@@ -32,7 +33,13 @@ export default async function ModifyPostPage({
       </form>
       {content ? (
         <div style={{ marginTop: '1.5rem' }}>
-          <EditPostForm sessionToken={token ?? null} canPublish={Boolean(user)} content={content} />
+          <EditPostForm
+            sessionToken={token ?? null}
+            canPublish={Boolean(user)}
+            availableTags={taxonomy.tags}
+            availableCategories={taxonomy.categories}
+            content={content}
+          />
           {user && <DeletePostForm contentId={content.id} />}
         </div>
       ) : (

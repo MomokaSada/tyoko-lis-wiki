@@ -1,5 +1,6 @@
 import { requireEditSession } from '@/lib/auth/guards';
 import { CreatePostForm } from './create-post-form';
+import { getTaxonomyOptions } from '@/server/services/contentService';
 
 export default async function CreatePostPage({
   searchParams,
@@ -11,6 +12,7 @@ export default async function CreatePostPage({
   
   // Guard 実行: NG ならリダイレクトされる
   const { valid, user, token } = await requireEditSession(sessionToken);
+  const taxonomy = await getTaxonomyOptions();
 
   return (
     <main style={{ padding: '2rem' }}>
@@ -22,7 +24,11 @@ export default async function CreatePostPage({
         <p><strong>トークン:</strong> {token || 'なし'}</p>
       </div>
       <div style={{ marginTop: '1.5rem' }}>
-        <CreatePostForm sessionToken={token ?? null} />
+        <CreatePostForm
+          sessionToken={token ?? null}
+          availableTags={taxonomy.tags}
+          availableCategories={taxonomy.categories}
+        />
       </div>
       <br/>
       <a href="/" style={{ color: 'blue' }}>ホームに戻る</a>

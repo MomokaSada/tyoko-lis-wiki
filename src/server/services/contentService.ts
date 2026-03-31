@@ -15,6 +15,12 @@ import {
 } from '@/server/repositories/contentRepository';
 import type { EditorContext } from '@/server/lib/currentEditor';
 import type { DeleteContentInput, UpdateContentInput } from '@/server/schemas/contentSchemas';
+import {
+  detectTaxonomyChanges,
+  getContentTaxonomyState,
+  getTaxonomyOptions,
+  resolveTaxonomySelection,
+} from '@/server/services/taxonomyService';
 
 export type CreateContentResult =
   | {
@@ -50,6 +56,14 @@ export async function createContent(
     };
   }
 
+  const resolvedTaxonomy = await resolveTaxonomySelection({
+    existingTagIds: input.tagIds,
+    newTags: input.newTags,
+    existingCategoryIds: input.categoryIds,
+    newCategoryName: input.newCategoryName,
+    newCategoryParentId: input.newCategoryParentId,
+  });
+
   const effectiveIsPublished = editor.type === 'actor' ? input.isPublished : false;
 
   const created = await createContentWithInitialRevision({
@@ -60,6 +74,10 @@ export async function createContent(
     isPublished: effectiveIsPublished,
     userId: editor.type === 'actor' ? editor.actorId : null,
     sessionId: editor.type === 'session' ? editor.sessionId : null,
+    tagIds: resolvedTaxonomy.tagIds,
+    categoryIds: resolvedTaxonomy.categoryIds,
+    tagChanged: resolvedTaxonomy.tagIds.length > 0,
+    categoryChanged: resolvedTaxonomy.categoryIds.length > 0,
   });
 
   return {
@@ -148,7 +166,19 @@ export async function getAccessibleContentDetail(slug: string, editor: EditorCon
 }
 
 export async function getEditableContentDetail(slug: string) {
-  return findEditableContentBySlug(slug);
+  const content = await findEditableContentBySlug(slug);
+
+  if (!content) {
+    return null;
+  }
+
+  const taxonomy = await getContentTaxonomyState(content.id);
+
+  return {
+    ...content,
+    tagIds: taxonomy.tagIds,
+    categoryIds: taxonomy.categoryIds,
+  };
 }
 
 export type UpdateContentResult =
@@ -188,6 +218,16 @@ export async function updateContent(
     };
   }
 
+  const resolvedTaxonomy = await resolveTaxonomySelection({
+    existingTagIds: input.tagIds,
+    newTags: input.newTags,
+    existingCategoryIds: input.categoryIds,
+    newCategoryName: input.newCategoryName,
+    newCategoryParentId: input.newCategoryParentId,
+  });
+  const currentTaxonomy = await getContentTaxonomyState(input.contentId);
+  const taxonomyChanges = detectTaxonomyChanges(currentTaxonomy, resolvedTaxonomy);
+
   const effectiveIsPublished =
     editor.type === 'actor' ? input.isPublished : current.isPublished;
 
@@ -200,6 +240,10 @@ export async function updateContent(
     isPublished: effectiveIsPublished,
     userId: editor.type === 'actor' ? editor.actorId : null,
     sessionId: editor.type === 'session' ? editor.sessionId : null,
+    tagIds: resolvedTaxonomy.tagIds,
+    categoryIds: resolvedTaxonomy.categoryIds,
+    tagChanged: taxonomyChanges.tagChanged,
+    categoryChanged: taxonomyChanges.categoryChanged,
   });
 
   return {
@@ -212,6 +256,8 @@ export async function updateContent(
     },
   };
 }
+
+export { getTaxonomyOptions };
 
 type ActorOnlyEditor = Extract<EditorContext, { type: 'actor' }>;
 
