@@ -59,7 +59,7 @@ export async function registerAccount(input: RegisterInput): Promise<RegisterRes
     email: dummyEmail,
     password: input.password,
     email_confirm: true,
-    app_metadata: input.type === 'admin' ? { role: 'admin' } : { role: 'bot' },
+    app_metadata: { role: 'admin' },
   });
 
   if (error || !data.user) {
@@ -75,7 +75,7 @@ export async function registerAccount(input: RegisterInput): Promise<RegisterRes
       authUserId: data.user.id,
       username: normalizedUsername,
       passwordHash: hashPassword(input.password),
-      type: input.type,
+      type: 'admin',
     });
   } catch (dbError) {
     await supabaseAdmin.auth.admin.deleteUser(data.user.id);

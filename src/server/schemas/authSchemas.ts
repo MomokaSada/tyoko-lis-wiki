@@ -20,7 +20,6 @@ export const registerSchema = z
     username: usernameSchema,
     password: z.string().min(8, 'パスワードは8文字以上で入力してください'),
     confirmPassword: z.string().min(1, '確認用パスワードを入力してください'),
-    type: z.enum(['admin', 'bot'], 'アカウント種別が不正です'),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'パスワードが一致しません',

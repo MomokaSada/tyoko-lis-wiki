@@ -33,21 +33,6 @@ export function RegisterForm({ sessionToken }: { sessionToken: string }) {
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-          アカウント種別
-        </label>
-        <select
-          id="type"
-          name="type"
-          defaultValue="admin"
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-        >
-          <option value="admin">admin</option>
-          <option value="bot">bot</option>
-        </select>
-      </div>
-
-      <div className="space-y-1.5">
         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
           パスワード
         </label>

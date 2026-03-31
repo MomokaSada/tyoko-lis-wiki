@@ -38,7 +38,6 @@ export async function registerAction(
     username: formData.get('username'),
     password: formData.get('password'),
     confirmPassword: formData.get('confirmPassword'),
-    type: formData.get('type'),
   });
 
   if (!parsed.success) {
@@ -51,5 +50,14 @@ export async function registerAction(
     return { error: result.error };
   }
 
-  redirect('/auth/login?registered=1');
+  const loginResult = await signIn({
+    username: parsed.data.username,
+    password: parsed.data.password,
+  });
+
+  if (!loginResult.success) {
+    return { error: loginResult.error };
+  }
+
+  redirect('/');
 }
