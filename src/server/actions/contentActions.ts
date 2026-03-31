@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
+import { resolveThumbnailUrl } from '@/server/lib/thumbnailUpload';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import {
   createContentSchema,
@@ -22,12 +23,26 @@ export async function createContentAction(
   _prevState: CreateContentActionState,
   formData: FormData,
 ): Promise<CreateContentActionState> {
+  let thumbnailUrl: string;
+  try {
+    thumbnailUrl = await resolveThumbnailUrl({
+      file: formData.get('thumbnailFile'),
+      required: true,
+    });
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'サムネイル画像の処理に失敗しました',
+      createdSlug: null,
+      createdTitle: null,
+    };
+  }
+
   const parsed = createContentSchema.safeParse({
     session: formData.get('session'),
     title: formData.get('title'),
     slug: formData.get('slug'),
     content: formData.get('content'),
-    thumbnail: formData.get('thumbnail'),
+    thumbnail: thumbnailUrl,
     isPublished: formData.get('isPublished') === 'on',
     tagIds: formData.getAll('tagIds'),
     newTags: formData.get('newTags'),
@@ -82,13 +97,28 @@ export async function updateContentAction(
   _prevState: UpdateContentActionState,
   formData: FormData,
 ): Promise<UpdateContentActionState> {
+  let thumbnailUrl: string;
+  try {
+    thumbnailUrl = await resolveThumbnailUrl({
+      file: formData.get('thumbnailFile'),
+      existingUrl: typeof formData.get('existingThumbnail') === 'string' ? formData.get('existingThumbnail') as string : null,
+      required: true,
+    });
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : 'サムネイル画像の処理に失敗しました',
+      updatedSlug: null,
+      updatedTitle: null,
+    };
+  }
+
   const parsed = updateContentSchema.safeParse({
     session: formData.get('session'),
     contentId: formData.get('contentId'),
     title: formData.get('title'),
     slug: formData.get('slug'),
     content: formData.get('content'),
-    thumbnail: formData.get('thumbnail'),
+    thumbnail: thumbnailUrl,
     isPublished: formData.get('isPublished') === 'on',
     tagIds: formData.getAll('tagIds'),
     newTags: formData.get('newTags'),

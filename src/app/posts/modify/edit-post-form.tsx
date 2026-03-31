@@ -51,9 +51,19 @@ export function EditPostForm({
         <input name="slug" type="text" required defaultValue={content.slug} />
       </label>
 
+      <input type="hidden" name="existingThumbnail" value={content.thumbnail} />
+
       <label style={{ display: 'grid', gap: '0.25rem' }}>
-        <span>サムネイルURL</span>
-        <input name="thumbnail" type="url" required defaultValue={content.thumbnail} />
+        <span>現在のサムネイル</span>
+        <a href={content.thumbnail} target="_blank" rel="noreferrer" style={{ color: 'blue' }}>
+          {content.thumbnail}
+        </a>
+      </label>
+
+      <label style={{ display: 'grid', gap: '0.25rem' }}>
+        <span>新しいサムネイル画像</span>
+        <input name="thumbnailFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+        <small style={{ color: '#666' }}>差し替えない場合は未選択のままで大丈夫です。5MB以下。</small>
       </label>
 
       <label style={{ display: 'grid', gap: '0.25rem' }}>
