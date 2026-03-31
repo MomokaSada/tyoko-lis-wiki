@@ -13,7 +13,7 @@ type Actor = {
 };
 
 export async function createIpBan(actor: Actor, input: CreateIpBanInput) {
-  if (actor.role !== 'owner' && actor.role !== 'admin') {
+  if (actor.role !== 'owner') {
     return {
       success: false as const,
       error: 'IPBAN 権限がありません',
@@ -50,7 +50,7 @@ export async function createIpBan(actor: Actor, input: CreateIpBanInput) {
 }
 
 export async function getActiveIpBans(actor: Actor) {
-  if (actor.role !== 'owner' && actor.role !== 'admin') {
+  if (actor.role !== 'owner') {
     return [];
   }
 

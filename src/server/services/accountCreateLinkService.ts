@@ -53,7 +53,7 @@ export async function createAccountCreateLink(
     actor: Actor,
     input: CreateAccountCreateLinkInput
 ): Promise<CreateAccountCreateLinkResult> {
-    if (actor.role !== 'owner' && actor.role !== 'admin') {
+    if (actor.role !== 'owner') {
         return { 
             success: false, 
             error: 'Unauthorized' 
@@ -95,7 +95,7 @@ export async function createAccountCreateLink(
 }
 
 export async function getAccountCreateLinks(actor: Actor): Promise<AccountCreateLinkListItem[]> {
-    if (actor.role !== 'owner' && actor.role !== 'admin') {
+    if (actor.role !== 'owner') {
         return [];
     }
 
@@ -116,7 +116,7 @@ export async function deactivateAccountCreateLink(
     actor: Actor,
     input: DeactivateAccountCreateLinkInput,
 ): Promise<{ success: true } | { success: false; error: string }> {
-    if (actor.role !== 'owner' && actor.role !== 'admin') {
+    if (actor.role !== 'owner') {
         return {
             success: false,
             error: 'リンク無効化権限がありません',

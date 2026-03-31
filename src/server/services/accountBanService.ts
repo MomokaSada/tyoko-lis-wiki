@@ -10,7 +10,7 @@ type Actor = {
 };
 
 export async function getManageableAccounts(actor: Actor) {
-  if (actor.role !== 'owner' && actor.role !== 'admin') {
+  if (actor.role !== 'owner') {
     return [];
   }
 
@@ -18,7 +18,7 @@ export async function getManageableAccounts(actor: Actor) {
 }
 
 export async function banAccount(actor: Actor, input: BanAccountInput) {
-  if (actor.role !== 'owner' && actor.role !== 'admin') {
+  if (actor.role !== 'owner') {
     return {
       success: false as const,
       error: 'アカウントBAN権限がありません',
