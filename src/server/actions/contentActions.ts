@@ -12,6 +12,7 @@ import {
 } from '@/server/schemas/contentSchemas';
 import { createContent, deleteContent, updateContent } from '@/server/services/contentService';
 import { getCurrentActor } from '@/server/lib/currentActor';
+import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 
 export type CreateContentActionState = {
   error: string | null;
@@ -79,6 +80,8 @@ export async function createContentAction(
       createdTitle: null,
     };
   }
+
+  await recordCurrentRequestDevice();
 
   return {
     error: null,
@@ -154,6 +157,8 @@ export async function updateContentAction(
       updatedTitle: null,
     };
   }
+
+  await recordCurrentRequestDevice();
 
   const destination =
     parsed.data.session && parsed.data.session.length > 0
