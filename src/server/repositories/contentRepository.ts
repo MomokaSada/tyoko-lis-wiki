@@ -1,6 +1,14 @@
 import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { contentEditLogs, contents, editSessions } from '@/db/schema';
+import {
+  contentCategories,
+  contentEditLogCategories,
+  contentEditLogs,
+  contentEditLogTags,
+  contentTags,
+  contents,
+  editSessions,
+} from '@/db/schema';
 
 export async function findContentBySlug(slug: string) {
   const [content] = await db
@@ -37,6 +45,10 @@ export async function createContentWithInitialRevision(data: {
   isPublished: boolean;
   userId: number | null;
   sessionId: string | null;
+  tagIds: number[];
+  categoryIds: number[];
+  tagChanged: boolean;
+  categoryChanged: boolean;
 }) {
   return db.transaction(async (tx) => {
     const [createdContent] = await tx
@@ -55,7 +67,7 @@ export async function createContentWithInitialRevision(data: {
         currentTitle: contents.currentTitle,
       });
 
-    await tx.insert(contentEditLogs).values({
+    const [createdLog] = await tx.insert(contentEditLogs).values({
       contentId: createdContent.id,
       deviceSessionId: null,
       userId: data.userId,
@@ -64,9 +76,43 @@ export async function createContentWithInitialRevision(data: {
       title: data.title,
       data: data.content,
       thumbnail: data.thumbnail,
-      tagChanged: false,
-      categoryChanged: false,
+      tagChanged: data.tagChanged,
+      categoryChanged: data.categoryChanged,
+    }).returning({
+      id: contentEditLogs.id,
     });
+
+    if (data.tagIds.length > 0) {
+      await tx.insert(contentTags).values(
+        data.tagIds.map((tagId) => ({
+          contentId: createdContent.id,
+          tagId,
+        })),
+      );
+
+      await tx.insert(contentEditLogTags).values(
+        data.tagIds.map((tagId) => ({
+          editLogId: createdLog.id,
+          tagId,
+        })),
+      );
+    }
+
+    if (data.categoryIds.length > 0) {
+      await tx.insert(contentCategories).values(
+        data.categoryIds.map((categoryId) => ({
+          contentId: createdContent.id,
+          categoryId,
+        })),
+      );
+
+      await tx.insert(contentEditLogCategories).values(
+        data.categoryIds.map((categoryId) => ({
+          editLogId: createdLog.id,
+          categoryId,
+        })),
+      );
+    }
 
     if (data.sessionId) {
       await tx
@@ -226,6 +272,10 @@ export async function updateContentWithRevision(data: {
   isPublished: boolean;
   userId: number | null;
   sessionId: string | null;
+  tagIds: number[];
+  categoryIds: number[];
+  tagChanged: boolean;
+  categoryChanged: boolean;
 }) {
   return db.transaction(async (tx) => {
     const [current] = await tx
@@ -257,7 +307,7 @@ export async function updateContentWithRevision(data: {
         latestRevision: contents.latestRevision,
       });
 
-    await tx.insert(contentEditLogs).values({
+    const [createdLog] = await tx.insert(contentEditLogs).values({
       contentId: updatedContent.id,
       deviceSessionId: null,
       userId: data.userId,
@@ -266,9 +316,51 @@ export async function updateContentWithRevision(data: {
       title: data.title,
       data: data.content,
       thumbnail: data.thumbnail,
-      tagChanged: false,
-      categoryChanged: false,
+      tagChanged: data.tagChanged,
+      categoryChanged: data.categoryChanged,
+    }).returning({
+      id: contentEditLogs.id,
     });
+
+    if (data.tagChanged) {
+      await tx.delete(contentTags).where(eq(contentTags.contentId, updatedContent.id));
+
+      if (data.tagIds.length > 0) {
+        await tx.insert(contentTags).values(
+          data.tagIds.map((tagId) => ({
+            contentId: updatedContent.id,
+            tagId,
+          })),
+        );
+
+        await tx.insert(contentEditLogTags).values(
+          data.tagIds.map((tagId) => ({
+            editLogId: createdLog.id,
+            tagId,
+          })),
+        );
+      }
+    }
+
+    if (data.categoryChanged) {
+      await tx.delete(contentCategories).where(eq(contentCategories.contentId, updatedContent.id));
+
+      if (data.categoryIds.length > 0) {
+        await tx.insert(contentCategories).values(
+          data.categoryIds.map((categoryId) => ({
+            contentId: updatedContent.id,
+            categoryId,
+          })),
+        );
+
+        await tx.insert(contentEditLogCategories).values(
+          data.categoryIds.map((categoryId) => ({
+            editLogId: createdLog.id,
+            categoryId,
+          })),
+        );
+      }
+    }
 
     if (data.sessionId) {
       await tx

@@ -15,10 +15,14 @@ const initialState: UpdateContentActionState = {
 export function EditPostForm({
   sessionToken,
   canPublish,
+  availableTags,
+  availableCategories,
   content,
 }: {
   sessionToken: string | null;
   canPublish: boolean;
+  availableTags: Array<{ id: number; name: string }>;
+  availableCategories: Array<{ id: number; name: string; label?: string }>;
   content: {
     id: number;
     title: string;
@@ -26,6 +30,8 @@ export function EditPostForm({
     content: string;
     thumbnail: string;
     isPublished: boolean;
+    tagIds: number[];
+    categoryIds: number[];
   };
 }) {
   const [state, action, isPending] = useActionState(updateContentAction, initialState);
@@ -54,6 +60,67 @@ export function EditPostForm({
         <span>本文</span>
         <textarea name="content" rows={12} required defaultValue={content.content} />
       </label>
+
+      <fieldset style={{ display: 'grid', gap: '0.5rem' }}>
+        <legend>タグ</legend>
+        {availableTags.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+            {availableTags.map((tag) => (
+              <label key={tag.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <input
+                  type="checkbox"
+                  name="tagIds"
+                  value={tag.id}
+                  defaultChecked={content.tagIds.includes(tag.id)}
+                />
+                <span>{tag.name}</span>
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p style={{ margin: 0, color: '#666' }}>登録済みタグはまだありません。</p>
+        )}
+        <label style={{ display: 'grid', gap: '0.25rem' }}>
+          <span>新規タグ（カンマ区切り）</span>
+          <input name="newTags" type="text" placeholder="例: 更新履歴, 注目" />
+        </label>
+      </fieldset>
+
+      <fieldset style={{ display: 'grid', gap: '0.5rem' }}>
+        <legend>カテゴリ</legend>
+        {availableCategories.length > 0 ? (
+          <div style={{ display: 'grid', gap: '0.35rem' }}>
+            {availableCategories.map((category) => (
+              <label key={category.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                <input
+                  type="checkbox"
+                  name="categoryIds"
+                  value={category.id}
+                  defaultChecked={content.categoryIds.includes(category.id)}
+                />
+                <span>{category.label ?? category.name}</span>
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p style={{ margin: 0, color: '#666' }}>登録済みカテゴリはまだありません。</p>
+        )}
+        <label style={{ display: 'grid', gap: '0.25rem' }}>
+          <span>新規カテゴリ名</span>
+          <input name="newCategoryName" type="text" placeholder="例: 役・ルール" />
+        </label>
+        <label style={{ display: 'grid', gap: '0.25rem' }}>
+          <span>新規カテゴリの親カテゴリ</span>
+          <select name="newCategoryParentId" defaultValue="">
+            <option value="">親カテゴリなし</option>
+            {availableCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.label ?? category.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </fieldset>
 
       {canPublish ? (
         <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
