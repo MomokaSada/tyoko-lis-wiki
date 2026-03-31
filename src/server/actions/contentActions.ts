@@ -1,5 +1,6 @@
 'use server';
 
+import { redirect } from 'next/navigation';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import {
@@ -114,11 +115,12 @@ export async function updateContentAction(
     };
   }
 
-  return {
-    error: null,
-    updatedSlug: result.data.slug,
-    updatedTitle: result.data.title,
-  };
+  const destination =
+    parsed.data.session && parsed.data.session.length > 0
+      ? `/posts/${result.data.slug}?session=${encodeURIComponent(parsed.data.session)}`
+      : `/posts/${result.data.slug}`;
+
+  redirect(destination);
 }
 
 export type DeleteContentActionState = {

@@ -32,7 +32,7 @@ export default async function ModifyPostPage({
       </form>
       {content ? (
         <div style={{ marginTop: '1.5rem' }}>
-          <EditPostForm sessionToken={token ?? null} content={content} />
+          <EditPostForm sessionToken={token ?? null} canPublish={Boolean(user)} content={content} />
           {user && <DeletePostForm contentId={content.id} />}
         </div>
       ) : (

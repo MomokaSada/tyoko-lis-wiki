@@ -2,11 +2,14 @@ import type { CreateContentInput } from '@/server/schemas/contentSchemas';
 import {
   createContentWithInitialRevision,
   deleteContentById,
+  findContentSummaryById,
   findPublishedContentBySlug,
   findEditableContentBySlug,
   findContentBySlug,
   incrementContentViewCount,
+  listVisibleContents,
   listPublishedContents,
+  searchVisibleContents,
   searchPublishedContents,
   updateContentWithRevision,
 } from '@/server/repositories/contentRepository';
@@ -47,12 +50,14 @@ export async function createContent(
     };
   }
 
+  const effectiveIsPublished = editor.type === 'actor' ? input.isPublished : false;
+
   const created = await createContentWithInitialRevision({
     slug: input.slug,
     title: input.title,
     content: input.content,
     thumbnail: input.thumbnail,
-    isPublished: input.isPublished,
+    isPublished: effectiveIsPublished,
     userId: editor.type === 'actor' ? editor.actorId : null,
     sessionId: editor.type === 'session' ? editor.sessionId : null,
   });
@@ -93,10 +98,44 @@ export async function searchPublishedContentList(query: string) {
   }));
 }
 
+export async function searchVisibleContentList(query: string, includeUnpublished: boolean) {
+  const trimmedQuery = query.trim();
+  const rows = trimmedQuery
+    ? await searchVisibleContents(trimmedQuery, includeUnpublished)
+    : await listVisibleContents(includeUnpublished);
+
+  return rows.map((row) => ({
+    ...row,
+    excerpt:
+      row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
+  }));
+}
+
 export async function getPublishedContentDetail(slug: string) {
   const content = await findPublishedContentBySlug(slug);
 
   if (!content) {
+    return null;
+  }
+
+  const updated = await incrementContentViewCount(content.id);
+
+  return {
+    ...content,
+    viewCount: updated?.viewCount ?? content.viewCount,
+  };
+}
+
+export async function getAccessibleContentDetail(slug: string, editor: EditorContext | null) {
+  const content = editor
+    ? await findEditableContentBySlug(slug)
+    : await findPublishedContentBySlug(slug);
+
+  if (!content) {
+    return null;
+  }
+
+  if (!editor && 'isPublished' in content && !content.isPublished) {
     return null;
   }
 
@@ -131,6 +170,15 @@ export async function updateContent(
   editor: EditorContext,
   input: UpdateContentInput,
 ): Promise<UpdateContentResult> {
+  const current = await findContentSummaryById(input.contentId);
+
+  if (!current) {
+    return {
+      success: false,
+      error: '対象の記事が見つかりません',
+    };
+  }
+
   const existing = await findEditableContentBySlug(input.slug);
 
   if (existing && existing.id !== input.contentId) {
@@ -140,13 +188,16 @@ export async function updateContent(
     };
   }
 
+  const effectiveIsPublished =
+    editor.type === 'actor' ? input.isPublished : current.isPublished;
+
   const updated = await updateContentWithRevision({
     contentId: input.contentId,
     slug: input.slug,
     title: input.title,
     content: input.content,
     thumbnail: input.thumbnail,
-    isPublished: input.isPublished,
+    isPublished: effectiveIsPublished,
     userId: editor.type === 'actor' ? editor.actorId : null,
     sessionId: editor.type === 'session' ? editor.sessionId : null,
   });

@@ -14,6 +14,7 @@ const initialState: CreateContentActionState = {
 
 export function CreatePostForm({ sessionToken }: { sessionToken: string | null }) {
   const [state, action, isPending] = useActionState(createContentAction, initialState);
+  const canPublish = sessionToken === null;
 
   return (
     <form action={action} style={{ display: 'grid', gap: '0.75rem', maxWidth: '48rem' }}>
@@ -39,10 +40,16 @@ export function CreatePostForm({ sessionToken }: { sessionToken: string | null }
         <textarea name="content" rows={12} required />
       </label>
 
-      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <input name="isPublished" type="checkbox" />
-        <span>公開状態で作成する</span>
-      </label>
+      {canPublish ? (
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <input name="isPublished" type="checkbox" />
+          <span>公開状態で作成する</span>
+        </label>
+      ) : (
+        <p style={{ margin: 0, color: '#555' }}>
+          編集セッション経由の作成では、公開状態の切り替えはできません。
+        </p>
+      )}
 
       <button type="submit" disabled={isPending} style={{ width: 'fit-content', padding: '0.5rem 1rem' }}>
         {isPending ? '作成中...' : '記事を作成する'}

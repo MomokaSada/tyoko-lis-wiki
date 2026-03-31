@@ -14,9 +14,11 @@ const initialState: UpdateContentActionState = {
 
 export function EditPostForm({
   sessionToken,
+  canPublish,
   content,
 }: {
   sessionToken: string | null;
+  canPublish: boolean;
   content: {
     id: number;
     title: string;
@@ -53,10 +55,16 @@ export function EditPostForm({
         <textarea name="content" rows={12} required defaultValue={content.content} />
       </label>
 
-      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <input name="isPublished" type="checkbox" defaultChecked={content.isPublished} />
-        <span>公開状態</span>
-      </label>
+      {canPublish ? (
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <input name="isPublished" type="checkbox" defaultChecked={content.isPublished} />
+          <span>公開状態</span>
+        </label>
+      ) : (
+        <p style={{ margin: 0, color: '#555' }}>
+          編集セッション経由では公開状態を変更できません。
+        </p>
+      )}
 
       <button type="submit" disabled={isPending} style={{ width: 'fit-content', padding: '0.5rem 1rem' }}>
         {isPending ? '保存中...' : '記事を更新する'}
