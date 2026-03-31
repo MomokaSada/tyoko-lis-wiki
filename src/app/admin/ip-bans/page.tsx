@@ -5,6 +5,7 @@ import { IpBanForm } from './ip-ban-form';
 export default async function IpBansPage() {
   const actor = await getCurrentActor();
   const bans = actor ? await getActiveIpBans(actor) : [];
+  const isOwner = actor?.role === 'owner';
 
   return (
     <main style={{ padding: '2rem' }}>
@@ -12,14 +13,22 @@ export default async function IpBansPage() {
         IP BAN 管理
       </h1>
 
-      <IpBanForm />
+      {isOwner ? (
+        <IpBanForm />
+      ) : (
+        <p style={{ marginBottom: '1.5rem', color: '#b45309' }}>
+          この機能は owner のみ利用できます。
+        </p>
+      )}
 
       <section>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
           有効な IP BAN 一覧
         </h2>
 
-        {bans.length === 0 ? (
+        {!isOwner ? (
+          <p>owner 権限を持つユーザーのみ一覧を確認できます。</p>
+        ) : bans.length === 0 ? (
           <p>有効なIP BANはまだありません。</p>
         ) : (
           <div style={{ display: 'grid', gap: '1rem' }}>

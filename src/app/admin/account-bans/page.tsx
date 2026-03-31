@@ -5,6 +5,7 @@ import { getManageableAccounts } from '@/server/services/accountBanService';
 export default async function AccountBansPage() {
   const actor = await getCurrentActor();
   const accounts = actor ? await getManageableAccounts(actor) : [];
+  const isOwner = actor?.role === 'owner';
 
   return (
     <main style={{ padding: '2rem' }}>
@@ -12,7 +13,9 @@ export default async function AccountBansPage() {
         アカウントBAN管理
       </h1>
 
-      {accounts.length === 0 ? (
+      {!isOwner ? (
+        <p style={{ color: '#b45309' }}>この機能は owner のみ利用できます。</p>
+      ) : accounts.length === 0 ? (
         <p>BAN対象のアカウントはありません。</p>
       ) : (
         <div style={{ display: 'grid', gap: '1rem' }}>
