@@ -1,12 +1,18 @@
 import { notFound } from 'next/navigation';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { getPublishedContentDetail } from '@/server/services/contentService';
 
 export default async function PostDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const { slug } = await params;
+  const sp = await searchParams;
+  const session = typeof sp.session === 'string' ? sp.session : null;
+  const editor = await getCurrentEditor(session);
   const post = await getPublishedContentDetail(slug);
 
   if (!post) {
@@ -31,6 +37,19 @@ export default async function PostDetailPage({
         <section style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
           {post.content}
         </section>
+
+        {editor && (
+          <a
+            href={
+              editor.type === 'session'
+                ? `/posts/modify?slug=${post.slug}&session=${encodeURIComponent(editor.sessionId)}`
+                : `/posts/modify?slug=${post.slug}`
+            }
+            style={{ color: 'blue' }}
+          >
+            この記事を編集する
+          </a>
+        )}
 
         <a href="/posts" style={{ color: 'blue' }}>
           記事一覧に戻る

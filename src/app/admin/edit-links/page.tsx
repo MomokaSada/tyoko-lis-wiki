@@ -48,7 +48,7 @@ export default async function EditLinksPage() {
                 <p><strong>開始:</strong> {link.startAt.toISOString()}</p>
                 <p><strong>終了:</strong> {link.endAt.toISOString()}</p>
                 <p><strong>作成:</strong> {link.createdAt.toISOString()}</p>
-                <p><strong>編集リンク:</strong> <code>{`/posts/modify?session=${link.uuid}`}</code></p>
+                <p><strong>編集リンク:</strong> <code>{`/posts/create?session=${link.uuid}`}</code></p>
               </article>
             ))}
           </div>

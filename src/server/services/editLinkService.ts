@@ -74,7 +74,7 @@ export async function createEditLink(
         success: true,
         data: {
           uuid,
-          url: `/posts/modify?session=${uuid}`,
+          url: `/posts/create?session=${uuid}`,
           endAt,
           maxEdits: input.maxEdits,
         },

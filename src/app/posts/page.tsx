@@ -7,6 +7,7 @@ export default async function PostsPage({
 }) {
   const sp = await searchParams;
   const query = typeof sp.q === 'string' ? sp.q : '';
+  const session = typeof sp.session === 'string' ? sp.session : '';
   const posts = await searchPublishedContentList(query);
 
   return (
@@ -16,6 +17,7 @@ export default async function PostsPage({
       </h1>
 
       <form method="get" style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        {session && <input type="hidden" name="session" value={session} />}
         <input
           type="text"
           name="q"
@@ -37,7 +39,10 @@ export default async function PostsPage({
               <p><strong>閲覧数:</strong> {post.viewCount}</p>
               <p><strong>抜粋:</strong> {post.excerpt}</p>
               <p><strong>最終更新:</strong> {post.updatedAt.toISOString()}</p>
-              <a href={`/posts/${post.slug}`} style={{ color: 'blue' }}>
+              <a
+                href={session ? `/posts/${post.slug}?session=${encodeURIComponent(session)}` : `/posts/${post.slug}`}
+                style={{ color: 'blue' }}
+              >
                 詳細を見る
               </a>
             </article>
