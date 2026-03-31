@@ -46,8 +46,9 @@ export function CreatePostForm({
       </label>
 
       <label style={{ display: 'grid', gap: '0.25rem' }}>
-        <span>サムネイルURL</span>
-        <input name="thumbnail" type="url" required />
+        <span>サムネイル画像</span>
+        <input name="thumbnailFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" required />
+        <small style={{ color: '#666' }}>JPEG / PNG / WEBP / GIF、5MB以下</small>
       </label>
 
       <label style={{ display: 'grid', gap: '0.25rem' }}>
