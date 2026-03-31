@@ -15,6 +15,20 @@ export async function findContentBySlug(slug: string) {
   return content ?? null;
 }
 
+export async function findContentSummaryById(contentId: number) {
+  const [content] = await db
+    .select({
+      id: contents.id,
+      slug: contents.slug,
+      isPublished: contents.isPublished,
+    })
+    .from(contents)
+    .where(eq(contents.id, contentId))
+    .limit(1);
+
+  return content ?? null;
+}
+
 export async function createContentWithInitialRevision(data: {
   slug: string;
   title: string;
@@ -86,6 +100,25 @@ export async function listPublishedContents() {
     .orderBy(desc(contents.updatedAt));
 }
 
+export async function listVisibleContents(includeUnpublished: boolean) {
+  return db
+    .select({
+      id: contents.id,
+      slug: contents.slug,
+      title: contents.currentTitle,
+      content: contents.currentContent,
+      thumbnail: contents.currentThumbnail,
+      latestRevision: contents.latestRevision,
+      viewCount: contents.viewCount,
+      isPublished: contents.isPublished,
+      createdAt: contents.createdAt,
+      updatedAt: contents.updatedAt,
+    })
+    .from(contents)
+    .where(includeUnpublished ? undefined : eq(contents.isPublished, true))
+    .orderBy(desc(contents.updatedAt));
+}
+
 export async function searchPublishedContents(query: string) {
   return db
     .select({
@@ -103,6 +136,36 @@ export async function searchPublishedContents(query: string) {
     .where(
       and(
         eq(contents.isPublished, true),
+        or(
+          ilike(contents.currentTitle, `%${query}%`),
+          ilike(contents.currentContent, `%${query}%`),
+          ilike(contents.slug, `%${query}%`),
+        ),
+      ),
+    )
+    .orderBy(desc(contents.updatedAt));
+}
+
+export async function searchVisibleContents(query: string, includeUnpublished: boolean) {
+  const visibilityClause = includeUnpublished ? undefined : eq(contents.isPublished, true);
+
+  return db
+    .select({
+      id: contents.id,
+      slug: contents.slug,
+      title: contents.currentTitle,
+      content: contents.currentContent,
+      thumbnail: contents.currentThumbnail,
+      latestRevision: contents.latestRevision,
+      viewCount: contents.viewCount,
+      isPublished: contents.isPublished,
+      createdAt: contents.createdAt,
+      updatedAt: contents.updatedAt,
+    })
+    .from(contents)
+    .where(
+      and(
+        visibilityClause,
         or(
           ilike(contents.currentTitle, `%${query}%`),
           ilike(contents.currentContent, `%${query}%`),
