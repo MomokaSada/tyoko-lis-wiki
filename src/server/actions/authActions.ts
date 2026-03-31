@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { loginSchema, registerSchema } from '@/server/schemas/authSchemas';
+import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { registerAccount, signIn } from '@/server/services/authService';
 
 /** Server Action: ログインフォームの送信を処理する */
@@ -10,6 +11,8 @@ export async function loginAction(
   _prevState: { error: string | null },
   formData: FormData,
 ): Promise<{ error: string | null }> {
+  await recordCurrentRequestDevice();
+
   const parsed = loginSchema.safeParse({
     username: formData.get('username'),
     password: formData.get('password'),
