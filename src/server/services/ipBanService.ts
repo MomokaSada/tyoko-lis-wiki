@@ -5,6 +5,7 @@ import {
   findActiveBlockByDeviceId,
   findDeviceByIp,
   listActiveIpBans,
+  listIpDeviceRecords,
 } from '@/server/repositories/ipBanRepository';
 
 type Actor = {
@@ -55,4 +56,12 @@ export async function getActiveIpBans(actor: Actor) {
   }
 
   return listActiveIpBans();
+}
+
+export async function getIpDeviceRecords(actor: Actor) {
+  if (actor.role !== 'owner') {
+    return [];
+  }
+
+  return listIpDeviceRecords();
 }

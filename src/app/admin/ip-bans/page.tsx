@@ -1,10 +1,11 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
-import { getActiveIpBans } from '@/server/services/ipBanService';
+import { getActiveIpBans, getIpDeviceRecords } from '@/server/services/ipBanService';
 import { IpBanForm } from './ip-ban-form';
 
 export default async function IpBansPage() {
   const actor = await getCurrentActor();
   const bans = actor ? await getActiveIpBans(actor) : [];
+  const records = actor ? await getIpDeviceRecords(actor) : [];
   const isOwner = actor?.role === 'owner';
 
   return (
@@ -39,6 +40,42 @@ export default async function IpBansPage() {
                 <p><strong>理由:</strong> {ban.reason}</p>
                 <p><strong>登録者:</strong> {ban.blockedByName ?? `user:${ban.blockedBy}`}</p>
                 <p><strong>登録日時:</strong> {ban.createdAt.toISOString()}</p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section style={{ marginTop: '2rem' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
+          IP 記録一覧
+        </h2>
+
+        {!isOwner ? (
+          <p>owner 権限を持つユーザーのみ一覧を確認できます。</p>
+        ) : records.length === 0 ? (
+          <p>記録された IP はまだありません。</p>
+        ) : (
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            {records.map((record) => (
+              <article
+                key={record.deviceId}
+                style={{ border: '1px solid #ddd', padding: '1rem', background: '#fff' }}
+              >
+                <p><strong>状態:</strong> {record.isBanned ? 'BAN中' : '未BAN'}</p>
+                <p><strong>IP:</strong> {record.ip}</p>
+                <p><strong>ブラウザ:</strong> {record.browser}</p>
+                <p><strong>初回記録:</strong> {record.firstSeenAt.toISOString()}</p>
+                <p><strong>最終記録:</strong> {record.lastSeenAt.toISOString()}</p>
+                {record.isBanned ? (
+                  <>
+                    <p><strong>BAN理由:</strong> {record.banReason}</p>
+                    <p><strong>BAN実行者:</strong> {record.bannedByName ?? `user:${record.bannedBy}`}</p>
+                    <p><strong>BAN日時:</strong> {record.bannedAt?.toISOString()}</p>
+                  </>
+                ) : (
+                  <p><strong>BAN情報:</strong> なし</p>
+                )}
               </article>
             ))}
           </div>
