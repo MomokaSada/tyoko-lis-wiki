@@ -37,7 +37,7 @@ export default async function PostDetailPage({
         </header>
 
         <div>
-          <p><strong>サムネイルURL:</strong> {post.thumbnail}</p>
+          <p><strong>サムネイルURL:</strong> {post.thumbnail ?? '未設定'}</p>
         </div>
 
         <section style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import {
   updateContentAction,
   type UpdateContentActionState,
@@ -28,18 +28,64 @@ export function EditPostForm({
     title: string;
     slug: string;
     content: string;
-    thumbnail: string;
+    thumbnail: string | null;
     isPublished: boolean;
     tagIds: number[];
     categoryIds: number[];
   };
 }) {
   const [state, action, isPending] = useActionState(updateContentAction, initialState);
+  const [thumbnailUrl, setThumbnailUrl] = useState(content.thumbnail ?? '');
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [removeThumbnail, setRemoveThumbnail] = useState(false);
+
+  async function handleThumbnailChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setIsUploadingThumbnail(true);
+    setThumbnailError(null);
+
+    try {
+      const formData = new FormData();
+      formData.set('file', file);
+
+      if (sessionToken) {
+        formData.set('session', sessionToken);
+      }
+
+      const response = await fetch('/api/uploads/thumbnail', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = (await response.json()) as { url?: string; error?: string };
+
+      if (!response.ok || !data.url) {
+        throw new Error(data.error ?? 'サムネイル画像のアップロードに失敗しました');
+      }
+
+      setThumbnailUrl(data.url);
+      setRemoveThumbnail(false);
+    } catch (error) {
+      setThumbnailError(
+        error instanceof Error
+          ? error.message
+          : 'サムネイル画像のアップロードに失敗しました',
+      );
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
+  }
 
   return (
     <form action={action} style={{ display: 'grid', gap: '0.75rem', maxWidth: '48rem' }}>
       <input type="hidden" name="session" value={sessionToken ?? ''} />
       <input type="hidden" name="contentId" value={content.id} />
+      <input type="hidden" name="thumbnail" value={removeThumbnail ? '' : thumbnailUrl} />
 
       <label style={{ display: 'grid', gap: '0.25rem' }}>
         <span>タイトル</span>
@@ -51,19 +97,38 @@ export function EditPostForm({
         <input name="slug" type="text" required defaultValue={content.slug} />
       </label>
 
-      <input type="hidden" name="existingThumbnail" value={content.thumbnail} />
-
       <label style={{ display: 'grid', gap: '0.25rem' }}>
         <span>現在のサムネイル</span>
-        <a href={content.thumbnail} target="_blank" rel="noreferrer" style={{ color: 'blue' }}>
-          {content.thumbnail}
-        </a>
+        {thumbnailUrl && !removeThumbnail ? (
+          <a href={thumbnailUrl} target="_blank" rel="noreferrer" style={{ color: 'blue' }}>
+            {thumbnailUrl}
+          </a>
+        ) : (
+          <span style={{ color: '#666' }}>未設定</span>
+        )}
       </label>
 
       <label style={{ display: 'grid', gap: '0.25rem' }}>
         <span>新しいサムネイル画像</span>
-        <input name="thumbnailFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+        <input
+          name="thumbnailFile"
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          onChange={handleThumbnailChange}
+        />
         <small style={{ color: '#666' }}>差し替えない場合は未選択のままで大丈夫です。5MB以下。</small>
+        {isUploadingThumbnail && <small style={{ color: '#1d4ed8' }}>アップロード中...</small>}
+        {thumbnailError && <small style={{ color: '#b00020' }}>{thumbnailError}</small>}
+      </label>
+
+      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+        <input
+          name="removeThumbnail"
+          type="checkbox"
+          checked={removeThumbnail}
+          onChange={(event) => setRemoveThumbnail(event.currentTarget.checked)}
+        />
+        <span>サムネイルを削除する</span>
       </label>
 
       <label style={{ display: 'grid', gap: '0.25rem' }}>
@@ -143,8 +208,12 @@ export function EditPostForm({
         </p>
       )}
 
-      <button type="submit" disabled={isPending} style={{ width: 'fit-content', padding: '0.5rem 1rem' }}>
-        {isPending ? '保存中...' : '記事を更新する'}
+      <button
+        type="submit"
+        disabled={isPending || isUploadingThumbnail}
+        style={{ width: 'fit-content', padding: '0.5rem 1rem' }}
+      >
+        {isUploadingThumbnail ? '画像アップロード中...' : isPending ? '保存中...' : '記事を更新する'}
       </button>
 
       {state.error && <p style={{ color: '#b00020' }}>{state.error}</p>}
