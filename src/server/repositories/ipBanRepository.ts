@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { blockDevices, devices, users } from '@/db/schema';
 
@@ -81,4 +81,28 @@ export async function listActiveIpBans() {
     .leftJoin(users, eq(blockDevices.blockedBy, users.id))
     .where(eq(blockDevices.isActive, true))
     .orderBy(desc(blockDevices.createdAt));
+}
+
+export async function listIpDeviceRecords() {
+  return db
+    .select({
+      deviceId: devices.id,
+      ip: devices.ip,
+      browser: devices.browser,
+      firstSeenAt: devices.createdAt,
+      lastSeenAt: devices.updatedAt,
+      banId: blockDevices.id,
+      isBanned: blockDevices.isActive,
+      banReason: blockDevices.reason,
+      bannedBy: blockDevices.blockedBy,
+      bannedByName: users.name,
+      bannedAt: blockDevices.createdAt,
+    })
+    .from(devices)
+    .leftJoin(
+      blockDevices,
+      and(eq(blockDevices.deviceId, devices.id), eq(blockDevices.isActive, true)),
+    )
+    .leftJoin(users, eq(blockDevices.blockedBy, users.id))
+    .orderBy(desc(devices.updatedAt), desc(devices.createdAt));
 }
