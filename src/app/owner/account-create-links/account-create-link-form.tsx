@@ -50,7 +50,7 @@ export function AccountCreateLinkForm() {
       {state.generatedUrl && (
         <div style={{ marginTop: '1rem', padding: '1rem', background: '#f5f5f5' }}>
           <p><strong>生成されたリンク</strong></p>
-          <code>{state.generatedUrl}</code>
+          <code>{process.env.NEXT_PUBLIC_APP_URL}{state.generatedUrl}</code>
           <p style={{ marginTop: '0.5rem' }}>
             有効期限: {state.expiresAt}
           </p>

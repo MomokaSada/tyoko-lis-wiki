@@ -48,7 +48,7 @@ export default async function AccountCreateLinksPage() {
                 <p><strong>作成:</strong> {link.createdAt.toISOString()}</p>
                 <p>
                   <strong>リンク:</strong>{' '}
-                  <code>{`/auth/register?session=${link.uuid}`}</code>
+                  <code>{`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}</code>
                 </p>
                 {link.status === 'active' && (
                   <form action={deactivateAccountCreateLinkAction} style={{ marginTop: '0.75rem' }}>

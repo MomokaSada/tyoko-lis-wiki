@@ -42,7 +42,7 @@ export function EditLinkForm() {
 
       {state.generatedUrl && (
         <div style={{ marginTop: '1rem', padding: '1rem', background: '#f5f5f5' }}>
-          <p><strong>生成されたリンク:</strong> <code>{state.generatedUrl}</code></p>
+          <p><strong>生成されたリンク:</strong> <code>{process.env.NEXT_PUBLIC_APP_URL}{state.generatedUrl}</code></p>
           <p><strong>有効期限:</strong> {state.expiresAt}</p>
           <p><strong>編集可能回数:</strong> {state.maxEdits}</p>
         </div>

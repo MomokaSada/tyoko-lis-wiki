@@ -12,20 +12,11 @@ export default async function AdminPage() {
         <strong>あなたのロール (Proxyから付与): </strong> {userRole || 'なし'}
       </div>
       <br/>
-      <a href="/admin/account-create-links" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
-        アカウント作成リンク生成へ
-      </a>
       <a href="/admin/edit-links" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
         記事編集リンク管理へ
       </a>
       <a href="/admin/categories" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
         カテゴリ管理へ
-      </a>
-      <a href="/admin/ip-bans" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
-        IP BAN 管理へ
-      </a>
-      <a href="/admin/account-bans" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
-        アカウントBAN 管理へ
       </a>
       <a href="/" style={{ color: 'blue' }}>ホームに戻る</a>
     </main>
