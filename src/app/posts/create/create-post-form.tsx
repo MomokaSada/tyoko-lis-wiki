@@ -95,7 +95,6 @@ export function CreatePostForm({
       <label style={{ display: 'grid', gap: '0.25rem' }}>
         <span>サムネイル画像</span>
         <input
-          name="thumbnailFile"
           type="file"
           accept="image/png,image/jpeg,image/webp,image/gif"
           onChange={handleThumbnailChange}
