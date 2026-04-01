@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import {
   createContentAction,
   type CreateContentActionState,
@@ -29,11 +29,58 @@ export function CreatePostForm({
   availableCategories: TaxonomyOption[];
 }) {
   const [state, action, isPending] = useActionState(createContentAction, initialState);
+  const [thumbnailUrl, setThumbnailUrl] = useState('');
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const canPublish = sessionToken === null;
+
+  async function handleThumbnailChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+
+    if (!file) {
+      setThumbnailUrl('');
+      setThumbnailError(null);
+      return;
+    }
+
+    setIsUploadingThumbnail(true);
+    setThumbnailError(null);
+
+    try {
+      const formData = new FormData();
+      formData.set('file', file);
+
+      if (sessionToken) {
+        formData.set('session', sessionToken);
+      }
+
+      const response = await fetch('/api/uploads/thumbnail', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = (await response.json()) as { url?: string; error?: string };
+
+      if (!response.ok || !data.url) {
+        throw new Error(data.error ?? 'サムネイル画像のアップロードに失敗しました');
+      }
+
+      setThumbnailUrl(data.url);
+    } catch (error) {
+      setThumbnailUrl('');
+      setThumbnailError(
+        error instanceof Error
+          ? error.message
+          : 'サムネイル画像のアップロードに失敗しました',
+      );
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
+  }
 
   return (
     <form action={action} style={{ display: 'grid', gap: '0.75rem', maxWidth: '48rem' }}>
       <input type="hidden" name="session" value={sessionToken ?? ''} />
+      <input type="hidden" name="thumbnail" value={thumbnailUrl} />
 
       <label style={{ display: 'grid', gap: '0.25rem' }}>
         <span>タイトル</span>
@@ -47,8 +94,18 @@ export function CreatePostForm({
 
       <label style={{ display: 'grid', gap: '0.25rem' }}>
         <span>サムネイル画像</span>
-        <input name="thumbnailFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" required />
-        <small style={{ color: '#666' }}>JPEG / PNG / WEBP / GIF、5MB以下</small>
+        <input
+          name="thumbnailFile"
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          onChange={handleThumbnailChange}
+        />
+        <small style={{ color: '#666' }}>任意設定。JPEG / PNG / WEBP / GIF、5MB以下</small>
+        {isUploadingThumbnail && <small style={{ color: '#1d4ed8' }}>アップロード中...</small>}
+        {!isUploadingThumbnail && thumbnailUrl && (
+          <small style={{ color: '#15803d' }}>アップロード完了: {thumbnailUrl}</small>
+        )}
+        {thumbnailError && <small style={{ color: '#b00020' }}>{thumbnailError}</small>}
       </label>
 
       <label style={{ display: 'grid', gap: '0.25rem' }}>
@@ -118,8 +175,12 @@ export function CreatePostForm({
         </p>
       )}
 
-      <button type="submit" disabled={isPending} style={{ width: 'fit-content', padding: '0.5rem 1rem' }}>
-        {isPending ? '作成中...' : '記事を作成する'}
+      <button
+        type="submit"
+        disabled={isPending || isUploadingThumbnail}
+        style={{ width: 'fit-content', padding: '0.5rem 1rem' }}
+      >
+        {isUploadingThumbnail ? '画像アップロード中...' : isPending ? '作成中...' : '記事を作成する'}
       </button>
 
       {state.error && <p style={{ color: '#b00020' }}>{state.error}</p>}

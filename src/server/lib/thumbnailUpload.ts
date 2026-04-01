@@ -55,7 +55,7 @@ async function ensureBucketExists(bucket: string) {
   }
 }
 
-export async function uploadThumbnailFile(file: File) {
+export async function uploadThumbnailFile(file: FormDataEntryValue | null) {
   if (!(file instanceof File) || file.size === 0) {
     throw new Error('サムネイル画像を選択してください');
   }
@@ -85,26 +85,4 @@ export async function uploadThumbnailFile(file: File) {
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
-}
-
-export async function resolveThumbnailUrl(input: {
-  file: FormDataEntryValue | null;
-  existingUrl?: string | null;
-  required: boolean;
-}) {
-  const existingUrl = input.existingUrl?.trim() ?? '';
-
-  if (input.file instanceof File && input.file.size > 0) {
-    return uploadThumbnailFile(input.file);
-  }
-
-  if (existingUrl) {
-    return existingUrl;
-  }
-
-  if (input.required) {
-    throw new Error('サムネイル画像を選択してください');
-  }
-
-  return existingUrl;
 }

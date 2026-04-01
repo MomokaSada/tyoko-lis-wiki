@@ -41,7 +41,7 @@ export async function createContentWithInitialRevision(data: {
   slug: string;
   title: string;
   content: string;
-  thumbnail: string;
+  thumbnail: string | null;
   isPublished: boolean;
   userId: number | null;
   sessionId: string | null;
@@ -268,7 +268,7 @@ export async function updateContentWithRevision(data: {
   slug: string;
   title: string;
   content: string;
-  thumbnail: string;
+  thumbnail: string | null;
   isPublished: boolean;
   userId: number | null;
   sessionId: string | null;

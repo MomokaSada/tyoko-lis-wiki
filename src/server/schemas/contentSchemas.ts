@@ -26,6 +26,18 @@ const taxonomySelectionSchema = z.object({
   newCategoryParentId: optionalParentIdSchema,
 });
 
+const thumbnailUrlSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== 'string') {
+      return value ?? null;
+    }
+
+    const trimmed = value.trim();
+    return trimmed === '' ? null : trimmed;
+  },
+  z.string().url('サムネイルURLは正しいURL形式で入力してください').nullable(),
+);
+
 export const createContentSchema = z.object({
   session: z.string().optional().nullable(),
   title: z.string().trim().min(1, 'タイトルを入力してください').max(255, 'タイトルは255文字以内で入力してください'),
@@ -36,7 +48,7 @@ export const createContentSchema = z.object({
     .transform((value) => value || '')
     .optional(),
   content: z.string().trim().min(1, '本文を入力してください'),
-  thumbnail: z.string().trim().url('サムネイルURLは正しいURL形式で入力してください'),
+  thumbnail: thumbnailUrlSchema,
   isPublished: z.boolean(),
 }).and(taxonomySelectionSchema);
 
@@ -47,7 +59,7 @@ export type CreateContentInput = {
   title: string;
   slug: string;
   content: string;
-  thumbnail: string;
+  thumbnail: string | null;
   isPublished: boolean;
   tagIds: number[];
   newTags: string;
@@ -80,7 +92,7 @@ export const updateContentSchema = z.object({
   title: z.string().trim().min(1, 'タイトルを入力してください').max(255, 'タイトルは255文字以内で入力してください'),
   slug: slugSchema,
   content: z.string().trim().min(1, '本文を入力してください'),
-  thumbnail: z.string().trim().url('サムネイルURLは正しいURL形式で入力してください'),
+  thumbnail: thumbnailUrlSchema,
   isPublished: z.boolean(),
 }).and(taxonomySelectionSchema);
 
