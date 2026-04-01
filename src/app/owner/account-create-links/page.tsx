@@ -1,6 +1,7 @@
 import { AccountCreateLinkForm } from './account-create-link-form';
 import { deactivateAccountCreateLinkAction } from '@/server/actions/accountCreateLinkActions';
 import { getCurrentActor } from '@/server/lib/currentActor';
+import { formatDateTimeJst } from '@/server/lib/formatDateTime';
 import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
 
 function getStatusLabel(status: 'active' | 'expired' | 'inactive') {
@@ -43,9 +44,9 @@ export default async function AccountCreateLinksPage() {
                 <p><strong>UUID:</strong> <code>{link.uuid}</code></p>
                 <p><strong>状態:</strong> {getStatusLabel(link.status)}</p>
                 <p><strong>発行者:</strong> {link.authorName ?? `user:${link.authorId}`}</p>
-                <p><strong>開始:</strong> {link.startAt.toISOString()}</p>
-                <p><strong>終了:</strong> {link.endAt.toISOString()}</p>
-                <p><strong>作成:</strong> {link.createdAt.toISOString()}</p>
+                <p><strong>開始:</strong> {formatDateTimeJst(link.startAt)}</p>
+                <p><strong>終了:</strong> {formatDateTimeJst(link.endAt)}</p>
+                <p><strong>作成:</strong> {formatDateTimeJst(link.createdAt)}</p>
                 <p>
                   <strong>リンク:</strong>{' '}
                   <code>{`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}</code>

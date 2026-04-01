@@ -1,4 +1,5 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
+import { formatDateTimeJst } from '@/server/lib/formatDateTime';
 import { getActiveIpBans, getIpDeviceRecords } from '@/server/services/ipBanService';
 import { IpBanForm } from './ip-ban-form';
 
@@ -39,7 +40,7 @@ export default async function IpBansPage() {
                 <p><strong>ブラウザ:</strong> {ban.browser}</p>
                 <p><strong>理由:</strong> {ban.reason}</p>
                 <p><strong>登録者:</strong> {ban.blockedByName ?? `user:${ban.blockedBy}`}</p>
-                <p><strong>登録日時:</strong> {ban.createdAt.toISOString()}</p>
+                <p><strong>登録日時:</strong> {formatDateTimeJst(ban.createdAt)}</p>
               </article>
             ))}
           </div>
@@ -65,13 +66,13 @@ export default async function IpBansPage() {
                 <p><strong>状態:</strong> {record.isBanned ? 'BAN中' : '未BAN'}</p>
                 <p><strong>IP:</strong> {record.ip}</p>
                 <p><strong>ブラウザ:</strong> {record.browser}</p>
-                <p><strong>初回記録:</strong> {record.firstSeenAt.toISOString()}</p>
-                <p><strong>最終記録:</strong> {record.lastSeenAt.toISOString()}</p>
+                <p><strong>初回記録:</strong> {formatDateTimeJst(record.firstSeenAt)}</p>
+                <p><strong>最終記録:</strong> {formatDateTimeJst(record.lastSeenAt)}</p>
                 {record.isBanned ? (
                   <>
                     <p><strong>BAN理由:</strong> {record.banReason}</p>
                     <p><strong>BAN実行者:</strong> {record.bannedByName ?? `user:${record.bannedBy}`}</p>
-                    <p><strong>BAN日時:</strong> {record.bannedAt?.toISOString()}</p>
+                    <p><strong>BAN日時:</strong> {record.bannedAt ? formatDateTimeJst(record.bannedAt) : '不明'}</p>
                   </>
                 ) : (
                   <p><strong>BAN情報:</strong> なし</p>
