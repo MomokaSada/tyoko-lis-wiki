@@ -12,6 +12,7 @@ import {
 import { createContent, deleteContent, updateContent } from '@/server/services/contentService';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { recordCurrentEditDeviceSession, recordCurrentRequestDevice } from '@/server/services/deviceService';
+import { getCurrentRequestBan } from '@/server/services/ipBanService';
 
 export type CreateContentActionState = {
   error: string | null;
@@ -40,6 +41,16 @@ export async function createContentAction(
   if (!parsed.success) {
     return {
       error: getFirstZodErrorMessage(parsed.error),
+      createdSlug: null,
+      createdTitle: null,
+    };
+  }
+
+  const activeBan = await getCurrentRequestBan();
+
+  if (activeBan) {
+    return {
+      error: 'このIPアドレスからの記事作成は許可されていません',
       createdSlug: null,
       createdTitle: null,
     };
@@ -109,6 +120,16 @@ export async function updateContentAction(
   if (!parsed.success) {
     return {
       error: getFirstZodErrorMessage(parsed.error),
+      updatedSlug: null,
+      updatedTitle: null,
+    };
+  }
+
+  const activeBan = await getCurrentRequestBan();
+
+  if (activeBan) {
+    return {
+      error: 'このIPアドレスからの記事編集は許可されていません',
       updatedSlug: null,
       updatedTitle: null,
     };
