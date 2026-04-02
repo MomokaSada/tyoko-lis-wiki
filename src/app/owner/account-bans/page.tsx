@@ -1,4 +1,4 @@
-import { banAccountAction } from '@/server/actions/accountBanActions';
+import { banAccountAction, unbanAccountAction } from '@/server/actions/accountBanActions';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { formatDateTimeJst } from '@/server/lib/formatDateTime';
 import { getManageableAccounts } from '@/server/services/accountBanService';
@@ -26,11 +26,18 @@ export default async function AccountBansPage() {
               <p><strong>種別:</strong> {account.type}</p>
               <p><strong>状態:</strong> {account.isActive ? '有効' : 'BAN済み'}</p>
               <p><strong>作成日時:</strong> {formatDateTimeJst(account.createdAt)}</p>
-              {account.isActive && (
+              {account.isActive ? (
                 <form action={banAccountAction} style={{ marginTop: '0.75rem' }}>
                   <input type="hidden" name="userId" value={account.id} />
                   <button type="submit" style={{ padding: '0.4rem 0.75rem' }}>
                     アカウントをBANする
+                  </button>
+                </form>
+              ) : (
+                <form action={unbanAccountAction} style={{ marginTop: '0.75rem' }}>
+                  <input type="hidden" name="userId" value={account.id} />
+                  <button type="submit" style={{ padding: '0.4rem 0.75rem' }}>
+                    アカウントBANを解除する
                   </button>
                 </form>
               )}
