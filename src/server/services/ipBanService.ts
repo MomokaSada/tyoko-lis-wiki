@@ -5,7 +5,6 @@ import {
   createDevice,
   deactivateBlockDeviceById,
   findActiveBlockByIp,
-  findActiveBlockByDeviceId,
   findDeviceByIp,
   listActiveIpBans,
   listIpDeviceRecords,
@@ -29,7 +28,7 @@ export async function createIpBan(actor: Actor, input: CreateIpBanInput) {
     browser: input.browser,
   }));
 
-  const existingBan = await findActiveBlockByDeviceId(device.id);
+  const existingBan = await findActiveBlockByIp(input.ip);
 
   if (existingBan) {
     return {

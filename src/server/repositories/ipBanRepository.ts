@@ -38,7 +38,7 @@ export async function findActiveBlockByDeviceId(deviceId: number) {
       id: blockDevices.id,
     })
     .from(blockDevices)
-    .where(eq(blockDevices.deviceId, deviceId))
+    .where(and(eq(blockDevices.deviceId, deviceId), eq(blockDevices.isActive, true)))
     .limit(1);
 
   return ban ?? null;

@@ -24,8 +24,18 @@ export type RegisterResult =
  * Supabase Auth はメールベースのため、内部で `username@test.com` のダミーメールに変換する。
  */
 export async function signIn({ username, password }: LoginInput): Promise<SignInResult> {
+  const normalizedUsername = normalizeUsername(username);
+  const existingUser = await findUserByName(normalizedUsername);
+
+  if (existingUser && !existingUser.isActive) {
+    return {
+      success: false,
+      error: 'このアカウントはBANされています',
+    };
+  }
+
   const supabase = await createClient();
-  const dummyEmail = buildDummyEmail(username);
+  const dummyEmail = buildDummyEmail(normalizedUsername);
 
   const { error } = await supabase.auth.signInWithPassword({
     email: dummyEmail,
