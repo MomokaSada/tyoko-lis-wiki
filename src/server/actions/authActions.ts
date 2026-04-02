@@ -54,6 +54,12 @@ export async function registerAction(
     return { error: getFirstZodErrorMessage(parsed.error) };
   }
 
+  const activeBan = await getCurrentRequestBan();
+
+  if (activeBan) {
+    return { error: 'このIPアドレスからのアカウント作成は許可されていません' };
+  }
+
   const result = await registerAccount(parsed.data);
 
   if (!result.success) {
