@@ -8,3 +8,9 @@ export const createIpBanSchema = z.object({
 });
 
 export type CreateIpBanInput = z.infer<typeof createIpBanSchema>;
+
+export const deactivateIpBanSchema = z.object({
+  banId: z.coerce.number().int().positive('BAN IDが不正です'),
+});
+
+export type DeactivateIpBanInput = z.infer<typeof deactivateIpBanSchema>;
