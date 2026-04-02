@@ -1,6 +1,6 @@
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { devices, deviceSessions } from '@/db/schema';
+import { contentEditLogs, deviceSessions, devices, editSessions, users } from '@/db/schema';
 
 export async function findDeviceByIpAndBrowser(ip: string, browser: string) {
   const [device] = await db
@@ -88,4 +88,49 @@ export async function touchDeviceSessionRecord(id: number) {
     });
 
   return record ?? null;
+}
+
+export async function listDeviceSessionUsageRecords() {
+  return db
+    .select({
+      recordId: deviceSessions.id,
+      sessionId: deviceSessions.sessionId,
+      sessionAuthorId: editSessions.authorId,
+      sessionAuthorName: users.name,
+      maxEdits: editSessions.maxEdits,
+      editsUsed: editSessions.editsUsed,
+      sessionIsActive: editSessions.isActive,
+      sessionStartAt: editSessions.startAt,
+      sessionEndAt: editSessions.endAt,
+      sessionCreatedAt: editSessions.createdAt,
+      deviceId: devices.id,
+      ip: devices.ip,
+      browser: devices.browser,
+      firstRecordedAt: deviceSessions.createdAt,
+      lastRecordedAt: deviceSessions.updatedAt,
+      revisionCount: sql<number>`count(${contentEditLogs.id})`,
+    })
+    .from(deviceSessions)
+    .innerJoin(devices, eq(deviceSessions.deviceId, devices.id))
+    .innerJoin(editSessions, eq(deviceSessions.sessionId, editSessions.uuid))
+    .leftJoin(users, eq(editSessions.authorId, users.id))
+    .leftJoin(contentEditLogs, eq(contentEditLogs.deviceSessionId, deviceSessions.id))
+    .groupBy(
+      deviceSessions.id,
+      deviceSessions.sessionId,
+      deviceSessions.createdAt,
+      deviceSessions.updatedAt,
+      editSessions.authorId,
+      editSessions.maxEdits,
+      editSessions.editsUsed,
+      editSessions.isActive,
+      editSessions.startAt,
+      editSessions.endAt,
+      editSessions.createdAt,
+      users.name,
+      devices.id,
+      devices.ip,
+      devices.browser,
+    )
+    .orderBy(desc(deviceSessions.updatedAt), desc(deviceSessions.createdAt));
 }

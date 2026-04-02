@@ -4,9 +4,15 @@ import {
   createDeviceRecord,
   findDeviceSessionRecord,
   findDeviceByIpAndBrowser,
+  listDeviceSessionUsageRecords,
   touchDeviceSessionRecord,
   touchDeviceRecord,
 } from '@/server/repositories/deviceRepository';
+
+type Actor = {
+  id: number;
+  role: 'owner' | 'admin' | 'bot';
+};
 
 export async function recordCurrentRequestDevice() {
   const device = await getCurrentRequestDevice();
@@ -45,4 +51,12 @@ export async function recordCurrentEditDeviceSession(sessionId: string) {
   });
 
   return created.id;
+}
+
+export async function getDeviceSessionUsageRecords(actor: Actor) {
+  if (actor.role !== 'owner') {
+    return [];
+  }
+
+  return listDeviceSessionUsageRecords();
 }
