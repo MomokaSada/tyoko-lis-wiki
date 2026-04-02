@@ -3,6 +3,7 @@ import { getCurrentRequestDevice } from '@/server/lib/requestDevice';
 import {
   createBlockDevice,
   createDevice,
+  deactivateBlockDeviceById,
   findActiveBlockByIp,
   findActiveBlockByDeviceId,
   findDeviceByIp,
@@ -66,6 +67,29 @@ export async function getIpDeviceRecords(actor: Actor) {
   }
 
   return listIpDeviceRecords();
+}
+
+export async function deactivateIpBan(actor: Actor, banId: number) {
+  if (actor.role !== 'owner') {
+    return {
+      success: false as const,
+      error: 'IPBAN 解除権限がありません',
+    };
+  }
+
+  const updated = await deactivateBlockDeviceById(banId);
+
+  if (!updated) {
+    return {
+      success: false as const,
+      error: '対象のIPBANが見つかりません',
+    };
+  }
+
+  return {
+    success: true as const,
+    data: updated,
+  };
 }
 
 export async function getCurrentRequestBan() {

@@ -1,9 +1,10 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
-import { createIpBanSchema } from '@/server/schemas/ipBanSchemas';
-import { createIpBan } from '@/server/services/ipBanService';
+import { createIpBanSchema, deactivateIpBanSchema } from '@/server/schemas/ipBanSchemas';
+import { createIpBan, deactivateIpBan } from '@/server/services/ipBanService';
 
 export type CreateIpBanActionState = {
   error: string | null;
@@ -54,4 +55,28 @@ export async function createIpBanAction(
     bannedIp: result.data.ip,
     reason: result.data.reason,
   };
+}
+
+export async function deactivateIpBanAction(formData: FormData) {
+  const parsed = deactivateIpBanSchema.safeParse({
+    banId: formData.get('banId'),
+  });
+
+  if (!parsed.success) {
+    throw new Error(getFirstZodErrorMessage(parsed.error));
+  }
+
+  const actor = await getCurrentActor();
+
+  if (!actor) {
+    throw new Error('IPBAN 解除権限がありません');
+  }
+
+  const result = await deactivateIpBan(actor, parsed.data.banId);
+
+  if (!result.success) {
+    throw new Error(result.error);
+  }
+
+  revalidatePath('/owner/ip-bans');
 }

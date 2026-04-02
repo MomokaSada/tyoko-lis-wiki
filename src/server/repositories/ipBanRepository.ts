@@ -84,6 +84,22 @@ export async function createBlockDevice(input: {
   return created;
 }
 
+export async function deactivateBlockDeviceById(banId: number) {
+  const [updated] = await db
+    .update(blockDevices)
+    .set({
+      isActive: false,
+      updatedAt: new Date(),
+    })
+    .where(eq(blockDevices.id, banId))
+    .returning({
+      id: blockDevices.id,
+      deviceId: blockDevices.deviceId,
+    });
+
+  return updated ?? null;
+}
+
 export async function listActiveIpBans() {
   return db
     .select({
