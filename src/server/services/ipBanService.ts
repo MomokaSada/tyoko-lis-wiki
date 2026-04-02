@@ -1,7 +1,9 @@
 import type { CreateIpBanInput } from '@/server/schemas/ipBanSchemas';
+import { getCurrentRequestDevice } from '@/server/lib/requestDevice';
 import {
   createBlockDevice,
   createDevice,
+  findActiveBlockByIp,
   findActiveBlockByDeviceId,
   findDeviceByIp,
   listActiveIpBans,
@@ -64,4 +66,23 @@ export async function getIpDeviceRecords(actor: Actor) {
   }
 
   return listIpDeviceRecords();
+}
+
+export async function getCurrentRequestBan() {
+  const device = await getCurrentRequestDevice();
+
+  if (!device) {
+    return null;
+  }
+
+  const ban = await findActiveBlockByIp(device.ip);
+
+  if (!ban) {
+    return null;
+  }
+
+  return {
+    ...ban,
+    ip: device.ip,
+  };
 }

@@ -44,6 +44,25 @@ export async function findActiveBlockByDeviceId(deviceId: number) {
   return ban ?? null;
 }
 
+export async function findActiveBlockByIp(ip: string) {
+  const [ban] = await db
+    .select({
+      id: blockDevices.id,
+      reason: blockDevices.reason,
+      blockedBy: blockDevices.blockedBy,
+      blockedByName: users.name,
+      createdAt: blockDevices.createdAt,
+    })
+    .from(blockDevices)
+    .innerJoin(devices, eq(blockDevices.deviceId, devices.id))
+    .leftJoin(users, eq(blockDevices.blockedBy, users.id))
+    .where(and(eq(devices.ip, ip), eq(blockDevices.isActive, true)))
+    .orderBy(desc(blockDevices.createdAt))
+    .limit(1);
+
+  return ban ?? null;
+}
+
 export async function createBlockDevice(input: {
   deviceId: number;
   blockedBy: number;

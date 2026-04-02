@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { loginSchema, registerSchema } from '@/server/schemas/authSchemas';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
+import { getCurrentRequestBan } from '@/server/services/ipBanService';
 import { registerAccount, signIn } from '@/server/services/authService';
 
 /** Server Action: ログインフォームの送信を処理する */
@@ -20,6 +21,12 @@ export async function loginAction(
 
   if (!parsed.success) {
     return { error: getFirstZodErrorMessage(parsed.error) };
+  }
+
+  const activeBan = await getCurrentRequestBan();
+
+  if (activeBan) {
+    return { error: 'このIPアドレスからのログインは許可されていません' };
   }
 
   const result = await signIn(parsed.data);
