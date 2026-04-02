@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { devices } from '@/db/schema';
+import { devices, deviceSessions } from '@/db/schema';
 
 export async function findDeviceByIpAndBrowser(ip: string, browser: string) {
   const [device] = await db
@@ -40,4 +40,52 @@ export async function touchDeviceRecord(id: number) {
     });
 
   return device ?? null;
+}
+
+export async function findDeviceSessionRecord(deviceId: number, sessionId: string) {
+  const [record] = await db
+    .select({
+      id: deviceSessions.id,
+    })
+    .from(deviceSessions)
+    .where(
+      and(
+        eq(deviceSessions.deviceId, deviceId),
+        eq(deviceSessions.sessionId, sessionId),
+      ),
+    )
+    .limit(1);
+
+  return record ?? null;
+}
+
+export async function createDeviceSessionRecord(input: {
+  deviceId: number;
+  sessionId: string;
+}) {
+  const [record] = await db
+    .insert(deviceSessions)
+    .values({
+      deviceId: input.deviceId,
+      sessionId: input.sessionId,
+    })
+    .returning({
+      id: deviceSessions.id,
+    });
+
+  return record;
+}
+
+export async function touchDeviceSessionRecord(id: number) {
+  const [record] = await db
+    .update(deviceSessions)
+    .set({
+      updatedAt: new Date(),
+    })
+    .where(eq(deviceSessions.id, id))
+    .returning({
+      id: deviceSessions.id,
+    });
+
+  return record ?? null;
 }

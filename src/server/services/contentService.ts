@@ -39,6 +39,9 @@ export type CreateContentResult =
 export async function createContent(
   editor: EditorContext,
   input: CreateContentInput,
+  options?: {
+    deviceSessionId?: number | null;
+  },
 ): Promise<CreateContentResult> {
   if (!input.slug) {
     return {
@@ -74,6 +77,7 @@ export async function createContent(
     isPublished: effectiveIsPublished,
     userId: editor.type === 'actor' ? editor.actorId : null,
     sessionId: editor.type === 'session' ? editor.sessionId : null,
+    deviceSessionId: options?.deviceSessionId ?? null,
     tagIds: resolvedTaxonomy.tagIds,
     categoryIds: resolvedTaxonomy.categoryIds,
     tagChanged: resolvedTaxonomy.tagIds.length > 0,
@@ -199,6 +203,9 @@ export type UpdateContentResult =
 export async function updateContent(
   editor: EditorContext,
   input: UpdateContentInput,
+  options?: {
+    deviceSessionId?: number | null;
+  },
 ): Promise<UpdateContentResult> {
   const current = await findContentSummaryById(input.contentId);
 
@@ -240,6 +247,7 @@ export async function updateContent(
     isPublished: effectiveIsPublished,
     userId: editor.type === 'actor' ? editor.actorId : null,
     sessionId: editor.type === 'session' ? editor.sessionId : null,
+    deviceSessionId: options?.deviceSessionId ?? null,
     tagIds: resolvedTaxonomy.tagIds,
     categoryIds: resolvedTaxonomy.categoryIds,
     tagChanged: taxonomyChanges.tagChanged,
