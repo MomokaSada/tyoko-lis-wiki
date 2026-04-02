@@ -22,6 +22,9 @@ export default async function OwnerPage() {
       <a href="/owner/ip-bans" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
         IPアドレスBAN管理へ
       </a>
+      <a href="/owner/edit-link-usage" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
+        編集リンク使用状況へ
+      </a>
       <a href="/" style={{ color: 'blue' }}>ホームに戻る</a>
       <OrphanThumbnailCleanupForm />
     </main>
