@@ -32,3 +32,20 @@ export async function deactivateUserById(userId: number) {
 
   return updated ?? null;
 }
+
+export async function activateUserById(userId: number) {
+  const [updated] = await db
+    .update(users)
+    .set({
+      isActive: true,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId))
+    .returning({
+      id: users.id,
+      name: users.name,
+      type: users.type,
+    });
+
+  return updated ?? null;
+}
