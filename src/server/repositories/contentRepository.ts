@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, isNotNull, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   contentCategories,
@@ -404,4 +404,23 @@ export async function incrementContentViewCount(contentId: number) {
     });
 
   return updated ?? null;
+}
+
+export async function listReferencedThumbnailUrls() {
+  const [contentRows, logRows] = await Promise.all([
+    db
+      .select({
+        url: contents.currentThumbnail,
+      })
+      .from(contents)
+      .where(isNotNull(contents.currentThumbnail)),
+    db
+      .select({
+        url: contentEditLogs.thumbnail,
+      })
+      .from(contentEditLogs)
+      .where(isNotNull(contentEditLogs.thumbnail)),
+  ]);
+
+  return [...contentRows, ...logRows].map((row) => row.url);
 }

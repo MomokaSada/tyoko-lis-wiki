@@ -14,6 +14,13 @@ function getBucketName() {
   return process.env.SUPABASE_THUMBNAIL_BUCKET ?? DEFAULT_BUCKET;
 }
 
+type StorageEntry = {
+  name: string;
+  id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
 function getExtension(file: File) {
   const fromName = file.name.split('.').pop()?.toLowerCase();
   if (fromName && fromName.length <= 10) {
@@ -85,4 +92,96 @@ export async function uploadThumbnailFile(file: FormDataEntryValue | null) {
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
+}
+
+function joinPrefix(prefix: string, name: string) {
+  return prefix ? `${prefix}/${name}` : name;
+}
+
+async function listStorageEntries(prefix: string) {
+  const bucket = getBucketName();
+  const supabase = createAdminClient();
+  const entries: StorageEntry[] = [];
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await supabase.storage.from(bucket).list(prefix, {
+      limit: 100,
+      offset,
+      sortBy: { column: 'name', order: 'asc' },
+    });
+
+    if (error) {
+      throw new Error(`Storage ファイル一覧の取得に失敗しました: ${error.message}`);
+    }
+
+    entries.push(...data);
+
+    if (data.length < 100) {
+      break;
+    }
+
+    offset += data.length;
+  }
+
+  return entries;
+}
+
+export async function listAllThumbnailObjects(prefix = ''): Promise<Array<{
+  path: string;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+}>> {
+  const entries = await listStorageEntries(prefix);
+  const files: Array<{ path: string; createdAt: Date | null; updatedAt: Date | null }> = [];
+
+  for (const entry of entries) {
+    const path = joinPrefix(prefix, entry.name);
+    const isDirectory = !entry.id;
+
+    if (isDirectory) {
+      files.push(...(await listAllThumbnailObjects(path)));
+      continue;
+    }
+
+    files.push({
+      path,
+      createdAt: entry.created_at ? new Date(entry.created_at) : null,
+      updatedAt: entry.updated_at ? new Date(entry.updated_at) : null,
+    });
+  }
+
+  return files;
+}
+
+export function extractThumbnailStoragePath(publicUrl: string) {
+  const bucket = getBucketName();
+  const marker = `/storage/v1/object/public/${bucket}/`;
+  const markerIndex = publicUrl.indexOf(marker);
+
+  if (markerIndex === -1) {
+    return null;
+  }
+
+  const rawPath = publicUrl.slice(markerIndex + marker.length);
+
+  try {
+    return decodeURIComponent(rawPath);
+  } catch {
+    return rawPath;
+  }
+}
+
+export async function deleteThumbnailObjects(paths: string[]) {
+  if (paths.length === 0) {
+    return;
+  }
+
+  const bucket = getBucketName();
+  const supabase = createAdminClient();
+  const { error } = await supabase.storage.from(bucket).remove(paths);
+
+  if (error) {
+    throw new Error(`未使用サムネイルの削除に失敗しました: ${error.message}`);
+  }
 }

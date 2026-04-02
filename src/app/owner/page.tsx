@@ -1,4 +1,5 @@
 import { headers } from 'next/headers';
+import { OrphanThumbnailCleanupForm } from './orphan-thumbnail-cleanup-form';
 
 export default async function OwnerPage() {
   const headersList = await headers();
@@ -22,6 +23,7 @@ export default async function OwnerPage() {
         IPアドレスBAN管理へ
       </a>
       <a href="/" style={{ color: 'blue' }}>ホームに戻る</a>
+      <OrphanThumbnailCleanupForm />
     </main>
   );
 }
