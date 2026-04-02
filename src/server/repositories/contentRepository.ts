@@ -45,6 +45,7 @@ export async function createContentWithInitialRevision(data: {
   isPublished: boolean;
   userId: number | null;
   sessionId: string | null;
+  deviceSessionId: number | null;
   tagIds: number[];
   categoryIds: number[];
   tagChanged: boolean;
@@ -69,7 +70,7 @@ export async function createContentWithInitialRevision(data: {
 
     const [createdLog] = await tx.insert(contentEditLogs).values({
       contentId: createdContent.id,
-      deviceSessionId: null,
+      deviceSessionId: data.deviceSessionId,
       userId: data.userId,
       revisionNumber: 1,
       type: 'snapshot',
@@ -272,6 +273,7 @@ export async function updateContentWithRevision(data: {
   isPublished: boolean;
   userId: number | null;
   sessionId: string | null;
+  deviceSessionId: number | null;
   tagIds: number[];
   categoryIds: number[];
   tagChanged: boolean;
@@ -309,7 +311,7 @@ export async function updateContentWithRevision(data: {
 
     const [createdLog] = await tx.insert(contentEditLogs).values({
       contentId: updatedContent.id,
-      deviceSessionId: null,
+      deviceSessionId: data.deviceSessionId,
       userId: data.userId,
       revisionNumber: nextRevision,
       type: 'snapshot',

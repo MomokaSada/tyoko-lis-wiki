@@ -11,7 +11,7 @@ import {
 } from '@/server/schemas/contentSchemas';
 import { createContent, deleteContent, updateContent } from '@/server/services/contentService';
 import { getCurrentActor } from '@/server/lib/currentActor';
-import { recordCurrentRequestDevice } from '@/server/services/deviceService';
+import { recordCurrentEditDeviceSession, recordCurrentRequestDevice } from '@/server/services/deviceService';
 
 export type CreateContentActionState = {
   error: string | null;
@@ -56,7 +56,12 @@ export async function createContentAction(
     };
   }
 
-  const result = await createContent(editor, normalized);
+  const deviceSessionId =
+    editor.type === 'session'
+      ? await recordCurrentEditDeviceSession(editor.sessionId)
+      : null;
+
+  const result = await createContent(editor, normalized, { deviceSessionId });
 
   if (!result.success) {
     return {
@@ -68,11 +73,12 @@ export async function createContentAction(
 
   await recordCurrentRequestDevice();
 
-  return {
-    error: null,
-    createdSlug: result.data.slug,
-    createdTitle: result.data.title,
-  };
+  const destination =
+    parsed.data.session && parsed.data.session.length > 0
+      ? `/posts/${result.data.slug}?session=${encodeURIComponent(parsed.data.session)}`
+      : `/posts/${result.data.slug}`;
+
+  redirect(destination);
 }
 
 export type UpdateContentActionState = {
@@ -118,7 +124,12 @@ export async function updateContentAction(
     };
   }
 
-  const result = await updateContent(editor, parsed.data);
+  const deviceSessionId =
+    editor.type === 'session'
+      ? await recordCurrentEditDeviceSession(editor.sessionId)
+      : null;
+
+  const result = await updateContent(editor, parsed.data, { deviceSessionId });
 
   if (!result.success) {
     return {
