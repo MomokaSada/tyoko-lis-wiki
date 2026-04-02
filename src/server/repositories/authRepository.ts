@@ -29,6 +29,7 @@ export async function findUserByName(name: string) {
     .select({
       id: users.id,
       name: users.name,
+      isActive: users.isActive,
     })
     .from(users)
     .where(eq(users.name, name))

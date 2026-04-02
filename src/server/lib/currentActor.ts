@@ -34,6 +34,7 @@ export async function getCurrentActor(): Promise<Actor | null> {
         .select({
             id: users.id,
             role: users.type,
+            isActive: users.isActive,
         })
         .from(users)
         .where(eq(users.authUserId, data.user.id))
@@ -51,13 +52,18 @@ export async function getCurrentActor(): Promise<Actor | null> {
             .select({
                 id: users.id,
                 role: users.type,
+                isActive: users.isActive,
             })
             .from(users)
             .where(eq(users.name, username))
             .limit(1);
     }
     
-    if (!appUser || (appUser.role !== 'owner' && appUser.role !== 'admin')) {
+    if (
+        !appUser ||
+        !appUser.isActive ||
+        (appUser.role !== 'owner' && appUser.role !== 'admin')
+    ) {
         return null;
     }
     
