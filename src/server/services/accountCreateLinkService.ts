@@ -8,11 +8,8 @@ import type {
     CreateAccountCreateLinkInput,
     DeactivateAccountCreateLinkInput,
 } from '@/server/schemas/accountCreateLinkSchemas';
-
-type Actor = {
-    id: number;
-    role: 'owner' | 'admin' | 'bot';
-};
+import type { Actor } from '@/types/actor';
+import { isUniqueViolation } from '@/server/services/modules/pgError';
 
 type CreateAccountCreateLinkResult = 
     | { 
@@ -38,16 +35,6 @@ type AccountCreateLinkListItem = {
     createdAt: Date;
     status: 'active' | 'expired' | 'inactive';
 };
-
-function isAccountCreateSessionUuidConflict(error: unknown): boolean {
-    return (
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        error.code === '23505'
-    );
-}
-
 
 export async function createAccountCreateLink(
     actor: Actor,
@@ -81,7 +68,7 @@ export async function createAccountCreateLink(
                 },
             };
         } catch (error) {
-            if (!isAccountCreateSessionUuidConflict(error)) {
+            if (!isUniqueViolation(error)) {
                 throw error;
             }
 

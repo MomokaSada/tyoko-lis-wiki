@@ -1,5 +1,5 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
-import { formatDateTimeJst } from '@/server/lib/formatDateTime';
+import { formatDateTimeJst } from '@/lib/format/formatDateTime';
 import { getDeviceSessionUsageRecords } from '@/server/services/deviceService';
 
 function getSessionStatusLabel(record: {

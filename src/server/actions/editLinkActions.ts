@@ -4,9 +4,9 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { createEditLinkSchema } from '@/server/schemas/editLinkSchemas';
 import { createEditLink } from '@/server/services/editLinkService';
+import type { BaseActionState } from '@/server/types/actionState';
 
-export type CreateEditLinkActionState = {
-  error: string | null;
+export type CreateEditLinkActionState = BaseActionState & {
   generatedUrl: string | null;
   expiresAt: string | null;
   maxEdits: number | null;

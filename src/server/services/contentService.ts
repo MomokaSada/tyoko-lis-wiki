@@ -156,17 +156,11 @@ export async function getAccessibleContentDetail(slug: string, editor: EditorCon
   if (!content) {
     return null;
   }
-
-  if (!editor && 'isPublished' in content && !content.isPublished) {
-    return null;
+  if (!editor) {
+    await incrementContentViewCount(content.id);
   }
 
-  const updated = await incrementContentViewCount(content.id);
-
-  return {
-    ...content,
-    viewCount: updated?.viewCount ?? content.viewCount,
-  };
+  return content;
 }
 
 export async function getEditableContentDetail(slug: string) {

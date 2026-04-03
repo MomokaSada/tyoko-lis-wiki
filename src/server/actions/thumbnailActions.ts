@@ -2,9 +2,9 @@
 
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { cleanupOrphanThumbnails } from '@/server/services/thumbnailService';
+import type { BaseActionState } from '@/server/types/actionState';
 
-export type ThumbnailCleanupActionState = {
-  error: string | null;
+export type ThumbnailCleanupActionState = BaseActionState & {
   deletedCount: number;
   scannedCount: number;
   referencedCount: number;

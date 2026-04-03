@@ -1,14 +1,11 @@
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { BanAccountInput } from '@/server/schemas/accountBanSchemas';
 import {
   activateUserById,
   deactivateUserById,
   listManageableAccounts,
 } from '@/server/repositories/accountBanRepository';
-
-type Actor = {
-  id: number;
-  role: 'owner' | 'admin' | 'bot';
-};
+import type { Actor } from '@/types/actor';
 
 export async function getManageableAccounts(actor: Actor) {
   if (actor.role !== 'owner') {
@@ -41,7 +38,14 @@ export async function banAccount(actor: Actor, input: BanAccountInput) {
       error: '対象ユーザーが見つかりません',
     };
   }
-
+  if (updated.authUserId) {
+    try {
+      const supabaseAdmin = createAdminClient();
+      await supabaseAdmin.auth.admin.deleteUser(updated.authUserId);
+    } catch (error) {
+      console.warn('Failed to deactivate user session:', error);
+    }
+  }
   return {
     success: true as const,
     data: updated,

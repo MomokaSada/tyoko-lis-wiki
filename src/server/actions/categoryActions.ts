@@ -5,9 +5,9 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { createCategorySchema, updateCategorySchema } from '@/server/schemas/categorySchemas';
 import { createCategoryAsAdmin, updateCategoryAsAdmin } from '@/server/services/taxonomyService';
+import { BaseActionState } from '@/server/types/actionState';
 
-export type CategoryActionState = {
-  error: string | null;
+export type CategoryActionState = BaseActionState & {
   success: string | null;
 };
 

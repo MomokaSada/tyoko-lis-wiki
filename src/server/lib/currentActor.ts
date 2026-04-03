@@ -2,11 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-
-type Actor = {
-  id: number;
-  role: 'owner' | 'admin';
-};
+import type { PrivilegedActor as Actor } from '@/types/actor';
 
 function getUsernameFromDummyEmail(email: string | undefined) {
   if (!email || !email.endsWith('@test.com')) {

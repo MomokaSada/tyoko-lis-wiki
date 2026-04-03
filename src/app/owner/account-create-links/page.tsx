@@ -1,8 +1,8 @@
 import { AccountCreateLinkForm } from './account-create-link-form';
-import { deactivateAccountCreateLinkAction } from '@/server/actions/accountCreateLinkActions';
 import { getCurrentActor } from '@/server/lib/currentActor';
-import { formatDateTimeJst } from '@/server/lib/formatDateTime';
+import { formatDateTimeJst } from '@/lib/format/formatDateTime';
 import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
+import { InvalidButton } from './invalid-button';
 
 function getStatusLabel(status: 'active' | 'expired' | 'inactive') {
   switch (status) {
@@ -52,12 +52,9 @@ export default async function AccountCreateLinksPage() {
                   <code>{`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}</code>
                 </p>
                 {link.status === 'active' && (
-                  <form action={deactivateAccountCreateLinkAction} style={{ marginTop: '0.75rem' }}>
-                    <input type="hidden" name="uuid" value={link.uuid} />
-                    <button type="submit" style={{ padding: '0.4rem 0.75rem' }}>
-                      無効化
-                    </button>
-                  </form>
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <InvalidButton uuid={link.uuid} />
+                  </div>
                 )}
               </article>
             ))}
