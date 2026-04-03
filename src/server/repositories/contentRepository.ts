@@ -7,8 +7,11 @@ import {
   contentEditLogTags,
   contentTags,
   contents,
+  tags,
+  categories,
   editSessions,
 } from '@/db/schema';
+import { escapeLikePattern } from './modules/escapeLike';
 
 export async function findContentBySlug(slug: string) {
   const [content] = await db
@@ -167,8 +170,9 @@ export async function listVisibleContents(includeUnpublished: boolean) {
 }
 
 export async function searchPublishedContents(query: string) {
+  const escapedQuery = escapeLikePattern(query);
   return db
-    .select({
+    .selectDistinct({
       id: contents.id,
       slug: contents.slug,
       title: contents.currentTitle,
@@ -180,13 +184,19 @@ export async function searchPublishedContents(query: string) {
       updatedAt: contents.updatedAt,
     })
     .from(contents)
+    .leftJoin(contentTags, eq(contents.id, contentTags.contentId))
+    .leftJoin(tags, eq(contentTags.tagId, tags.id))
+    .leftJoin(contentCategories, eq(contents.id, contentCategories.contentId))
+    .leftJoin(categories, eq(contentCategories.categoryId, categories.id))
     .where(
       and(
         eq(contents.isPublished, true),
         or(
-          ilike(contents.currentTitle, `%${query}%`),
-          ilike(contents.currentContent, `%${query}%`),
-          ilike(contents.slug, `%${query}%`),
+          ilike(contents.currentTitle, `%${escapedQuery}%`),
+          ilike(contents.currentContent, `%${escapedQuery}%`),
+          ilike(contents.slug, `%${escapedQuery}%`),
+          ilike(tags.name, `%${escapedQuery}%`),
+          ilike(categories.name, `%${escapedQuery}%`),
         ),
       ),
     )
@@ -195,9 +205,10 @@ export async function searchPublishedContents(query: string) {
 
 export async function searchVisibleContents(query: string, includeUnpublished: boolean) {
   const visibilityClause = includeUnpublished ? undefined : eq(contents.isPublished, true);
+  const escapedQuery = escapeLikePattern(query);
 
   return db
-    .select({
+    .selectDistinct({
       id: contents.id,
       slug: contents.slug,
       title: contents.currentTitle,
@@ -210,13 +221,19 @@ export async function searchVisibleContents(query: string, includeUnpublished: b
       updatedAt: contents.updatedAt,
     })
     .from(contents)
+    .leftJoin(contentTags, eq(contents.id, contentTags.contentId))
+    .leftJoin(tags, eq(contentTags.tagId, tags.id))
+    .leftJoin(contentCategories, eq(contents.id, contentCategories.contentId))
+    .leftJoin(categories, eq(contentCategories.categoryId, categories.id))
     .where(
       and(
         visibilityClause,
         or(
-          ilike(contents.currentTitle, `%${query}%`),
-          ilike(contents.currentContent, `%${query}%`),
-          ilike(contents.slug, `%${query}%`),
+          ilike(contents.currentTitle, `%${escapedQuery}%`),
+          ilike(contents.currentContent, `%${escapedQuery}%`),
+          ilike(contents.slug, `%${escapedQuery}%`),
+          ilike(tags.name, `%${escapedQuery}%`),
+          ilike(categories.name, `%${escapedQuery}%`),
         ),
       ),
     )

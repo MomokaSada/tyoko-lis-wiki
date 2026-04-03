@@ -41,7 +41,13 @@ function getExtension(file: File) {
   }
 }
 
+let bucketVerified = false;
+
 async function ensureBucketExists(bucket: string) {
+  if (bucketVerified) {
+    return;
+  }
+
   const supabase = createAdminClient();
   const { data: buckets, error } = await supabase.storage.listBuckets();
 
@@ -60,6 +66,8 @@ async function ensureBucketExists(bucket: string) {
       throw new Error(`Storage バケット作成に失敗しました: ${createError.message}`);
     }
   }
+
+  bucketVerified = true;
 }
 
 export async function uploadThumbnailFile(file: FormDataEntryValue | null) {

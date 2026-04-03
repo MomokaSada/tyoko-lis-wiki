@@ -28,6 +28,7 @@ export async function deactivateUserById(userId: number) {
       id: users.id,
       name: users.name,
       type: users.type,
+      authUserId: users.authUserId,
     });
 
   return updated ?? null;
@@ -45,6 +46,7 @@ export async function activateUserById(userId: number) {
       id: users.id,
       name: users.name,
       type: users.type,
+      authUserId: users.authUserId,
     });
 
   return updated ?? null;

@@ -1,3 +1,3 @@
-export type ActionState = {
+export type BaseActionState = {
   error: string | null;
 };

@@ -4,11 +4,7 @@ import {
   extractThumbnailStoragePath,
   listAllThumbnailObjects,
 } from '@/server/lib/thumbnailUpload';
-
-type Actor = {
-  id: number;
-  role: 'owner' | 'admin';
-};
+import type { PrivilegedActor as Actor } from '@/types/actor';
 
 const CLEANUP_MIN_AGE_HOURS = 24;
 

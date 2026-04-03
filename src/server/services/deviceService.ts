@@ -8,11 +8,7 @@ import {
   touchDeviceSessionRecord,
   touchDeviceRecord,
 } from '@/server/repositories/deviceRepository';
-
-type Actor = {
-  id: number;
-  role: 'owner' | 'admin' | 'bot';
-};
+import type { Actor } from '@/types/actor';
 
 export async function recordCurrentRequestDevice() {
   const device = await getCurrentRequestDevice();

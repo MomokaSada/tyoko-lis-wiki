@@ -3,13 +3,13 @@
 import { useActionState, useState } from 'react';
 import {
   updateContentAction,
-  type UpdateContentActionState,
+  type ContentActionState,
 } from '@/server/actions/contentActions';
 
-const initialState: UpdateContentActionState = {
+const initialState: ContentActionState = {
   error: null,
-  updatedSlug: null,
-  updatedTitle: null,
+  slug: null,
+  title: null,
 };
 
 export function EditPostForm({
@@ -217,10 +217,10 @@ export function EditPostForm({
 
       {state.error && <p style={{ color: '#b00020' }}>{state.error}</p>}
 
-      {state.updatedSlug && (
+      {state.slug && (
         <div style={{ padding: '1rem', background: '#f5f5f5' }}>
-          <p><strong>更新完了:</strong> {state.updatedTitle}</p>
-          <p><strong>スラッグ:</strong> <code>{state.updatedSlug}</code></p>
+          <p><strong>更新完了:</strong> {state.title}</p>
+          <p><strong>スラッグ:</strong> <code>{state.slug}</code></p>
         </div>
       )}
     </form>

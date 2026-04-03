@@ -1,8 +1,8 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
-import { formatDateTimeJst } from '@/server/lib/formatDateTime';
+import { formatDateTimeJst } from '@/lib/format/formatDateTime';
 import { getActiveIpBans, getIpDeviceRecords } from '@/server/services/ipBanService';
-import { deactivateIpBanAction } from '@/server/actions/ipBanActions';
 import { IpBanForm } from './ip-ban-form';
+import { UnIpBanButton } from './un-ip-ban-button';
 
 export default async function IpBansPage() {
   const actor = await getCurrentActor();
@@ -42,12 +42,7 @@ export default async function IpBansPage() {
                 <p><strong>理由:</strong> {ban.reason}</p>
                 <p><strong>登録者:</strong> {ban.blockedByName ?? `user:${ban.blockedBy}`}</p>
                 <p><strong>登録日時:</strong> {formatDateTimeJst(ban.createdAt)}</p>
-                <form action={deactivateIpBanAction} style={{ marginTop: '0.75rem' }}>
-                  <input type="hidden" name="banId" value={ban.id} />
-                  <button type="submit" style={{ padding: '0.4rem 0.75rem' }}>
-                    IPBANを解除する
-                  </button>
-                </form>
+                <UnIpBanButton banId={ban.id} />
               </article>
             ))}
           </div>

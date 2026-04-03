@@ -9,11 +9,7 @@ import {
   listActiveIpBans,
   listIpDeviceRecords,
 } from '@/server/repositories/ipBanRepository';
-
-type Actor = {
-  id: number;
-  role: 'owner' | 'admin' | 'bot';
-};
+import type { PrivilegedActor as Actor } from '@/types/actor';
 
 export async function createIpBan(actor: Actor, input: CreateIpBanInput) {
   if (actor.role !== 'owner') {

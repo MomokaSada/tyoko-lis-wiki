@@ -8,6 +8,7 @@ import {
 import { buildDummyEmail, normalizeUsername } from '@/server/lib/dummyEmail';
 import { hashPassword } from '@/server/lib/password';
 import type { LoginInput, RegisterInput } from '@/server/schemas/authSchemas';
+import { isUniqueViolation } from '@/server/services/modules/pgError';
 
 /** signIn の結果型 */
 export type SignInResult =
@@ -84,18 +85,13 @@ export async function registerAccount(input: RegisterInput): Promise<RegisterRes
       sessionId: input.session,
       authUserId: data.user.id,
       username: normalizedUsername,
-      passwordHash: hashPassword(input.password),
+      passwordHash: await hashPassword(input.password),
       type: 'admin',
     });
   } catch (dbError) {
     await supabaseAdmin.auth.admin.deleteUser(data.user.id);
 
-    if (
-      typeof dbError === 'object' &&
-      dbError !== null &&
-      'code' in dbError &&
-      dbError.code === '23505'
-    ) {
+    if (isUniqueViolation(dbError)) {
       return { success: false, error: 'そのユーザー名はすでに使われています' };
     }
 

@@ -5,11 +5,15 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { createIpBanSchema, deactivateIpBanSchema } from '@/server/schemas/ipBanSchemas';
 import { createIpBan, deactivateIpBan } from '@/server/services/ipBanService';
+import type { BaseActionState } from '@/server/types/actionState';
 
-export type CreateIpBanActionState = {
-  error: string | null;
+export type CreateIpBanActionState = BaseActionState & {
   bannedIp: string | null;
   reason: string | null;
+};
+
+export type DeactivateIpBanActionState = {
+  error: string | null;
 };
 
 export async function createIpBanAction(
@@ -57,26 +61,39 @@ export async function createIpBanAction(
   };
 }
 
-export async function deactivateIpBanAction(formData: FormData) {
+export async function deactivateIpBanAction(
+  _prevState: DeactivateIpBanActionState,
+  formData: FormData,
+): Promise<DeactivateIpBanActionState> {
   const parsed = deactivateIpBanSchema.safeParse({
     banId: formData.get('banId'),
   });
 
   if (!parsed.success) {
-    throw new Error(getFirstZodErrorMessage(parsed.error));
+    return {
+      error: getFirstZodErrorMessage(parsed.error),
+    };
   }
 
   const actor = await getCurrentActor();
 
   if (!actor) {
-    throw new Error('IPBAN 解除権限がありません');
+    return {
+      error: 'IPBAN 解除権限がありません',
+    };
   }
 
   const result = await deactivateIpBan(actor, parsed.data.banId);
 
   if (!result.success) {
-    throw new Error(result.error);
+    return {
+      error: result.error,
+    };
   }
 
   revalidatePath('/owner/ip-bans');
+
+  return {
+    error: null,
+  };
 }

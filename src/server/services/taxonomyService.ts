@@ -9,6 +9,7 @@ import {
   listTags,
   updateCategory,
 } from '@/server/repositories/taxonomyRepository';
+import type { PrivilegedActor as Actor } from '@/types/actor';
 
 function normalizeName(value: string) {
   return value.trim().replace(/\s+/g, ' ');
@@ -171,13 +172,8 @@ export function detectTaxonomyChanges(
   };
 }
 
-type AdminActor = {
-  id: number;
-  role: 'owner' | 'admin';
-};
-
 export async function createCategoryAsAdmin(
-  actor: AdminActor,
+  actor: Actor,
   input: { name: string; parentId: number | null },
 ) {
   if (actor.role !== 'owner' && actor.role !== 'admin') {
@@ -203,7 +199,7 @@ export async function createCategoryAsAdmin(
 }
 
 export async function updateCategoryAsAdmin(
-  actor: AdminActor,
+  actor: Actor,
   input: { id: number; name: string; parentId: number | null },
 ) {
   if (actor.role !== 'owner' && actor.role !== 'admin') {

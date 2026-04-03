@@ -6,12 +6,15 @@ import { loginSchema, registerSchema } from '@/server/schemas/authSchemas';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
 import { registerAccount, signIn } from '@/server/services/authService';
+import type { BaseActionState } from '@/server/types/actionState';
+
+export type ActionState = BaseActionState;
 
 /** Server Action: ログインフォームの送信を処理する */
 export async function loginAction(
-  _prevState: { error: string | null },
+  _prevState: ActionState,
   formData: FormData,
-): Promise<{ error: string | null }> {
+): Promise<ActionState> {
   await recordCurrentRequestDevice();
 
   const parsed = loginSchema.safeParse({
@@ -40,9 +43,9 @@ export async function loginAction(
 }
 
 export async function registerAction(
-  _prevState: { error: string | null },
+  _prevState: ActionState,
   formData: FormData,
-): Promise<{ error: string | null }> {
+): Promise<ActionState> {
   const parsed = registerSchema.safeParse({
     session: formData.get('session'),
     username: formData.get('username'),

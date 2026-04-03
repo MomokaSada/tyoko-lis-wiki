@@ -3,13 +3,13 @@
 import { useActionState } from 'react';
 import {
   deleteContentAction,
-  type DeleteContentActionState,
+  type ContentActionState,
 } from '@/server/actions/contentActions';
 
-const initialState: DeleteContentActionState = {
+const initialState: ContentActionState = {
   error: null,
-  deletedSlug: null,
-  deletedTitle: null,
+  slug: null,
+  title: null,
 };
 
 export function DeletePostForm({ contentId }: { contentId: number }) {
@@ -29,10 +29,10 @@ export function DeletePostForm({ contentId }: { contentId: number }) {
 
       {state.error && <p style={{ color: '#b00020' }}>{state.error}</p>}
 
-      {state.deletedSlug && (
+      {state.slug && (
         <div style={{ padding: '1rem', background: '#f5f5f5' }}>
-          <p><strong>削除完了:</strong> {state.deletedTitle}</p>
-          <p><strong>スラッグ:</strong> <code>{state.deletedSlug}</code></p>
+          <p><strong>削除完了:</strong> {state.title}</p>
+          <p><strong>スラッグ:</strong> <code>{state.slug}</code></p>
         </div>
       )}
     </form>

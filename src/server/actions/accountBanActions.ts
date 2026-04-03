@@ -5,51 +5,80 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { banAccountSchema } from '@/server/schemas/accountBanSchemas';
 import { banAccount, unbanAccount } from '@/server/services/accountBanService';
+import type { BaseActionState } from '@/server/types/actionState';
 
-export async function banAccountAction(formData: FormData) {
+export type BanAccountActionState = BaseActionState;
+
+export async function banAccountAction(
+  _prevState: BanAccountActionState,
+  formData: FormData,
+): Promise<BanAccountActionState> {
   const parsed = banAccountSchema.safeParse({
     userId: formData.get('userId'),
   });
 
   if (!parsed.success) {
-    throw new Error(getFirstZodErrorMessage(parsed.error));
+    return {
+      error: getFirstZodErrorMessage(parsed.error),
+    };
   }
 
   const actor = await getCurrentActor();
 
   if (!actor) {
-    throw new Error('アカウントBAN権限がありません');
+    return {
+      error: 'アカウントBAN権限がありません',
+    };
   }
 
   const result = await banAccount(actor, parsed.data);
 
   if (!result.success) {
-    throw new Error(result.error);
+    return {
+      error: result.error,
+    };
   }
 
   revalidatePath('/owner/account-bans');
+
+  return {
+    error: null,
+  };
 }
 
-export async function unbanAccountAction(formData: FormData) {
+export async function unbanAccountAction(
+  _prevState: BanAccountActionState,
+  formData: FormData,
+): Promise<BanAccountActionState> {
   const parsed = banAccountSchema.safeParse({
     userId: formData.get('userId'),
   });
 
   if (!parsed.success) {
-    throw new Error(getFirstZodErrorMessage(parsed.error));
+    return {
+      error: getFirstZodErrorMessage(parsed.error),
+    };
   }
 
   const actor = await getCurrentActor();
 
   if (!actor) {
-    throw new Error('アカウントBAN解除権限がありません');
+    return {
+      error: 'アカウントBAN解除権限がありません',
+    };
   }
 
   const result = await unbanAccount(actor, parsed.data);
 
   if (!result.success) {
-    throw new Error(result.error);
+    return {
+      error: result.error,
+    };
   }
 
   revalidatePath('/owner/account-bans');
+
+  return {
+    error: null,
+  };
 }

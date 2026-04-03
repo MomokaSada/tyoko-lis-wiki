@@ -1,22 +1,13 @@
 import { z } from 'zod';
 import { slugify } from '@/server/lib/slug';
+import { optionalParentIdSchema } from './modules/optionalParentId';
 
 const slugSchema = z
   .string()
   .trim()
   .min(1, 'スラッグを入力してください')
   .max(255, 'スラッグは255文字以内で入力してください')
-  .regex(/^[a-z0-9-]+$/, 'スラッグは英小文字・数字・ハイフンのみ利用できます');
-
-const optionalParentIdSchema = z
-  .union([z.coerce.number().int().positive(), z.literal(''), z.null(), z.undefined()])
-  .transform((value) => {
-    if (value === '' || value === null || value === undefined) {
-      return null;
-    }
-
-    return value;
-  });
+  .regex(/^[\p{L}\p{N}-]+$/u, 'スラッグに使用できない文字が含まれています');
 
 const taxonomySelectionSchema = z.object({
   tagIds: z.array(z.coerce.number().int().positive()).default([]),

@@ -13,17 +13,17 @@ import { createContent, deleteContent, updateContent } from '@/server/services/c
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { recordCurrentEditDeviceSession, recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
+import { BaseActionState } from '@/server/types/actionState';
 
-export type CreateContentActionState = {
-  error: string | null;
-  createdSlug: string | null;
-  createdTitle: string | null;
+export type ContentActionState = BaseActionState & {
+  slug: string | null;
+  title: string | null;
 };
 
 export async function createContentAction(
-  _prevState: CreateContentActionState,
+  _prevState: ContentActionState,
   formData: FormData,
-): Promise<CreateContentActionState> {
+): Promise<ContentActionState> {
   const parsed = createContentSchema.safeParse({
     session: formData.get('session'),
     title: formData.get('title'),
@@ -41,8 +41,8 @@ export async function createContentAction(
   if (!parsed.success) {
     return {
       error: getFirstZodErrorMessage(parsed.error),
-      createdSlug: null,
-      createdTitle: null,
+      slug: null,
+      title: null,
     };
   }
 
@@ -51,8 +51,8 @@ export async function createContentAction(
   if (activeBan) {
     return {
       error: 'このIPアドレスからの記事作成は許可されていません',
-      createdSlug: null,
-      createdTitle: null,
+      slug: null,
+      title: null,
     };
   }
 
@@ -62,8 +62,8 @@ export async function createContentAction(
   if (!editor) {
     return {
       error: '記事作成権限がありません',
-      createdSlug: null,
-      createdTitle: null,
+      slug: null,
+      title: null,
     };
   }
 
@@ -77,8 +77,8 @@ export async function createContentAction(
   if (!result.success) {
     return {
       error: result.error,
-      createdSlug: null,
-      createdTitle: null,
+      slug: null,
+      title: null,
     };
   }
 
@@ -92,16 +92,10 @@ export async function createContentAction(
   redirect(destination);
 }
 
-export type UpdateContentActionState = {
-  error: string | null;
-  updatedSlug: string | null;
-  updatedTitle: string | null;
-};
-
 export async function updateContentAction(
-  _prevState: UpdateContentActionState,
+  _prevState: ContentActionState,
   formData: FormData,
-): Promise<UpdateContentActionState> {
+): Promise<ContentActionState> {
   const parsed = updateContentSchema.safeParse({
     session: formData.get('session'),
     contentId: formData.get('contentId'),
@@ -120,8 +114,8 @@ export async function updateContentAction(
   if (!parsed.success) {
     return {
       error: getFirstZodErrorMessage(parsed.error),
-      updatedSlug: null,
-      updatedTitle: null,
+      slug: null,
+      title: null,
     };
   }
 
@@ -130,8 +124,8 @@ export async function updateContentAction(
   if (activeBan) {
     return {
       error: 'このIPアドレスからの記事編集は許可されていません',
-      updatedSlug: null,
-      updatedTitle: null,
+      slug: null,
+      title: null,
     };
   }
 
@@ -140,8 +134,8 @@ export async function updateContentAction(
   if (!editor) {
     return {
       error: '記事編集権限がありません',
-      updatedSlug: null,
-      updatedTitle: null,
+      slug: null,
+      title: null,
     };
   }
 
@@ -155,8 +149,8 @@ export async function updateContentAction(
   if (!result.success) {
     return {
       error: result.error,
-      updatedSlug: null,
-      updatedTitle: null,
+      slug: null,
+      title: null,
     };
   }
 
@@ -170,16 +164,10 @@ export async function updateContentAction(
   redirect(destination);
 }
 
-export type DeleteContentActionState = {
-  error: string | null;
-  deletedSlug: string | null;
-  deletedTitle: string | null;
-};
-
 export async function deleteContentAction(
-  _prevState: DeleteContentActionState,
+  _prevState: ContentActionState,
   formData: FormData,
-): Promise<DeleteContentActionState> {
+): Promise<ContentActionState> {
   const parsed = deleteContentSchema.safeParse({
     contentId: formData.get('contentId'),
   });
@@ -187,8 +175,8 @@ export async function deleteContentAction(
   if (!parsed.success) {
     return {
       error: getFirstZodErrorMessage(parsed.error),
-      deletedSlug: null,
-      deletedTitle: null,
+      slug: null,
+      title: null,
     };
   }
 
@@ -197,8 +185,8 @@ export async function deleteContentAction(
   if (!actor) {
     return {
       error: '記事削除権限がありません',
-      deletedSlug: null,
-      deletedTitle: null,
+      slug: null,
+      title: null,
     };
   }
 
@@ -214,14 +202,14 @@ export async function deleteContentAction(
   if (!result.success) {
     return {
       error: result.error,
-      deletedSlug: null,
-      deletedTitle: null,
+      slug: null,
+      title: null,
     };
   }
 
   return {
     error: null,
-    deletedSlug: result.data.slug,
-    deletedTitle: result.data.title,
+    slug: result.data.slug,
+    title: result.data.title,
   };
 }

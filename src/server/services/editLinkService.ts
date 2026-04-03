@@ -1,11 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { findEditSessions, insertEditSession } from '@/server/repositories/editLinkRepository';
 import type { CreateEditLinkInput } from '@/server/schemas/editLinkSchemas';
-
-type Actor = {
-  id: number;
-  role: 'owner' | 'admin' | 'bot';
-};
+import type { Actor } from '@/types/actor';
+import { isUniqueViolation } from '@/server/services/modules/pgError';
 
 type CreateEditLinkResult =
   | {
@@ -34,15 +31,6 @@ export type EditLinkListItem = {
   createdAt: Date;
   status: 'active' | 'expired' | 'inactive' | 'limit-reached';
 };
-
-function isEditSessionUuidConflict(error: unknown) {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    error.code === '23505'
-  );
-}
 
 export async function createEditLink(
   actor: Actor,
@@ -80,7 +68,7 @@ export async function createEditLink(
         },
       };
     } catch (error) {
-      if (!isEditSessionUuidConflict(error)) {
+      if (!isUniqueViolation(error)) {
         throw error;
       }
     }

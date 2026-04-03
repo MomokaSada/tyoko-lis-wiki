@@ -9,12 +9,14 @@ import {
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { revalidatePath } from 'next/cache';
+import type { BaseActionState } from '@/server/types/actionState';
 
-export type CreateAccountCreateLinkActionState = {
-  error: string | null;
+export type CreateAccountCreateLinkActionState = BaseActionState & {
   generatedUrl: string | null;
   expiresAt: string | null;
 };
+
+export type DeactivateAccountCreateLinkActionState = BaseActionState;
 
 export async function createAccountCreateLinkAction(
   _prevState: CreateAccountCreateLinkActionState,
@@ -59,26 +61,39 @@ export async function createAccountCreateLinkAction(
     };
 }
 
-export async function deactivateAccountCreateLinkAction(formData: FormData) {
+export async function deactivateAccountCreateLinkAction(
+  _prevState: DeactivateAccountCreateLinkActionState,
+  formData: FormData,
+): Promise<DeactivateAccountCreateLinkActionState> {
     const parsed = deactivateAccountCreateLinkSchema.safeParse({
         uuid: formData.get('uuid'),
     });
 
     if (!parsed.success) {
-        throw new Error(getFirstZodErrorMessage(parsed.error));
+        return {
+            error: getFirstZodErrorMessage(parsed.error),
+        };
     }
 
     const actor = await getCurrentActor();
 
     if (!actor) {
-        throw new Error('リンク無効化権限がありません');
+        return {
+            error: 'リンク無効化権限がありません',
+        };
     }
 
     const result = await deactivateAccountCreateLink(actor, parsed.data);
 
     if (!result.success) {
-        throw new Error(result.error);
+        return {
+            error: result.error,
+        };
     }
 
-    revalidatePath('/admin/account-create-links');
+    revalidatePath('/owner/account-create-links');
+
+    return {
+        error: null,
+    };
 }
