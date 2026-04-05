@@ -5,6 +5,8 @@ import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { loginSchema, registerSchema } from '@/server/schemas/authSchemas';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
+import { getCurrentActor } from '@/server/lib/currentActor';
+import { recordAuditLog } from '@/server/services/auditLogService';
 import { registerAccount, signIn } from '@/server/services/authService';
 import { checkRateLimit } from '@/server/services/rateLimitService';
 import type { BaseActionState } from '@/server/types/actionState';
@@ -41,8 +43,21 @@ export async function loginAction(
   const result = await signIn(parsed.data);
 
   if (!result.success) {
+    await recordAuditLog({
+      actorId: null,
+      action: 'login_failed',
+      detail: { username: parsed.data.username },
+    });
     return { error: result.error };
   }
+
+  const actor = await getCurrentActor();
+  await recordAuditLog({
+    actorId: actor?.id ?? null,
+    action: 'login',
+    targetType: 'user',
+    targetId: actor?.id != null ? String(actor.id) : null,
+  });
 
   // サーバーサイドリダイレクト（クライアント往復なしで高速）
   redirect('/');
@@ -92,6 +107,14 @@ export async function registerAction(
   if (!loginResult.success) {
     return { error: loginResult.error };
   }
+
+  const actor = await getCurrentActor();
+  await recordAuditLog({
+    actorId: actor?.id ?? null,
+    action: 'register',
+    targetType: 'user',
+    targetId: actor?.id != null ? String(actor.id) : null,
+  });
 
   redirect('/');
 }

@@ -7,6 +7,7 @@ import { createEditLink } from '@/server/services/editLinkService';
 import type { BaseActionState } from '@/server/types/actionState';
 import { checkRateLimit } from '@/server/services/rateLimitService';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
+import { recordAuditLog } from '@/server/services/auditLogService';
 
 export type CreateEditLinkActionState = BaseActionState & {
   generatedUrl: string | null;
@@ -65,6 +66,13 @@ export async function createEditLinkAction(
       maxEdits: null,
     };
   }
+
+  await recordAuditLog({
+    actorId: actor.id,
+    action: "create_edit_link",
+    targetType: "edit_link",
+    detail: { expiresAt: result.data.endAt.toISOString() },
+  });
 
   return {
     error: null,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cleanUpRateLimitRecords } from '@/server/services/cleanUpService';
+import { cleanUpAuditLogs, cleanUpRateLimitRecords } from '@/server/services/cleanUpService';
+
 
 
 export async function GET(request: NextRequest) {
@@ -8,7 +9,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const deleted = await cleanUpRateLimitRecords();
+    const deletedRateLimitRecords = await cleanUpRateLimitRecords();
+    const deletedAuditLogs = await cleanUpAuditLogs();
 
-    return NextResponse.json({ ok: true, deletedCount: deleted });
+    return NextResponse.json({ ok: true, deletedRateLimitRecords, deletedAuditLogs });
 }

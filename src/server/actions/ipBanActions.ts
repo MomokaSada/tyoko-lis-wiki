@@ -8,6 +8,8 @@ import { createIpBan, deactivateIpBan } from '@/server/services/ipBanService';
 import type { BaseActionState } from '@/server/types/actionState';
 import { checkRateLimit } from '@/server/services/rateLimitService';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
+import { recordAuditLog } from "@/server/services/auditLogService";
+
 
 export type CreateIpBanActionState = BaseActionState & {
   bannedIp: string | null;
@@ -67,6 +69,13 @@ export async function createIpBanAction(
     };
   }
 
+  await recordAuditLog({
+    actorId: actor.id,
+    action: "create_ip_ban",
+    targetType: "ip_ban",
+    detail: { ip: result.data.ip, reason: result.data.reason },
+  });
+
   return {
     error: null,
     bannedIp: result.data.ip,
@@ -103,6 +112,13 @@ export async function deactivateIpBanAction(
       error: result.error,
     };
   }
+
+  await recordAuditLog({
+    actorId: actor.id,
+    action: "deactivate_ip_ban",
+    targetType: "ip_ban",
+    targetId: String(parsed.data.banId),
+  });
 
   revalidatePath('/owner/ip-bans');
 
