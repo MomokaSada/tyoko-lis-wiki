@@ -6,6 +6,8 @@ import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { createIpBanSchema, deactivateIpBanSchema } from '@/server/schemas/ipBanSchemas';
 import { createIpBan, deactivateIpBan } from '@/server/services/ipBanService';
 import type { BaseActionState } from '@/server/types/actionState';
+import { checkRateLimit } from '@/server/services/rateLimitService';
+import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 
 export type CreateIpBanActionState = BaseActionState & {
   bannedIp: string | null;
@@ -20,6 +22,17 @@ export async function createIpBanAction(
   _prevState: CreateIpBanActionState,
   formData: FormData,
 ): Promise<CreateIpBanActionState> {
+  await recordCurrentRequestDevice();
+
+  const rateLimitResult = await checkRateLimit('createIpBan');
+  if (!rateLimitResult.allowed) {
+    return {
+      error: 'IPBAN作成試行が多すぎます。しばらくしてから再度お試しください。',
+      bannedIp: null,
+      reason: null,
+    };
+  }
+
   const parsed = createIpBanSchema.safeParse({
     ip: formData.get('ip'),
     browser: formData.get('browser'),

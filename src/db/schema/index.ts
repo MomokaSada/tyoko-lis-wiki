@@ -12,6 +12,7 @@ export * from './contents';
 export * from './contentEditLogs';
 export * from './tags';
 export * from './categories';
+export * from './rateLimitRecords';
 
 // ===== 中間テーブル =====
 export * from './contentTags';

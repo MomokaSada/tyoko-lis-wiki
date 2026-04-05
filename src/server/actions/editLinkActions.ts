@@ -5,6 +5,8 @@ import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { createEditLinkSchema } from '@/server/schemas/editLinkSchemas';
 import { createEditLink } from '@/server/services/editLinkService';
 import type { BaseActionState } from '@/server/types/actionState';
+import { checkRateLimit } from '@/server/services/rateLimitService';
+import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 
 export type CreateEditLinkActionState = BaseActionState & {
   generatedUrl: string | null;
@@ -16,6 +18,18 @@ export async function createEditLinkAction(
   _prevState: CreateEditLinkActionState,
   formData: FormData,
 ): Promise<CreateEditLinkActionState> {
+  await recordCurrentRequestDevice();
+
+  const rateLimitResult = await checkRateLimit('createEditLink');
+  if (!rateLimitResult.allowed) {
+    return {
+      error: '編集リンク作成試行が多すぎます。しばらくしてから再度お試しください。',
+      generatedUrl: null,
+      expiresAt: null,
+      maxEdits: null,
+    };
+  }
+
   const parsed = createEditLinkSchema.safeParse({
     expiresInMinutes: formData.get('expiresInMinutes'),
     maxEdits: formData.get('maxEdits'),
