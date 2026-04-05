@@ -14,6 +14,7 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { recordCurrentEditDeviceSession, recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
 import { BaseActionState } from '@/server/types/actionState';
+import { checkRateLimit } from '@/server/services/rateLimitService';
 
 export type ContentActionState = BaseActionState & {
   slug: string | null;
@@ -24,6 +25,17 @@ export async function createContentAction(
   _prevState: ContentActionState,
   formData: FormData,
 ): Promise<ContentActionState> {
+  await recordCurrentRequestDevice();
+
+  const rateLimitResult = await checkRateLimit('createContent');
+  if (!rateLimitResult.allowed) {
+    return {
+      error: '記事作成試行が多すぎます。しばらくしてから再度お試しください。',
+      slug: null,
+      title: null,
+    };
+  }
+
   const parsed = createContentSchema.safeParse({
     session: formData.get('session'),
     title: formData.get('title'),
@@ -96,6 +108,16 @@ export async function updateContentAction(
   _prevState: ContentActionState,
   formData: FormData,
 ): Promise<ContentActionState> {
+  await recordCurrentRequestDevice();
+
+  const rateLimitResult = await checkRateLimit('updateContent');
+  if (!rateLimitResult.allowed) {
+    return {
+      error: '記事編集試行が多すぎます。しばらくしてから再度お試しください。',
+      slug: null,
+      title: null,
+    };
+  }
   const parsed = updateContentSchema.safeParse({
     session: formData.get('session'),
     contentId: formData.get('contentId'),
@@ -168,6 +190,14 @@ export async function deleteContentAction(
   _prevState: ContentActionState,
   formData: FormData,
 ): Promise<ContentActionState> {
+  const rateLimitResult = await checkRateLimit('deleteContent');
+  if (!rateLimitResult.allowed) {
+    return {
+      error: '記事削除試行が多すぎます。しばらくしてから再度お試しください。',
+      slug: null,
+      title: null,
+    };
+  }
   const parsed = deleteContentSchema.safeParse({
     contentId: formData.get('contentId'),
   });

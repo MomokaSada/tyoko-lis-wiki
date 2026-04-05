@@ -6,6 +6,8 @@ import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { createCategorySchema, updateCategorySchema } from '@/server/schemas/categorySchemas';
 import { createCategoryAsAdmin, updateCategoryAsAdmin } from '@/server/services/taxonomyService';
 import { BaseActionState } from '@/server/types/actionState';
+import { checkRateLimit } from '@/server/services/rateLimitService';
+import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 
 export type CategoryActionState = BaseActionState & {
   success: string | null;
@@ -15,6 +17,16 @@ export async function createCategoryAction(
   _prevState: CategoryActionState,
   formData: FormData,
 ): Promise<CategoryActionState> {
+  await recordCurrentRequestDevice();
+
+  const rateLimitResult = await checkRateLimit('createCategory');
+  if (!rateLimitResult.allowed) {
+    return {
+      error: 'カテゴリ作成試行が多すぎます。しばらくしてから再度お試しください。',
+      success: null,
+    };
+  }
+
   const parsed = createCategorySchema.safeParse({
     name: formData.get('name'),
     parentId: formData.get('parentId'),
@@ -46,6 +58,16 @@ export async function updateCategoryAction(
   _prevState: CategoryActionState,
   formData: FormData,
 ): Promise<CategoryActionState> {
+  await recordCurrentRequestDevice();
+
+  const rateLimitResult = await checkRateLimit('updateCategory');
+  if (!rateLimitResult.allowed) {
+    return {
+      error: 'カテゴリ更新試行が多すぎます。しばらくしてから再度お試しください。',
+      success: null,
+    };
+  }
+
   const parsed = updateCategorySchema.safeParse({
     id: formData.get('id'),
     name: formData.get('name'),

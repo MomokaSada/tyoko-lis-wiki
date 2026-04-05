@@ -1,8 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { uploadThumbnailFile } from '@/server/lib/thumbnailUpload';
+import { checkRateLimit } from '@/server/services/rateLimitService';
 
 export async function POST(request: Request) {
+  const rateLimitResult = await checkRateLimit('thumbnailUpload');
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      {
+        error: 'アップロード試行が多すぎます。しばらくしてから再度お試しください。',
+      },
+      { status: 429 },
+    );
+  }
+
   const formData = await request.formData();
   const session =
     typeof formData.get('session') === 'string'

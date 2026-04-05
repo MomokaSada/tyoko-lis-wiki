@@ -10,6 +10,8 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { revalidatePath } from 'next/cache';
 import type { BaseActionState } from '@/server/types/actionState';
+import { checkRateLimit } from '@/server/services/rateLimitService';
+import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 
 export type CreateAccountCreateLinkActionState = BaseActionState & {
   generatedUrl: string | null;
@@ -21,7 +23,18 @@ export type DeactivateAccountCreateLinkActionState = BaseActionState;
 export async function createAccountCreateLinkAction(
   _prevState: CreateAccountCreateLinkActionState,
   formData: FormData,
-) {
+): Promise<CreateAccountCreateLinkActionState> {
+    await recordCurrentRequestDevice();
+
+    const rateLimitResult = await checkRateLimit('createAccountCreateLink');
+    if (!rateLimitResult.allowed) {
+        return {
+            error: 'アカウント作成リンク作成試行が多すぎます。しばらくしてから再度お試しください。',
+            generatedUrl: null,
+            expiresAt: null,
+        };
+    }
+
     const parsed = createAccountCreateLinkSchema.safeParse({
         expiresInMinutes: formData.get('expiresInMinutes'),
     });

@@ -6,6 +6,7 @@ import { loginSchema, registerSchema } from '@/server/schemas/authSchemas';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
 import { registerAccount, signIn } from '@/server/services/authService';
+import { checkRateLimit } from '@/server/services/rateLimitService';
 import type { BaseActionState } from '@/server/types/actionState';
 
 export type ActionState = BaseActionState;
@@ -16,6 +17,11 @@ export async function loginAction(
   formData: FormData,
 ): Promise<ActionState> {
   await recordCurrentRequestDevice();
+
+  const rateLimitResult = await checkRateLimit('login');
+  if (!rateLimitResult.allowed) {
+    return { error: 'ログイン試行が多すぎます。しばらくしてから再度お試しください。' };
+  }
 
   const parsed = loginSchema.safeParse({
     username: formData.get('username'),
@@ -46,6 +52,13 @@ export async function registerAction(
   _prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  await recordCurrentRequestDevice();
+
+  const rateLimitResult = await checkRateLimit('register');
+  if (!rateLimitResult.allowed) {
+    return { error: 'アカウント作成試行が多すぎます。しばらくしてから再度お試しください。' };
+  }
+
   const parsed = registerSchema.safeParse({
     session: formData.get('session'),
     username: formData.get('username'),
