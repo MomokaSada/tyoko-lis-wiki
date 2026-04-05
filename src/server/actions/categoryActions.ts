@@ -8,6 +8,7 @@ import { createCategoryAsAdmin, updateCategoryAsAdmin } from '@/server/services/
 import { BaseActionState } from '@/server/types/actionState';
 import { checkRateLimit } from '@/server/services/rateLimitService';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
+import { recordAuditLog } from '@/server/services/auditLogService';
 
 export type CategoryActionState = BaseActionState & {
   success: string | null;

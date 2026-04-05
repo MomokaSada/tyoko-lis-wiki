@@ -5,6 +5,7 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { banAccountSchema } from '@/server/schemas/accountBanSchemas';
 import { banAccount, unbanAccount } from '@/server/services/accountBanService';
+import { recordAuditLog } from '@/server/services/auditLogService';
 import type { BaseActionState } from '@/server/types/actionState';
 
 export type BanAccountActionState = BaseActionState;
@@ -38,6 +39,13 @@ export async function banAccountAction(
       error: result.error,
     };
   }
+
+  await recordAuditLog({
+    actorId: actor.id,
+    action: "ban_account",
+    targetType: "user",
+    targetId: String(parsed.data.userId),
+  });
 
   revalidatePath('/owner/account-bans');
 
@@ -75,6 +83,12 @@ export async function unbanAccountAction(
       error: result.error,
     };
   }
+  await recordAuditLog({
+    actorId: actor.id,
+    action: "unban_account",
+    targetType: "user",
+    targetId: String(parsed.data.userId),
+  });
 
   revalidatePath('/owner/account-bans');
 

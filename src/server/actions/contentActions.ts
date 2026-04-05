@@ -15,6 +15,7 @@ import { recordCurrentEditDeviceSession, recordCurrentRequestDevice } from '@/se
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
 import { BaseActionState } from '@/server/types/actionState';
 import { checkRateLimit } from '@/server/services/rateLimitService';
+import { recordAuditLog } from '@/server/services/auditLogService';
 
 export type ContentActionState = BaseActionState & {
   slug: string | null;
@@ -93,6 +94,14 @@ export async function createContentAction(
       title: null,
     };
   }
+
+  await recordAuditLog({
+    actorId: editor.type === "actor" ? editor.actorId : null,
+    action: "create_content",
+    targetType: "content",
+    targetId: String(result.data.id),
+    detail: { slug: result.data.slug },
+  });
 
   await recordCurrentRequestDevice();
 
@@ -177,6 +186,14 @@ export async function updateContentAction(
   }
 
   await recordCurrentRequestDevice();
+  await recordAuditLog({
+    actorId: editor.type === "actor" ? editor.actorId : null,
+    action: "update_content",
+    targetType: "content",
+    targetId: String(result.data.id),
+    detail: { slug: result.data.slug },
+  });
+
 
   const destination =
     parsed.data.session && parsed.data.session.length > 0
@@ -236,6 +253,14 @@ export async function deleteContentAction(
       title: null,
     };
   }
+
+  await recordAuditLog({
+    actorId: actor.id,
+    action: 'delete_content',
+    targetType: 'content',
+    targetId: String(result.data.id),
+    detail: { slug: result.data.slug, title: result.data.title },
+  });
 
   return {
     error: null,

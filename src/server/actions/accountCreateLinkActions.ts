@@ -12,6 +12,7 @@ import { revalidatePath } from 'next/cache';
 import type { BaseActionState } from '@/server/types/actionState';
 import { checkRateLimit } from '@/server/services/rateLimitService';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
+import { recordAuditLog } from '@/server/services/auditLogService';
 
 export type CreateAccountCreateLinkActionState = BaseActionState & {
   generatedUrl: string | null;
@@ -67,6 +68,13 @@ export async function createAccountCreateLinkAction(
         };
     }
 
+    await recordAuditLog({
+        actorId: actor.id,
+        action: "create_account_link",
+        targetType: "account_link",
+        detail: { expiresAt: result.data.endAt.toISOString() },
+    });
+
     return {
         error: null,
         generatedUrl: result.data.url,
@@ -103,6 +111,13 @@ export async function deactivateAccountCreateLinkAction(
             error: result.error,
         };
     }
+
+    await recordAuditLog({
+        actorId: actor.id,
+        action: "deactivate_account_link",
+        targetType: "account_link",
+        targetId: parsed.data.uuid,
+    });
 
     revalidatePath('/owner/account-create-links');
 
