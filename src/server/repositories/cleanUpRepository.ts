@@ -6,15 +6,13 @@ import { auditLogs } from "@/db/schema";
 export async function deleteRateLimitRecords(createdAt: Date) {
     const result = await db
         .delete(rateLimitRecords)
-        .where(lt(rateLimitRecords.createdAt, createdAt))
-        .returning({ id: rateLimitRecords.id });
-    return result.length;
+        .where(lt(rateLimitRecords.createdAt, createdAt));
+    return result.count;
 }
 
 export async function deleteAuditLogs(createdAt: Date) {
     const result = await db
         .delete(auditLogs)
-        .where(lt(auditLogs.createdAt, createdAt))
-        .returning({ id: auditLogs.id });
-    return result.length;
+        .where(lt(auditLogs.createdAt, createdAt));
+    return result.count;
 }
