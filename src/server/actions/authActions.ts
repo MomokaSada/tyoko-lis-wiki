@@ -97,8 +97,6 @@ export async function registerAction(
     return { error: result.error };
   }
 
-  await recordCurrentRequestDevice();
-
   const loginResult = await signIn({
     username: parsed.data.username,
     password: parsed.data.password,

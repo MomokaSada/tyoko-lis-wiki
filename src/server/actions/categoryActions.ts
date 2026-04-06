@@ -47,6 +47,17 @@ export async function createCategoryAction(
     return { error: result.error, success: null };
   }
 
+  await recordAuditLog({
+    actorId: actor.id,
+    action: 'create_category',
+    targetId: String(result.data.id),
+    targetType: 'category',
+    detail: {
+      name: result.data.name,
+      parentId: result.data.parentId,
+    },
+  });
+  
   revalidatePath('/admin/categories');
 
   return {
@@ -88,6 +99,17 @@ export async function updateCategoryAction(
   if (!result.success) {
     return { error: result.error, success: null };
   }
+
+  await recordAuditLog({
+    actorId: actor.id,
+    action: 'update_category',
+    targetId: String(result.data.id),
+    targetType: 'category',
+    detail: {
+      name: result.data.name,
+      parentId: result.data.parentId,
+    },
+  });
 
   revalidatePath('/admin/categories');
 

@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { rateLimitRecords } from "@/db/schema";
-import { and, eq, gte, sql } from "drizzle-orm";
+import { and, eq, gte, count } from "drizzle-orm";
 
 export async function countRateLimitRecords(
     ip: string,
@@ -8,7 +8,7 @@ export async function countRateLimitRecords(
     windowStart: Date
 ): Promise<number> {
     const result = await db
-        .select({ const: sql<number>`count(*)::int`})
+        .select({ count: count() })
         .from(rateLimitRecords)
         .where(
             and(
@@ -18,7 +18,7 @@ export async function countRateLimitRecords(
             )
         );
 
-    return result[0]?.const ?? 0;
+    return result[0]?.count ?? 0;
 }
 
 export async function insertRateLimitRecord(
