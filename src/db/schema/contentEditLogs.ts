@@ -22,7 +22,7 @@ export const contentEditLogs = pgTable('content_edit_logs', {
     type: snapshotTypeEnum('type').notNull(),
     title: varchar('title', { length: 255 }),
     data: text('data'),
-    thumbnail: varchar('thumbnail', { length: 512 }),
+    thumbnail: text('thumbnail'),
     tagChanged: boolean('tag_changed'),
     categoryChanged: boolean('category_changed'),
     createdAt: timestamp('created_at').defaultNow().notNull(),

@@ -12,6 +12,12 @@ export default async function AdminPage() {
         <strong>あなたのロール (Proxyから付与): </strong> {userRole || 'なし'}
       </div>
       <br/>
+      <a href="/admin/edit-links" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
+        記事編集リンク管理へ
+      </a>
+      <a href="/admin/categories" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
+        カテゴリ管理へ
+      </a>
       <a href="/" style={{ color: 'blue' }}>ホームに戻る</a>
     </main>
   );

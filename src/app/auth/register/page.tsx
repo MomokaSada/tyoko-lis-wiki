@@ -1,4 +1,5 @@
 import { requireAccountCreateSession } from '@/lib/auth/guards';
+import { RegisterForm } from './register-form';
 
 export default async function AccountRegisterPage({
   searchParams,
@@ -12,15 +13,28 @@ export default async function AccountRegisterPage({
   const { valid, token } = await requireAccountCreateSession(sessionToken);
 
   return (
-    <main style={{ padding: '2rem' }}>
-      <h1>アカウント本登録 (/auth/register)</h1>
-      <p>ここにアカウント登録フォームが入ります。</p>
-      <div style={{ padding: '1rem', background: '#f0f0f0', marginTop: '1rem' }}>
-        <p><strong>Guard 検証:</strong> {valid ? 'OK' : 'NG'}</p>
-        <p><strong>有効な招待トークン:</strong> {token}</p>
+    <main className="min-h-screen bg-gray-50 px-4 py-12">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            招待リンクからアカウントを作成
+          </h1>
+          <p className="text-sm text-gray-600">
+            有効な招待リンクであることを確認したうえで、ログイン用アカウントを作成します。
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+          <p><strong>Guard 検証:</strong> {valid ? 'OK' : 'NG'}</p>
+          <p><strong>有効な招待トークン:</strong> {token}</p>
+        </div>
+
+        {token && <RegisterForm sessionToken={token} />}
+
+        <a href="/" className="text-sm text-blue-600 hover:underline">
+          ホームに戻る
+        </a>
       </div>
-      <br/>
-      <a href="/" style={{ color: 'blue' }}>ホームに戻る</a>
     </main>
   );
 }

@@ -1,0 +1,66 @@
+import { AccountCreateLinkForm } from './account-create-link-form';
+import { getCurrentActor } from '@/server/lib/currentActor';
+import { formatDateTimeJst } from '@/lib/format/formatDateTime';
+import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
+import { InvalidButton } from './invalid-button';
+
+function getStatusLabel(status: 'active' | 'expired' | 'inactive') {
+  switch (status) {
+    case 'active':
+      return '有効';
+    case 'expired':
+      return '期限切れ';
+    case 'inactive':
+      return '無効化済み';
+  }
+}
+
+export default async function AccountCreateLinksPage() {
+  const actor = await getCurrentActor();
+  const links = actor ? await getAccountCreateLinks(actor) : [];
+
+  return (
+    <main style={{ padding: '2rem' }}>
+      <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '1.5rem' }}>
+        アカウント作成リンク管理
+      </h1>
+
+      <AccountCreateLinkForm />
+
+      <section>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
+          発行済みリンク一覧
+        </h2>
+
+        {links.length === 0 ? (
+          <p>まだ発行されたリンクはありません。</p>
+        ) : (
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            {links.map((link) => (
+              <article
+                key={link.uuid}
+                style={{ border: '1px solid #ddd', padding: '1rem', background: '#fff' }}
+              >
+                <p><strong>UUID:</strong> <code>{link.uuid}</code></p>
+                <p><strong>状態:</strong> {getStatusLabel(link.status)}</p>
+                <p><strong>発行者:</strong> {link.authorName ?? `user:${link.authorId}`}</p>
+                <p><strong>開始:</strong> {formatDateTimeJst(link.startAt)}</p>
+                <p><strong>終了:</strong> {formatDateTimeJst(link.endAt)}</p>
+                <p><strong>作成:</strong> {formatDateTimeJst(link.createdAt)}</p>
+                <p>
+                  <strong>リンク:</strong>{' '}
+                  <code>{`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}</code>
+                </p>
+                {link.status === 'active' && (
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <InvalidButton uuid={link.uuid} />
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
