@@ -29,6 +29,48 @@
       "when": 1774441698585,
       "tag": "0003_stormy_peter_parker",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774789692279,
+      "tag": "0004_broad_franklin_richards",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774790000000,
+      "tag": "0005_curious_lockjaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774992000000,
+      "tag": "0006_freezing_thunderbolt",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1775249047578,
+      "tag": "0007_powerful_mentallo",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1775363100650,
+      "tag": "0008_minor_bastion",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1775439966716,
+      "tag": "0009_cultured_phantom_reporter",
+      "breakpoints": true
     }
   ]
 }

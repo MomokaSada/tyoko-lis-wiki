@@ -1,4 +1,5 @@
 import { headers } from 'next/headers';
+import { OrphanThumbnailCleanupForm } from './orphan-thumbnail-cleanup-form';
 
 export default async function OwnerPage() {
   const headersList = await headers();
@@ -12,7 +13,20 @@ export default async function OwnerPage() {
         <strong>あなたのロール (Proxyから付与): </strong> {userRole || 'なし'}
       </div>
       <br/>
+      <a href="/owner/account-create-links" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
+        アカウント作成リンク生成へ
+      </a>
+      <a href="/owner/account-bans" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
+        アカウントBAN管理へ
+      </a>
+      <a href="/owner/ip-bans" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
+        IPアドレスBAN管理へ
+      </a>
+      <a href="/owner/edit-link-usage" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
+        編集リンク使用状況へ
+      </a>
       <a href="/" style={{ color: 'blue' }}>ホームに戻る</a>
+      <OrphanThumbnailCleanupForm />
     </main>
   );
 }
