@@ -3,27 +3,27 @@
 import { createAccountCreateLinkSchema } from '@/server/schemas/accountCreateLinkSchemas';
 import { deactivateAccountCreateLinkSchema } from '@/server/schemas/accountCreateLinkSchemas';
 import {
-  createAccountCreateLink,
-  deactivateAccountCreateLink,
+    createAccountCreateLink,
+    deactivateAccountCreateLink,
 } from '@/server/services/accountCreateLinkService';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { revalidatePath } from 'next/cache';
-import type { BaseActionState } from '@/server/types/actionState';
+import type { BaseActionState } from '@/types/actionState';
 import { checkRateLimit } from '@/server/services/rateLimitService';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { recordAuditLog } from '@/server/services/auditLogService';
 
 export type CreateAccountCreateLinkActionState = BaseActionState & {
-  generatedUrl: string | null;
-  expiresAt: string | null;
+    generatedUrl: string | null;
+    expiresAt: string | null;
 };
 
 export type DeactivateAccountCreateLinkActionState = BaseActionState;
 
 export async function createAccountCreateLinkAction(
-  _prevState: CreateAccountCreateLinkActionState,
-  formData: FormData,
+    _prevState: CreateAccountCreateLinkActionState,
+    formData: FormData,
 ): Promise<CreateAccountCreateLinkActionState> {
     await recordCurrentRequestDevice();
 
@@ -83,8 +83,8 @@ export async function createAccountCreateLinkAction(
 }
 
 export async function deactivateAccountCreateLinkAction(
-  _prevState: DeactivateAccountCreateLinkActionState,
-  formData: FormData,
+    _prevState: DeactivateAccountCreateLinkActionState,
+    formData: FormData,
 ): Promise<DeactivateAccountCreateLinkActionState> {
     const parsed = deactivateAccountCreateLinkSchema.safeParse({
         uuid: formData.get('uuid'),

@@ -5,7 +5,7 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { createIpBanSchema, deactivateIpBanSchema } from '@/server/schemas/ipBanSchemas';
 import { createIpBan, deactivateIpBan } from '@/server/services/ipBanService';
-import type { BaseActionState } from '@/server/types/actionState';
+import type { BaseActionState } from '@/types/actionState';
 import { checkRateLimit } from '@/server/services/rateLimitService';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { recordAuditLog } from "@/server/services/auditLogService";

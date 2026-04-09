@@ -120,8 +120,7 @@ async function seed() {
       if (existing.length > 0) {
         console.log(`  ⏭️  public.users に "${tu.username}" は既に存在`);
       } else {
-        const bcrypt = await import('bcrypt');
-        const hashedPassword = await bcrypt.hash(tu.password, 10);
+        const hashedPassword = await Bun.password.hash(tu.password);
 
         await db.insert(users).values({
           accountCreateSessionId: null,

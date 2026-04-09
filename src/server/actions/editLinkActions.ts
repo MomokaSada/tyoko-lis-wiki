@@ -4,7 +4,7 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { createEditLinkSchema } from '@/server/schemas/editLinkSchemas';
 import { createEditLink } from '@/server/services/editLinkService';
-import type { BaseActionState } from '@/server/types/actionState';
+import type { BaseActionState } from '@/types/actionState';
 import { checkRateLimit } from '@/server/services/rateLimitService';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { recordAuditLog } from '@/server/services/auditLogService';

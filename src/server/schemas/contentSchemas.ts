@@ -7,7 +7,8 @@ const slugSchema = z
   .trim()
   .min(1, 'スラッグを入力してください')
   .max(255, 'スラッグは255文字以内で入力してください')
-  .regex(/^[\p{L}\p{N}-]+$/u, 'スラッグに使用できない文字が含まれています');
+  .transform(slugify)
+  .refine((val) => /^[\p{L}\p{N}-]+$/u.test(val), 'スラッグに使用できない文字が含まれています');
 
 const taxonomySelectionSchema = z.object({
   tagIds: z.array(z.coerce.number().int().positive()).default([]),
@@ -26,7 +27,12 @@ const thumbnailUrlSchema = z.preprocess(
     const trimmed = value.trim();
     return trimmed === '' ? null : trimmed;
   },
-  z.string().url('サムネイルURLは正しいURL形式で入力してください').nullable(),
+  z.string()
+    .refine(
+      (val) => val.startsWith('http') || val.startsWith('/'),
+      'サムネイルはURLまたはパスの形式で入力してください'
+    )
+    .nullable(),
 );
 
 export const createContentSchema = z.object({

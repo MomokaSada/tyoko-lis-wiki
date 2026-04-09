@@ -7,18 +7,18 @@ export default function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginAction, { error: null });
 
   return (
-    <form action={formAction} className="w-full max-w-sm space-y-5">
+    <form action={formAction} className="space-y-5">
       {/* エラー表示 */}
       {state.error && (
-        <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 font-bold">
           {state.error}
         </div>
       )}
 
       {/* ユーザー名 */}
-      <div className="space-y-1.5">
-        <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          ユーザー名
+      <div className="space-y-1">
+        <label htmlFor="username" className="text-xs font-bold text-stone-500 uppercase tracking-wider block">
+          User Name
         </label>
         <input
           id="username"
@@ -26,28 +26,25 @@ export default function LoginForm() {
           type="text"
           required
           placeholder="admin"
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm
-                     shadow-sm transition-colors
-                     focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20
-                     dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all font-medium text-stone-900"
         />
       </div>
 
       {/* パスワード */}
-      <div className="space-y-1.5">
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          パスワード
-        </label>
+      <div className="space-y-1">
+        <div className="flex justify-between items-center">
+          <label htmlFor="password" className="text-xs font-bold text-stone-500 uppercase tracking-wider block">
+            Password
+          </label>
+          <a href="#" className="text-xs font-bold text-amber-600 hover:text-amber-700 hidden">パスワードをお忘れですか？</a>
+        </div>
         <input
           id="password"
           name="password"
           type="password"
           required
-          placeholder="password123"
-          className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm
-                     shadow-sm transition-colors
-                     focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20
-                     dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+          placeholder="••••••••"
+          className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all font-medium text-stone-900"
         />
       </div>
 
@@ -55,21 +52,18 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white
-                   shadow-sm transition-all
-                   hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50
-                   disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full py-3.5 bg-stone-900 text-white font-bold rounded-xl mt-4 hover:bg-stone-800 hover:-translate-y-0.5 transition-all shadow-lg shadow-stone-900/20 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
       >
-        {isPending ? 'ログイン中...' : 'ログイン'}
+        {isPending ? '認証中...' : 'ログイン'}
       </button>
 
-      {/* テスト用ヒント */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-500 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400">
-        <p className="mb-1 font-semibold">テスト用アカウント:</p>
-        <ul className="space-y-0.5">
-          <li><code>admin</code> / <code>password123</code> (Admin)</li>
-          <li><code>owner</code> / <code>password123</code> (Owner)</li>
-          <li><code>user</code>  / <code>password123</code> (一般)</li>
+      {/* テスト用ヒント (モックでは消してもいいが元のロジック維持のためスタイリングして残す) */}
+      <div className="mt-8 rounded-xl border border-stone-200 bg-stone-50 p-4 text-xs text-stone-500">
+        <p className="mb-2 font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-500"></span>テスト用アカウント:</p>
+        <ul className="space-y-1 ml-4 list-disc marker:text-stone-300">
+          <li><strong>admin</strong> / password123 (Admin)</li>
+          <li><strong>owner</strong> / password123 (Owner)</li>
+          <li><strong>user</strong> / password123 (一般)</li>
         </ul>
       </div>
     </form>

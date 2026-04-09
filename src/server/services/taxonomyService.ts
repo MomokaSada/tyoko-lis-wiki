@@ -41,29 +41,23 @@ function sameIds(a: number[], b: number[]) {
   return left.every((value, index) => value === right[index]);
 }
 
-function buildCategoryLabel(
+export function buildCategoryLabel(
   categoryId: number,
-  categories: Array<{ id: number; name: string; parentId: number | null }>,
-  seen = new Set<number>(),
+  allCategories: any[],
+  depth = 0
 ): string {
-  if (seen.has(categoryId)) {
-    return '[循環]';
+  // 無限再帰防止 (最大10階層まで)
+  if (depth > 10) return '...';
+
+  const category = allCategories.find((c) => c.id === categoryId);
+  if (!category) return 'Unknown';
+
+  if (category.parentId) {
+    const parentLabel = buildCategoryLabel(category.parentId, allCategories, depth + 1);
+    return `${parentLabel} > ${category.name}`;
   }
 
-  const category = categories.find((item) => item.id === categoryId);
-  if (!category) {
-    return '';
-  }
-
-  if (category.parentId === null) {
-    return category.name;
-  }
-
-  seen.add(categoryId);
-  const parentLabel = buildCategoryLabel(category.parentId, categories, seen);
-  seen.delete(categoryId);
-
-  return parentLabel ? `${parentLabel} > ${category.name}` : category.name;
+  return category.name;
 }
 
 function wouldCreateCategoryCycle(
@@ -170,6 +164,52 @@ export function detectTaxonomyChanges(
     tagChanged: !sameIds(current.tagIds, next.tagIds),
     categoryChanged: !sameIds(current.categoryIds, next.categoryIds),
   };
+}
+
+/**
+ * 記事に紐付く全てのタグとカテゴリの情報を取得します
+ */
+export async function getFullContentTaxonomy(contentId: number) {
+  const [tagIds, categoryIds] = await Promise.all([
+    listContentTagIds(contentId),
+    listContentCategoryIds(contentId),
+  ]);
+
+  const [tagRows, categoryRows] = await Promise.all([
+    listTags(),
+    listCategories(),
+  ]);
+
+  const contentTags = tagRows.filter((t) => tagIds.includes(t.id));
+  const contentCategories = categoryRows.filter((c) => categoryIds.includes(c.id));
+
+  return {
+    tags: contentTags,
+    categories: contentCategories,
+    allCategories: categoryRows, // 階層解決用
+  };
+}
+
+/**
+ * 特定のカテゴリからルートまでのパス（親子関係）を解決します
+ */
+export function resolveCategoryPath(
+  categoryId: number,
+  allCategories: Array<{ id: number; name: string; parentId: number | null }>
+): Array<{ id: number; name: string }> {
+  const path: Array<{ id: number; name: string }> = [];
+  let currentId: number | null = categoryId;
+  const seen = new Set<number>();
+
+  while (currentId !== null && !seen.has(currentId)) {
+    seen.add(currentId);
+    const category = allCategories.find((c) => c.id === currentId);
+    if (!category) break;
+    path.unshift({ id: category.id, name: category.name });
+    currentId = category.parentId;
+  }
+
+  return path;
 }
 
 export async function createCategoryAsAdmin(

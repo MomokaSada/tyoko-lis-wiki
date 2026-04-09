@@ -10,6 +10,11 @@ function nextWithRole(request: NextRequest, role: string): NextResponse {
   return NextResponse.next({ request: { headers } });
 }
 
+function isServerActionRequest(request: NextRequest): boolean {
+  // Server Actions are posted to the current route and include this header.
+  return request.headers.has('next-action');
+}
+
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { response, user } = await updateSession(request);
   const requirement = getRequirement(request.nextUrl.pathname);
@@ -38,6 +43,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     case 'createAndEditPost': {
       if (user && ADMIN_ROLES.includes(user.app_metadata?.role)) {
         return nextWithRole(request, user.app_metadata?.role);
+      }
+      if (isServerActionRequest(request)) {
+        return response;
       }
       const editSessionToken = request.nextUrl.searchParams.get('session');
       if (editSessionToken) {
