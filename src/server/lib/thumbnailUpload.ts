@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 
 const DEFAULT_BUCKET = 'content-thumbnails';
 const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024;
@@ -99,7 +100,13 @@ export async function uploadThumbnailFile(file: FormDataEntryValue | null) {
   }
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-  return data.publicUrl;
+  
+  try {
+    const url = new URL(data.publicUrl);
+    return url.pathname;
+  } catch {
+    return data.publicUrl;
+  }
 }
 
 function joinPrefix(prefix: string, name: string) {
@@ -179,6 +186,8 @@ export function extractThumbnailStoragePath(publicUrl: string) {
     return rawPath;
   }
 }
+
+export { getPublicThumbnailUrl };
 
 export async function deleteThumbnailObjects(paths: string[]) {
   if (paths.length === 0) {

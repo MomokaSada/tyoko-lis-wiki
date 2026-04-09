@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "katex/dist/katex.min.css";
+@plugin "@tailwindcss/typography";
 
 :root {
   --background: #ffffff;
@@ -23,4 +25,278 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Fix MDXEditor inline images causing text to flow to their right */
+.md-editor-container img {
+  display: block;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  clear: both;
+}
+
+/* --- MDXEditor UI Fixes --- */
+
+/* 1. CodeBlock の行のズレ問題を修正 */
+.md-editor-container pre,
+.md-editor-container .cm-scroller {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+/* CodeMirror の行番号とハイライトの高さを揃える */
+.md-editor-container .cm-editor,
+.md-editor-container .cm-line,
+.md-editor-container .cm-gutterElement {
+  line-height: 1.6 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* 2. プルダウン（テキスト種類選択等）のUIを分かりやすく立体的にする */
+.md-editor-container [role="combobox"] {
+  background-color: #ffffff !important;
+  border: 1px solid #d6d3d1 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+  border-radius: 0.5rem !important;
+  padding: 0.25rem 0.75rem !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.md-editor-container [role="combobox"]:hover {
+  background-color: #f5f5f4 !important;
+  border-color: #a8a29e !important;
+}
+
+/* 3. 引用 (blockquote) のデザイン修正と連続時の隙間解消 - プレミアムWiki風 */
+:where(.prose, .md-editor-container) blockquote {
+  border-left: 3px solid #e5e7eb !important;
+  background-color: #f9fafb !important;
+  padding: 0.75rem 1rem !important;
+  margin-inline: 0 !important;
+  margin-block: 1rem !important;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+  overflow: hidden;
+}
+
+/* 連続する引用の隙間を縮めて繋げる（完全にはくっつけない） */
+:where(.prose, .md-editor-container) blockquote:has(+ blockquote) {
+  margin-bottom: 0.125rem !important;
+}
+
+:where(.prose, .md-editor-container) blockquote+blockquote {
+  margin-top: 0.125rem !important;
+}
+
+:where(.prose, .md-editor-container) blockquote .cm-editor,
+:where(.prose, .md-editor-container) blockquote pre {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* スムーズスクロール時の見出し被り防止 */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  scroll-margin-top: 100px;
+}
+
+.toastui-host .toastui-editor-defaultUI {
+  border: none;
+  border-radius: 0;
+  height: 100%;
+}
+
+.toastui-host .toastui-editor-defaultUI-toolbar {
+  background: #fafaf9;
+  border-bottom: 1px solid #e7e5e4;
+  padding: 0.5rem 0.75rem;
+}
+
+.toastui-host .toastui-editor-main {
+  height: calc(100% - 42px);
+}
+
+.toastui-host .toastui-editor-md-container,
+.toastui-host .toastui-editor-ww-container {
+  background: #ffffff;
+  height: 100%;
+}
+
+.toastui-host .toastui-editor-md-container .CodeMirror,
+.toastui-host .toastui-editor-ww-container .ProseMirror,
+.toastui-host .toastui-editor-md-preview {
+  font-size: 0.95rem;
+  line-height: 1.8;
+  height: 100% !important;
+}
+
+.toastui-host .toastui-editor-md-container .CodeMirror,
+.toastui-host .toastui-editor-ww-container .ProseMirror {
+  padding: 1.25rem 1.5rem;
+}
+
+.toastui-host .toastui-editor-md-preview {
+  padding: 1.25rem 1.5rem;
+}
+
+.toastui-host .toastui-editor-mode-switch {
+  background: #fafaf9;
+  border-top: 1px solid #e7e5e4;
+  margin-top: 0;
+}
+
+.toastui-host .toastui-editor-mode-switch .tab-item {
+  background: #f5f5f4;
+  color: #78716c;
+  border-color: #e7e5e4;
+}
+
+.toastui-host .toastui-editor-mode-switch .tab-item.active {
+  background: #ffffff;
+  color: #1c1917;
+}
+
+.toastui-host .toastui-editor-main-container,
+.toastui-host .toastui-editor-md-tab-container,
+.toastui-host .toastui-editor-md-splitter {
+  height: 100%;
+}
+
+.toastui-host .toastui-editor-md-splitter {
+  margin: 0;
+}
+
+.article-viewer .toastui-editor-contents {
+  color: #44403c;
+  font-size: 1.05rem;
+  line-height: 1.9;
+  padding: 0;
+}
+
+.article-viewer .toastui-editor-contents > :first-child {
+  margin-top: 0;
+}
+
+.article-viewer .toastui-editor-contents h1,
+.article-viewer .toastui-editor-contents h2,
+.article-viewer .toastui-editor-contents h3,
+.article-viewer .toastui-editor-contents h4,
+.article-viewer .toastui-editor-contents h5,
+.article-viewer .toastui-editor-contents h6 {
+  color: #1c1917;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  scroll-margin-top: 6rem;
+}
+
+.article-viewer .toastui-editor-contents h1 {
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  line-height: 1.12;
+}
+
+.article-viewer .toastui-editor-contents h2 {
+  font-size: clamp(1.7rem, 2.3vw, 2.2rem);
+  line-height: 1.18;
+  margin-top: 3rem;
+}
+
+.article-viewer .toastui-editor-contents h3 {
+  font-size: clamp(1.35rem, 1.9vw, 1.7rem);
+  line-height: 1.24;
+  margin-top: 2.3rem;
+}
+
+.article-viewer .toastui-editor-contents h4,
+.article-viewer .toastui-editor-contents h5,
+.article-viewer .toastui-editor-contents h6 {
+  font-size: 1.1rem;
+  line-height: 1.35;
+  margin-top: 1.7rem;
+}
+
+.article-viewer .toastui-editor-contents p,
+.article-viewer .toastui-editor-contents li,
+.article-viewer .toastui-editor-contents blockquote {
+  color: #57534e;
+}
+
+.article-viewer .toastui-editor-contents code {
+  background: #f5f5f4;
+  color: #292524;
+  border-radius: 0.7rem;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.9em;
+}
+
+.article-viewer .toastui-editor-contents pre {
+  background: #1c1917;
+  border-radius: 2rem;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(28, 25, 23, 0.12);
+}
+
+.article-viewer .toastui-editor-contents pre code {
+  background: transparent;
+  color: #f5f5f4;
+  display: block;
+  padding: 1.75rem 2rem;
+  line-height: 1.8;
+}
+
+.article-viewer .toastui-editor-contents blockquote {
+  border-left: 4px solid #e7e5e4;
+  background: #fafaf9;
+  border-radius: 0 1.5rem 1.5rem 0;
+  padding: 1rem 1.25rem;
+}
+
+.article-viewer .toastui-editor-contents hr {
+  border-color: #e7e5e4;
+  margin: 2.5rem 0;
+}
+
+.article-viewer .toastui-editor-contents table {
+  border-collapse: collapse;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border-style: hidden;
+  box-shadow: 0 0 0 1px #e7e5e4;
+}
+
+.article-viewer .toastui-editor-contents th {
+  background: #f5f5f4;
+  color: #1c1917;
+  font-weight: 800;
+}
+
+.article-viewer .toastui-editor-contents th,
+.article-viewer .toastui-editor-contents td {
+  border: 1px solid #e7e5e4;
+  padding: 0.9rem 1rem;
+  vertical-align: top;
+}
+
+.toc-scroll-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-gutter: auto;
+}
+
+.toc-scroll-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+  background: transparent;
+}
+
+.toc-scroll-hidden::-webkit-scrollbar-thumb,
+.toc-scroll-hidden::-webkit-scrollbar-track {
+  background: transparent;
 }

@@ -13,7 +13,7 @@ import { createContent, deleteContent, updateContent } from '@/server/services/c
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { recordCurrentEditDeviceSession, recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
-import { BaseActionState } from '@/server/types/actionState';
+import { BaseActionState } from '@/types/actionState';
 import { checkRateLimit } from '@/server/services/rateLimitService';
 import { recordAuditLog } from '@/server/services/auditLogService';
 
@@ -107,8 +107,8 @@ export async function createContentAction(
 
   const destination =
     parsed.data.session && parsed.data.session.length > 0
-      ? `/posts/${result.data.slug}?session=${encodeURIComponent(parsed.data.session)}`
-      : `/posts/${result.data.slug}`;
+      ? `/posts/${encodeURIComponent(result.data.slug)}?session=${encodeURIComponent(parsed.data.session)}`
+      : `/posts/${encodeURIComponent(result.data.slug)}`;
 
   redirect(destination);
 }
@@ -197,8 +197,8 @@ export async function updateContentAction(
 
   const destination =
     parsed.data.session && parsed.data.session.length > 0
-      ? `/posts/${result.data.slug}?session=${encodeURIComponent(parsed.data.session)}`
-      : `/posts/${result.data.slug}`;
+      ? `/posts/${encodeURIComponent(result.data.slug)}?session=${encodeURIComponent(parsed.data.session)}`
+      : `/posts/${encodeURIComponent(result.data.slug)}`;
 
   redirect(destination);
 }
@@ -262,9 +262,5 @@ export async function deleteContentAction(
     detail: { slug: result.data.slug, title: result.data.title },
   });
 
-  return {
-    error: null,
-    slug: result.data.slug,
-    title: result.data.title,
-  };
+  redirect('/posts?deleted=1');
 }

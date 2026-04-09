@@ -5,7 +5,7 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { createCategorySchema, updateCategorySchema } from '@/server/schemas/categorySchemas';
 import { createCategoryAsAdmin, updateCategoryAsAdmin } from '@/server/services/taxonomyService';
-import { BaseActionState } from '@/server/types/actionState';
+import { BaseActionState } from '@/types/actionState';
 import { checkRateLimit } from '@/server/services/rateLimitService';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { recordAuditLog } from '@/server/services/auditLogService';
@@ -57,7 +57,7 @@ export async function createCategoryAction(
       parentId: result.data.parentId,
     },
   });
-  
+
   revalidatePath('/admin/categories');
 
   return {

@@ -3,6 +3,8 @@ import { formatDateTimeJst } from '@/lib/format/formatDateTime';
 import { getActiveIpBans, getIpDeviceRecords } from '@/server/services/ipBanService';
 import { IpBanForm } from './ip-ban-form';
 import { UnIpBanButton } from './un-ip-ban-button';
+import Link from 'next/link';
+import { ShieldBan, AlertTriangle } from 'lucide-react';
 
 export default async function IpBansPage() {
   const actor = await getCurrentActor();
@@ -11,79 +13,124 @@ export default async function IpBansPage() {
   const isOwner = actor?.role === 'owner';
 
   return (
-    <main style={{ padding: '2rem' }}>
-      <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '1.5rem' }}>
-        IP BAN 管理
-      </h1>
+    <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500 text-stone-900">
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center shrink-0">
+          <ShieldBan className="w-6 h-6" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-black text-stone-800 tracking-tighter mb-1">IP BAN 管理</h1>
+          <p className="text-stone-500 font-medium text-sm">悪意のあるアクセスをIP単位でブロックします。</p>
+        </div>
+      </div>
 
-      {isOwner ? (
-        <IpBanForm />
-      ) : (
-        <p style={{ marginBottom: '1.5rem', color: '#b45309' }}>
+      {!isOwner ? (
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center gap-2 font-bold text-sm">
+          <AlertTriangle className="w-5 h-5" />
           この機能は owner のみ利用できます。
-        </p>
+        </div>
+      ) : (
+        <>
+          <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm">
+            <h2 className="text-lg font-bold text-stone-800 mb-6 flex items-center gap-2">IP BAN 登録</h2>
+            <IpBanForm />
+          </div>
+
+          <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm">
+            <h2 className="text-xl font-bold text-stone-800 mb-6 pb-4 border-b border-stone-100">有効な IP BAN 一覧</h2>
+            {bans.length === 0 ? (
+              <p className="text-stone-500">有効なIP BANはまだありません。</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="text-stone-400 border-b border-stone-100 font-bold uppercase tracking-wider text-[10px]">
+                      <th className="pb-3 px-4">IP Address</th>
+                      <th className="pb-3 px-4">Browser Info</th>
+                      <th className="pb-3 px-4">Reason / Author</th>
+                      <th className="pb-3 px-4">Date</th>
+                      <th className="pb-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-50">
+                    {bans.map((ban) => (
+                      <tr key={ban.id} className="hover:bg-stone-50 transition-colors group">
+                        <td className="py-4 px-4 font-mono font-bold text-red-600">{ban.ip}</td>
+                        <td className="py-4 px-4 text-xs text-stone-500 max-w-[200px] truncate">{ban.browser}</td>
+                        <td className="py-4 px-4">
+                          <div className="font-medium text-stone-700 mb-1">{ban.reason}</div>
+                          <div className="text-[10px] text-stone-400">By: {ban.blockedByName ?? `user:${ban.blockedBy}`}</div>
+                        </td>
+                        <td className="py-4 px-4 text-xs text-stone-500">{formatDateTimeJst(ban.createdAt).split(' ')[0]}</td>
+                        <td className="py-4 px-4 text-right">
+                          <UnIpBanButton banId={ban.id} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm">
+            <h2 className="text-xl font-bold text-stone-800 mb-6 pb-4 border-b border-stone-100">アクセス記録一覧</h2>
+            {records.length === 0 ? (
+              <p className="text-stone-500">記録された IP はまだありません。</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="text-stone-400 border-b border-stone-100 font-bold uppercase tracking-wider text-[10px]">
+                      <th className="pb-3 px-4">Status</th>
+                      <th className="pb-3 px-4">IP Address</th>
+                      <th className="pb-3 px-4">Activity Date</th>
+                      <th className="pb-3 px-4">BAN Info</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-50">
+                    {records.map((record) => (
+                      <tr key={record.deviceId} className="hover:bg-stone-50 transition-colors group">
+                        <td className="py-4 px-4">
+                          {record.isBanned ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-100 text-red-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> BAN中</span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-stone-100 text-stone-500 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-stone-400"></div> 未BAN</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="font-mono text-stone-800 font-bold mb-1">{record.ip}</div>
+                          <div className="text-[10px] text-stone-400 max-w-[200px] truncate" title={record.browser}>{record.browser}</div>
+                        </td>
+                        <td className="py-4 px-4 text-xs font-medium text-stone-500">
+                          <div><span className="text-stone-400">初回:</span> {formatDateTimeJst(record.firstSeenAt).split(' ')[0]}</div>
+                          <div><span className="text-stone-400">最終:</span> {formatDateTimeJst(record.lastSeenAt).split(' ')[0]}</div>
+                        </td>
+                        <td className="py-4 px-4 text-xs">
+                          {record.isBanned ? (
+                            <div className="text-red-700 font-medium">
+                              <p className="mb-1">{record.banReason}</p>
+                              <p className="text-[10px] text-red-500">By: {record.bannedByName ?? `user:${record.bannedBy}`} {record.bannedAt ? `(${formatDateTimeJst(record.bannedAt).split(' ')[0]})` : ''}</p>
+                            </div>
+                          ) : (
+                            <span className="text-stone-300">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
       )}
 
-      <section>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-          有効な IP BAN 一覧
-        </h2>
-
-        {!isOwner ? (
-          <p>owner 権限を持つユーザーのみ一覧を確認できます。</p>
-        ) : bans.length === 0 ? (
-          <p>有効なIP BANはまだありません。</p>
-        ) : (
-          <div style={{ display: 'grid', gap: '1rem' }}>
-            {bans.map((ban) => (
-              <article key={ban.id} style={{ border: '1px solid #ddd', padding: '1rem', background: '#fff' }}>
-                <p><strong>IP:</strong> {ban.ip}</p>
-                <p><strong>ブラウザ:</strong> {ban.browser}</p>
-                <p><strong>理由:</strong> {ban.reason}</p>
-                <p><strong>登録者:</strong> {ban.blockedByName ?? `user:${ban.blockedBy}`}</p>
-                <p><strong>登録日時:</strong> {formatDateTimeJst(ban.createdAt)}</p>
-                <UnIpBanButton banId={ban.id} />
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section style={{ marginTop: '2rem' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-          IP 記録一覧
-        </h2>
-
-        {!isOwner ? (
-          <p>owner 権限を持つユーザーのみ一覧を確認できます。</p>
-        ) : records.length === 0 ? (
-          <p>記録された IP はまだありません。</p>
-        ) : (
-          <div style={{ display: 'grid', gap: '1rem' }}>
-            {records.map((record) => (
-              <article
-                key={record.deviceId}
-                style={{ border: '1px solid #ddd', padding: '1rem', background: '#fff' }}
-              >
-                <p><strong>状態:</strong> {record.isBanned ? 'BAN中' : '未BAN'}</p>
-                <p><strong>IP:</strong> {record.ip}</p>
-                <p><strong>ブラウザ:</strong> {record.browser}</p>
-                <p><strong>初回記録:</strong> {formatDateTimeJst(record.firstSeenAt)}</p>
-                <p><strong>最終記録:</strong> {formatDateTimeJst(record.lastSeenAt)}</p>
-                {record.isBanned ? (
-                  <>
-                    <p><strong>BAN理由:</strong> {record.banReason}</p>
-                    <p><strong>BAN実行者:</strong> {record.bannedByName ?? `user:${record.bannedBy}`}</p>
-                    <p><strong>BAN日時:</strong> {record.bannedAt ? formatDateTimeJst(record.bannedAt) : '不明'}</p>
-                  </>
-                ) : (
-                  <p><strong>BAN情報:</strong> なし</p>
-                )}
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-    </main>
+      <div className="pt-8">
+        <Link href="/owner" className="text-sm font-bold text-stone-500 hover:text-stone-800 transition-colors">
+          ← オーナー画面に戻る
+        </Link>
+      </div>
+    </div>
   );
 }

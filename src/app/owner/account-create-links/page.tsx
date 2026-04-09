@@ -3,15 +3,17 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { formatDateTimeJst } from '@/lib/format/formatDateTime';
 import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
 import { InvalidButton } from './invalid-button';
+import Link from 'next/link';
+import { KeySquare } from 'lucide-react';
 
-function getStatusLabel(status: 'active' | 'expired' | 'inactive') {
+function getStatusBadge(status: 'active' | 'expired' | 'inactive') {
   switch (status) {
     case 'active':
-      return '有効';
+      return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-100 text-green-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> 有効</span>;
     case 'expired':
-      return '期限切れ';
+      return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-100 text-red-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> 期限切れ</span>;
     case 'inactive':
-      return '無効化済み';
+      return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-stone-100 text-stone-500 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-stone-400"></div> 無効化済み</span>;
   }
 }
 
@@ -20,47 +22,75 @@ export default async function AccountCreateLinksPage() {
   const links = actor ? await getAccountCreateLinks(actor) : [];
 
   return (
-    <main style={{ padding: '2rem' }}>
-      <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '1.5rem' }}>
-        アカウント作成リンク管理
-      </h1>
+    <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500 text-stone-900">
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+          <KeySquare className="w-6 h-6" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-black text-stone-800 tracking-tighter mb-1">アカウント作成リンク管理</h1>
+          <p className="text-stone-500 font-medium text-sm">新規ユーザーの登録セッションリンクを発行・管理します。</p>
+        </div>
+      </div>
 
-      <AccountCreateLinkForm />
+      <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm">
+        <AccountCreateLinkForm />
+      </div>
 
-      <section>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-          発行済みリンク一覧
-        </h2>
+      <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm">
+        <h2 className="text-xl font-bold text-stone-800 mb-6 pb-4 border-b border-stone-100">発行済みリンク一覧</h2>
 
         {links.length === 0 ? (
-          <p>まだ発行されたリンクはありません。</p>
+          <p className="text-stone-500">まだ発行されたリンクはありません。</p>
         ) : (
-          <div style={{ display: 'grid', gap: '1rem' }}>
-            {links.map((link) => (
-              <article
-                key={link.uuid}
-                style={{ border: '1px solid #ddd', padding: '1rem', background: '#fff' }}
-              >
-                <p><strong>UUID:</strong> <code>{link.uuid}</code></p>
-                <p><strong>状態:</strong> {getStatusLabel(link.status)}</p>
-                <p><strong>発行者:</strong> {link.authorName ?? `user:${link.authorId}`}</p>
-                <p><strong>開始:</strong> {formatDateTimeJst(link.startAt)}</p>
-                <p><strong>終了:</strong> {formatDateTimeJst(link.endAt)}</p>
-                <p><strong>作成:</strong> {formatDateTimeJst(link.createdAt)}</p>
-                <p>
-                  <strong>リンク:</strong>{' '}
-                  <code>{`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}</code>
-                </p>
-                {link.status === 'active' && (
-                  <div style={{ marginTop: '0.75rem' }}>
-                    <InvalidButton uuid={link.uuid} />
-                  </div>
-                )}
-              </article>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="text-stone-400 border-b border-stone-100 font-bold uppercase tracking-wider text-[10px]">
+                  <th className="pb-3 px-4">Status</th>
+                  <th className="pb-3 px-4">UUID / URL</th>
+                  <th className="pb-3 px-4">Author</th>
+                  <th className="pb-3 px-4">Dates</th>
+                  <th className="pb-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-stone-50">
+                {links.map((link) => (
+                  <tr key={link.uuid} className="hover:bg-stone-50 transition-colors group">
+                    <td className="py-4 px-4">{getStatusBadge(link.status)}</td>
+                    <td className="py-4 px-4">
+                      <div className="font-mono text-stone-600 mb-1">{link.uuid}</div>
+                      <div className="text-[10px] text-blue-500 hover:underline max-w-[200px] truncate break-all">
+                        <a href={`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`} target="_blank" rel="noreferrer">
+                           {`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}
+                        </a>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 text-stone-700 font-medium">
+                      {link.authorName ?? `user:${link.authorId}`}
+                    </td>
+                    <td className="py-4 px-4 text-xs font-medium text-stone-500">
+                      <div><span className="text-stone-400">開始:</span> {formatDateTimeJst(link.startAt).split(' ')[0]}</div>
+                      <div><span className="text-stone-400">終了:</span> {formatDateTimeJst(link.endAt).split(' ')[0]}</div>
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                      {link.status === 'active' && (
+                        <InvalidButton uuid={link.uuid} />
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
-      </section>
-    </main>
+      </div>
+
+      <div className="pt-8">
+        <Link href="/owner" className="text-sm font-bold text-stone-500 hover:text-stone-800 transition-colors">
+          ← オーナー画面に戻る
+        </Link>
+      </div>
+    </div>
   );
 }

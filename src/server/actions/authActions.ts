@@ -9,7 +9,7 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { recordAuditLog } from '@/server/services/auditLogService';
 import { registerAccount, signIn } from '@/server/services/authService';
 import { checkRateLimit } from '@/server/services/rateLimitService';
-import type { BaseActionState } from '@/server/types/actionState';
+import type { BaseActionState } from '@/types/actionState';
 
 export type ActionState = BaseActionState;
 
