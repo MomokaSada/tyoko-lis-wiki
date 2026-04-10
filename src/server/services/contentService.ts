@@ -12,7 +12,9 @@ import {
   searchVisibleContents,
   searchPublishedContents,
   updateContentWithRevision,
+  countVisibleContents,
 } from '@/server/repositories/contentRepository';
+import type { ContentSortKey, SortOrder } from '@/server/repositories/contentRepository';
 import type { EditorContext } from '@/server/lib/currentEditor';
 import type { DeleteContentInput, UpdateContentInput } from '@/server/schemas/contentSchemas';
 import {
@@ -94,8 +96,8 @@ export async function createContent(
   };
 }
 
-export async function getPublishedContentList() {
-  const rows = await listPublishedContents();
+export async function getPublishedContentList(sort?: ContentSortKey, order?: SortOrder) {
+  const rows = await listPublishedContents(sort, order);
 
   return rows.map((row) => ({
     ...row,
@@ -104,14 +106,14 @@ export async function getPublishedContentList() {
   }));
 }
 
-export async function searchPublishedContentList(query: string) {
+export async function searchPublishedContentList(query: string, sort?: ContentSortKey, order?: SortOrder) {
   const trimmedQuery = query.trim();
 
   if (!trimmedQuery) {
-    return getPublishedContentList();
+    return getPublishedContentList(sort, order);
   }
 
-  const rows = await searchPublishedContents(trimmedQuery);
+  const rows = await searchPublishedContents(trimmedQuery, sort, order);
 
   return rows.map((row) => ({
     ...row,
@@ -120,17 +122,39 @@ export async function searchPublishedContentList(query: string) {
   }));
 }
 
-export async function searchVisibleContentList(query: string, includeUnpublished: boolean) {
+export async function searchVisibleContentList(
+  query: string, 
+  includeUnpublished: boolean,
+  sort?: ContentSortKey,
+  order?: SortOrder,
+  page: number = 1,
+  pageSize: number = 10
+) {
   const trimmedQuery = query.trim();
-  const rows = trimmedQuery
-    ? await searchVisibleContents(trimmedQuery, includeUnpublished)
-    : await listVisibleContents(includeUnpublished);
+  const offset = (page - 1) * pageSize;
 
-  return rows.map((row) => ({
-    ...row,
-    excerpt:
-      row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
-  }));
+  const [totalCount, rows] = await Promise.all([
+    countVisibleContents(trimmedQuery || undefined, includeUnpublished),
+    trimmedQuery
+      ? await searchVisibleContents(trimmedQuery, includeUnpublished, sort, order, pageSize, offset)
+      : await listVisibleContents(includeUnpublished, sort, order, pageSize, offset),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  return {
+    posts: rows.map((row) => ({
+      ...row,
+      excerpt:
+        row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
+    })),
+    pagination: {
+      totalCount,
+      totalPages,
+      currentPage: page,
+      pageSize,
+    }
+  };
 }
 
 export async function getPublishedContentDetail(slug: string) {
