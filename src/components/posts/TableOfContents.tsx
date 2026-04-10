@@ -14,8 +14,9 @@ interface TableOfContentsProps {
 }
 
 export default function TableOfContents({ toc }: TableOfContentsProps) {
-  const [activeId, setActiveId] = useState<string | null>(toc[0]?.id ?? null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedRootId, setExpandedRootId] = useState<string | null>(null);
+  const isInitialRender = useRef(true);
   const navRef = useRef<HTMLDivElement | null>(null);
   const itemRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const rootLevel = useMemo(() => {
@@ -125,15 +126,32 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
       return;
     }
 
-    const activeItem = itemRefs.current[activeId];
-    if (!activeItem) {
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
       return;
     }
 
-    activeItem.scrollIntoView({
-      block: 'nearest',
-      behavior: 'smooth',
-    });
+    const activeItem = itemRefs.current[activeId];
+    const nav = navRef.current;
+    if (!activeItem || !nav) {
+      return;
+    }
+
+    // scrollIntoView({ block: 'nearest' }) は副作用で
+    // コンテナ以外の親（ページ全体など）をスクロールさせることがあるため、
+    // scrollTo を使って目次エリア内のみをスクロールさせる
+    const navRect = nav.getBoundingClientRect();
+    const itemRect = activeItem.getBoundingClientRect();
+
+    if (itemRect.top < navRect.top || itemRect.bottom > navRect.bottom) {
+      const scrollTop = nav.scrollTop;
+      const targetTop = activeItem.offsetTop - nav.clientHeight / 2 + activeItem.clientHeight / 2;
+      
+      nav.scrollTo({
+        top: targetTop,
+        behavior: 'smooth',
+      });
+    }
   }, [activeId]);
 
   const activeRootId = activeId ? parentRootById[activeId] ?? activeId : null;

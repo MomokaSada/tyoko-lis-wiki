@@ -7,7 +7,7 @@ import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 
 export default async function HomePage() {
   // 本番データ取得 (最新3件を急上昇記事代わりに表示)
-  const posts = await searchVisibleContentList('', false);
+  const { posts } = await searchVisibleContentList('', false);
   const recentPosts = posts.slice(0, 3);
   const featuredPost = posts.length > 0 ? posts[0] : null;
 
@@ -84,9 +84,6 @@ export default async function HomePage() {
                 </div>
                 <div className="relative z-10 space-y-4">
                   <h3 className="text-3xl font-black leading-tight line-clamp-2">{featuredPost.title}</h3>
-                  <p className="text-stone-400 text-sm font-medium line-clamp-2">
-                      {featuredPost.excerpt || '記事本文を読む...'}
-                  </p>
                   <div className="inline-flex items-center gap-2 text-amber-400 font-bold text-sm group-hover:gap-4 transition-all">
                     記事を読む <ChevronRight size={16} />
                   </div>
@@ -110,7 +107,6 @@ export default async function HomePage() {
         <h4 className="font-bold text-stone-600 mb-2">【開発用リンク】</h4>
         <ul className="flex flex-wrap gap-4 text-sm text-blue-600">
           <li><Link href="/auth/login">ログイン (/auth/login)</Link></li>
-          <li><Link href="/auth/register">アカウント作成 (/auth/register)</Link></li>
           <li><Link href="/admin">管理画面 (/admin)</Link></li>
           <li><Link href="/owner">オーナー画面 (/owner)</Link></li>
         </ul>
