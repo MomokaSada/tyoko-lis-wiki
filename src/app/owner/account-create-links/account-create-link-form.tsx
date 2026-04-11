@@ -19,43 +19,55 @@ export function AccountCreateLinkForm() {
   );
 
   return (
-    <section style={{ marginBottom: '2rem' }}>
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem' }}>
-        アカウント作成リンク生成
-      </h2>
+    <div className="space-y-6">
+      <form action={action} className="space-y-4 max-w-md">
+        <div className="space-y-2">
+          <label htmlFor="expiresInMinutes" className="text-sm font-bold text-stone-700 uppercase tracking-wider block">
+            有効期限（分）
+          </label>
+          <input
+            id="expiresInMinutes"
+            name="expiresInMinutes"
+            type="number"
+            min={5}
+            max={10080}
+            defaultValue={60}
+            className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all font-medium text-stone-900"
+          />
+          <p className="text-xs text-stone-500">5分～10080分（7日間）で設定できます</p>
+        </div>
 
-      <form action={action} style={{ display: 'grid', gap: '0.75rem', maxWidth: 420 }}>
-        <label htmlFor="expiresInMinutes">有効期限（分）</label>
-        <input
-          id="expiresInMinutes"
-          name="expiresInMinutes"
-          type="number"
-          min={5}
-          max={10080}
-          defaultValue={60}
-          style={{ padding: '0.5rem 0.75rem' }}
-        />
-
-        <button type="submit" disabled={isPending} style={{ width: 'fit-content', padding: '0.5rem 1rem' }}>
-          {isPending ? '生成中...' : 'リンク生成'}
+        <button
+          type="submit"
+          disabled={isPending}
+          className="w-full py-3 bg-stone-900 text-white font-bold rounded-xl hover:bg-stone-800 hover:-translate-y-0.5 transition-all shadow-lg shadow-stone-900/20 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+        >
+          {isPending ? '生成中...' : 'リンクを生成する'}
         </button>
       </form>
 
       {state.error && (
-        <p style={{ marginTop: '1rem', color: '#b91c1c' }}>
+        <div className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 font-bold">
           {state.error}
-        </p>
+        </div>
       )}
 
       {state.generatedUrl && (
-        <div style={{ marginTop: '1rem', padding: '1rem', background: '#f5f5f5' }}>
-          <p><strong>生成されたリンク</strong></p>
-          <code>{process.env.NEXT_PUBLIC_APP_URL}{state.generatedUrl}</code>
-          <p style={{ marginTop: '0.5rem' }}>
-            有効期限: {state.expiresAt}
-          </p>
+        <div className="rounded-xl border border-green-200 bg-green-50 p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <h3 className="font-bold text-green-800">生成されたリンク</h3>
+          </div>
+          <div className="bg-white rounded-lg p-4 border border-green-100">
+            <code className="text-sm text-stone-700 break-all block">
+              {process.env.NEXT_PUBLIC_APP_URL}{state.generatedUrl}
+            </code>
+          </div>
+          <div className="text-sm text-stone-600">
+            <span className="font-medium">有効期限:</span> {state.expiresAt}
+          </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

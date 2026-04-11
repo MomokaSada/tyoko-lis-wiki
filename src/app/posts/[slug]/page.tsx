@@ -32,34 +32,26 @@ import { createHeadingIdBase, createUniqueHeadingId, normalizeHeadingText } from
  */
 function extractToc(markdown: string) {
   if (!markdown) return [];
-  // 改行コードの正規化 (\r\n -> \n)
-  const lines = markdown.replace(/\r\n/g, '\n').split('\n');
   const toc: { id: string, text: string, level: number }[] = [];
   const usedIds = new Map<string, number>();
-  let isInCodeBlock = false;
 
-  lines.forEach(line => {
-    // コードブロックの開始/終了を検知
-    if (line.trim().startsWith('```')) {
-      isInCodeBlock = !isInCodeBlock;
-      return;
-    }
-
-    // コードブロック内はスキップ
-    if (isInCodeBlock) return;
-
-    // 行頭・行末の空白を考慮し、H1-H6まで対応
-    const match = line.match(/^\s*(#{1,6})\s*(.+?)\s*$/);
-    if (match) {
+  // コードブロックをスキップしつつ見出しを抽出する正規表現
+  // 1. ``` で囲まれたブロックを最短一致でマッチさせて無視
+  // 2. 改行直後の # (1-6個) で始まる行を抽出
+  const regex = /^(?:```[\s\S]*?^```|^\s*(#{1,6})\s*(.+?)\s*$)/gm;
+  
+  let match;
+  while ((match = regex.exec(markdown)) !== null) {
+    // match[1] が存在する場合のみ見出しとして処理（コードブロックは無視）
+    if (match[1]) {
       const level = match[1].length;
       const text = normalizeHeadingText(match[2]);
       if (text) {
-        // 見出しテキストから ID を生成 (BlockViewer.tsx のロジックと完全に一致させる)
         const id = createUniqueHeadingId(createHeadingIdBase(text), usedIds);
         toc.push({ id, text, level });
       }
     }
-  });
+  }
 
   return toc;
 }
@@ -143,11 +135,11 @@ export default async function PostDetailPage({
             style={{ backgroundImage: `url(${thumbnailUrl})` }}
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-stone-800 via-stone-900 to-black opacity-80" />
+          <div className="absolute inset-0 bg-linear-to-br from-stone-800 via-stone-900 to-black opacity-80" />
         )}
 
         {/* オーバーレイ */}
-        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-stone-950 via-stone-950/40 to-transparent" />
 
         {/* コンテンツ */}
         <div className="relative max-w-7xl mx-auto px-6 flex flex-col pt-16 pb-48 md:pb-56 animate-in fade-in slide-in-from-bottom-8 duration-700">
@@ -247,7 +239,7 @@ export default async function PostDetailPage({
           <div className="w-full lg:w-80 order-1 lg:order-2 space-y-6">
 
             {/* 記事プロフィール (モックアップ構成 + 日本語詳細コンテンツ) */}
-            <div className="bg-white border border-stone-200 rounded-[2rem] shadow-[0_4px_20px_rgba(0,0,0,0.03)] animate-in slide-in-from-right-4 duration-500 delay-300 overflow-hidden">
+            <div className="bg-white border border-stone-200 rounded-4xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] animate-in slide-in-from-right-4 duration-500 delay-300 overflow-hidden">
 
               {/* ダークヘッダー */}
               <div className="bg-[#1c1c1c] py-3 text-center border-b border-white/5">

@@ -14,6 +14,7 @@ export * from './tags';
 export * from './categories';
 export * from './rateLimitRecords';
 export * from './auditLogs';
+export * from './contentViewStats';
 
 // ===== 中間テーブル =====
 export * from './contentTags';
@@ -34,3 +35,4 @@ export * from './relations/tags';
 export * from './relations/categories';
 export * from './relations/junctionTables';
 export * from './relations/auditLogs';
+export * from './relations/contentViewStats';

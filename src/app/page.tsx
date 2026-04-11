@@ -1,9 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
-import { TrendingUp, Award, ChevronRight } from 'lucide-react';
+import { TrendingUp, Award, ChevronRight, Users, BookOpen, PenTool, ExternalLink } from 'lucide-react';
 import { TyokoreIcon } from '../components/icons/TyokoreIcon';
-import { searchVisibleContentList } from '@/server/services/contentService';
+import { searchVisibleContentList, getWeeklyPopularContentList } from '@/server/services/contentService';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
+import { PopularRankingBoard } from '@/components/features/home/PopularRankingBoard';
 
 export default async function HomePage() {
   // 本番データ取得 (最新3件を急上昇記事代わりに表示)
@@ -11,14 +12,19 @@ export default async function HomePage() {
   const recentPosts = posts.slice(0, 3);
   const featuredPost = posts.length > 0 ? posts[0] : null;
 
+  // ランキング取得
+  const { posts: allTimePosts } = await searchVisibleContentList('', false, 'viewCount', 'desc', 1, 6);
+  const weeklyPosts = await getWeeklyPopularContentList(6);
+
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500">
       {/* ウェルカムバナー */}
       <div className="bg-stone-50 border border-stone-200 rounded-3xl p-8 relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-6">
         <div className="relative z-10 max-w-lg">
-          <h2 className="text-4xl font-black text-stone-800 mb-4 tracking-tighter">Tyokore Wiki へようこそ！</h2>
+          <h2 className="text-4xl font-black text-stone-800 mb-4 tracking-tighter">ちょこちょこ大百科へようこそ！</h2>
           <p className="text-stone-600 mb-6 leading-relaxed">
-            Mirrativ配信者「ちょこれ」とリスナーの非公式コミュニティサイトです。
+            Mirrativ配信者「ちょこれ」とそのリスナーの公式コミュニティサイトです。
           </p>
           <div className="flex gap-3">
             <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
@@ -102,15 +108,10 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* 開発用リンク（既存のもの） */}
-      <div className="mt-12 p-6 bg-stone-100 rounded-2xl">
-        <h4 className="font-bold text-stone-600 mb-2">【開発用リンク】</h4>
-        <ul className="flex flex-wrap gap-4 text-sm text-blue-600">
-          <li><Link href="/auth/login">ログイン (/auth/login)</Link></li>
-          <li><Link href="/admin">管理画面 (/admin)</Link></li>
-          <li><Link href="/owner">オーナー画面 (/owner)</Link></li>
-        </ul>
-      </div>
+      <PopularRankingBoard 
+        weeklyPosts={weeklyPosts} 
+        allTimePosts={allTimePosts} 
+      />
     </div>
   );
 }
