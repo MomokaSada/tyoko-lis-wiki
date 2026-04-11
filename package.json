@@ -11,7 +11,6 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@mdxeditor/editor": "^3.53.1",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.97.0",
     "drizzle-orm": "^0.45.1",
