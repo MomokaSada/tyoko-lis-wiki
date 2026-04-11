@@ -1,6 +1,6 @@
-import { and, eq, ilike, isNotNull, or, sql, asc, desc as dsc } from 'drizzle-orm';
+import { and, eq, ilike, isNotNull, or, sql, asc, desc as dsc, gte } from 'drizzle-orm';
 import { db } from '@/db';
-import { contents, tags, categories, contentTags, contentCategories, contentEditLogs, contentEditLogTags, contentEditLogCategories, editSessions } from '@/db/schema';
+import { contents, tags, categories, contentTags, contentCategories, contentEditLogs, contentEditLogTags, contentEditLogCategories, editSessions, contentViewStats } from '@/db/schema';
 import { escapeLikePattern } from './modules/escapeLike';
 
 export type ContentSortKey = 'updatedAt' | 'createdAt' | 'viewCount' | 'title';
@@ -469,18 +469,56 @@ export async function deleteContentById(contentId: number) {
 }
 
 export async function incrementContentViewCount(contentId: number) {
-  const [updated] = await db
-    .update(contents)
-    .set({
-      viewCount: sql`${contents.viewCount} + 1`,
-    })
-    .where(eq(contents.id, contentId))
-    .returning({
-      id: contents.id,
-      viewCount: contents.viewCount,
-    });
+  const today = new Date().toISOString().split('T')[0];
 
-  return updated ?? null;
+  return db.transaction(async (tx) => {
+    await tx
+      .insert(contentViewStats)
+      .values({ contentId, date: today, viewCount: 1 })
+      .onConflictDoUpdate({
+        target: [contentViewStats.contentId, contentViewStats.date],
+        set: { viewCount: sql`${contentViewStats.viewCount} + 1` },
+      });
+
+    const [updated] = await tx
+      .update(contents)
+      .set({
+        viewCount: sql`${contents.viewCount} + 1`,
+      })
+      .where(eq(contents.id, contentId))
+      .returning({
+        id: contents.id,
+        viewCount: contents.viewCount,
+      });
+
+    return updated ?? null;
+  });
+}
+
+export async function getWeeklyPopularContents(limitCount = 6) {
+  const oneWeekAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const oneWeekAgoStr = new Date(oneWeekAgoMs).toISOString().split('T')[0];
+
+  return db
+    .select({
+      id: contents.id,
+      slug: contents.slug,
+      title: contents.currentTitle,
+      thumbnail: contents.currentThumbnail,
+      viewCount: sql<number>`cast(sum(${contentViewStats.viewCount}) as int)`,
+      updatedAt: contents.updatedAt,
+    })
+    .from(contents)
+    .innerJoin(contentViewStats, eq(contents.id, contentViewStats.contentId))
+    .where(
+      and(
+        eq(contents.isPublished, true),
+        gte(contentViewStats.date, oneWeekAgoStr)
+      )
+    )
+    .groupBy(contents.id)
+    .orderBy(dsc(sql`sum(${contentViewStats.viewCount})`))
+    .limit(limitCount);
 }
 
 export async function listReferencedThumbnailUrls() {

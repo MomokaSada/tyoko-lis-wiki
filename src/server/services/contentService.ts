@@ -13,6 +13,7 @@ import {
   searchPublishedContents,
   updateContentWithRevision,
   countVisibleContents,
+  getWeeklyPopularContents,
 } from '@/server/repositories/contentRepository';
 import type { ContentSortKey, SortOrder } from '@/server/repositories/contentRepository';
 import type { EditorContext } from '@/server/lib/currentEditor';
@@ -157,6 +158,10 @@ export async function searchVisibleContentList(
   };
 }
 
+export async function getWeeklyPopularContentList(limitCount = 6) {
+  return await getWeeklyPopularContents(limitCount);
+}
+
 export async function getPublishedContentDetail(slug: string) {
   const content = await findPublishedContentBySlug(slug);
 
@@ -283,7 +288,7 @@ export async function updateContent(
   };
 }
 
-export { getTaxonomyOptions };
+export { getTaxonomyOptions, countVisibleContents };
 
 type ActorOnlyEditor = Extract<EditorContext, { type: 'actor' }>;
 

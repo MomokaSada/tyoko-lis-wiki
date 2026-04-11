@@ -28,6 +28,7 @@ export default async function EditLinksPage() {
       </div>
 
       <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm">
+        <h2 className="text-xl font-bold text-stone-800 mb-6 pb-4 border-b border-stone-100">新しい編集リンクを発行</h2>
         <EditLinkForm />
       </div>
 
