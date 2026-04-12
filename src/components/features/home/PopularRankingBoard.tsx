@@ -28,18 +28,17 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
         
         {/* 左側: 歴代トップ (フィーチャーカード) - 幅広にして左に配置 */}
         <div className="lg:col-span-5 space-y-6 order-2 lg:order-1 relative">
-          {/* 背景の装飾 */}
-          <div className="absolute -inset-4 bg-gradient-to-tr from-amber-100/50 to-orange-50/50 rounded-[3rem] -z-10 transform -rotate-3"></div>
-          
           <div className="flex items-center gap-2 text-stone-800 font-black text-2xl px-2">
             <Award size={28} className="text-amber-500" /> 歴代トップ
           </div>
           
           {featuredAllTime ? (
-            <Link href={`/posts/${featuredAllTime.slug}`} className="block bg-stone-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden aspect-[3/4] flex flex-col justify-end group cursor-pointer shadow-2xl shadow-stone-200/50 hover:-translate-y-2 transition-transform duration-500">
-              <div className="absolute top-8 left-8 bg-amber-400 text-stone-900 text-xs font-black px-3 py-1 rounded shadow-sm shadow-amber-400/20 uppercase tracking-widest z-20">
-                All Time Rank 1
-              </div>
+            <div className="relative overflow-visible">
+              <div className="absolute -top-16 -left-4 -right-4 -bottom-4 bg-gradient-to-tr from-amber-100/50 to-orange-50/50 rounded-[3rem] -z-10 transform -rotate-6 -translate-y-8" />
+              <Link href={`/posts/${featuredAllTime.slug}`} className="relative block z-10 bg-stone-900 rounded-[2.5rem] p-8 text-white overflow-hidden aspect-[3/4] flex flex-col justify-end group cursor-pointer shadow-2xl shadow-stone-200/50 hover:-translate-y-2 transition-transform duration-500">
+                <div className="absolute top-8 left-8 bg-amber-400 text-stone-900 text-xs font-black px-3 py-1 rounded shadow-sm shadow-amber-400/20 uppercase tracking-widest z-20">
+                  All Time Rank 1
+                </div>
               <div className="absolute inset-0 bg-stone-900/30 z-0 group-hover:bg-stone-900/10 transition-colors duration-700">
                 <img src={getPublicThumbnailUrl(featuredAllTime.thumbnail) || '/images/no-image.png'} alt="thumbnail" className="w-full h-full object-cover mix-blend-overlay opacity-50 group-hover:scale-110 transition-transform duration-700" />
               </div>
@@ -60,6 +59,7 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
                 </div>
               )}
             </Link>
+            </div>
           ) : (
              <div className="bg-stone-100 rounded-3xl p-8 aspect-[3/4] flex items-center justify-center text-stone-400">
                 記事がありません

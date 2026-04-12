@@ -28,7 +28,7 @@ export default async function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <body
-        className={`${inter.variable} min-h-screen bg-stone-50 text-stone-900 font-sans selection:bg-amber-100 antialiased flex flex-col`}
+        className={`${inter.variable} min-h-screen bg-stone-50 text-stone-900 font-sans antialiased flex flex-col`}
       >
         <Header userRole={userRole} />
         <main className="flex-1">

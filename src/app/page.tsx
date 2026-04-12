@@ -54,21 +54,26 @@ export default async function HomePage() {
                <p className="text-stone-500 p-4 border border-stone-200 rounded-2xl bg-stone-50">まだ公開されている記事が存在しません。</p>
             ) : (
                 recentPosts.map((article, index) => (
-                  <Link href={`/posts/${article.slug}`} key={article.id} className="bg-white border border-stone-100 rounded-2xl p-5 flex items-center gap-6 hover:shadow-md transition-shadow cursor-pointer group">
-                    <span className="text-4xl font-black text-stone-200 group-hover:text-stone-300 transition-colors italic w-12">
-                      {(index + 1).toString().padStart(2, '0')}
+                  <Link href={`/posts/${article.slug}`} key={article.id} className="relative overflow-hidden bg-white border border-stone-100 rounded-[2rem] p-5 flex items-center gap-6 hover:shadow-xl transition-all duration-300 cursor-pointer group">
+                  <div className="absolute -left-10 top-1/2 h-32 w-32 rounded-full bg-orange-100/40 blur-3xl opacity-80 transform -translate-y-1/2" />
+                  <div className="absolute right-0 bottom-0 h-24 w-24 rounded-full bg-amber-100/30 blur-3xl opacity-70 pointer-events-none" />
+                  <span className="relative text-4xl font-black text-stone-300 group-hover:text-amber-500 transition-colors italic w-12">
+                    {(index + 1).toString().padStart(2, '0')}
+                  </span>
+                  <div className="flex-1">
+                    <h3 className="relative font-bold text-stone-800 text-lg group-hover:text-blue-600 transition-colors mb-2">{article.title}</h3>
+                    <div className="flex gap-2">
+                       <span className="text-[10px] text-stone-400 font-bold uppercase p-1 bg-stone-50 rounded">#{article.slug}</span>
+                    </div>
+                  </div>
+                  <div className="text-right flex flex-col justify-end gap-1">
+                    <span className="text-xs text-stone-500 font-bold flex items-center justify-end gap-1">
+                      <TrendingUp size={14} className={index < 3 ? 'text-amber-500' : 'text-stone-300'} />
+                      {article.viewCount} views
                     </span>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-stone-800 text-lg group-hover:text-blue-600 transition-colors mb-2">{article.title}</h3>
-                      <div className="flex gap-2">
-                         <span className="text-[10px] text-stone-400 font-bold uppercase p-1 bg-stone-50 rounded">#{article.slug}</span>
-                      </div>
-                    </div>
-                    <div className="text-right flex flex-col justify-end gap-1">
-                      <span className="text-xs text-stone-400 font-medium">{article.viewCount} views</span>
-                      <span className="text-[10px] text-stone-300 font-bold">{article.updatedAt.toISOString().split('T')[0]}</span>
-                    </div>
-                  </Link>
+                    <span className="text-[10px] text-stone-300 font-bold">{article.updatedAt.toISOString().split('T')[0]}</span>
+                  </div>
+                </Link>
                 ))
             )}
           </div>
@@ -81,13 +86,16 @@ export default async function HomePage() {
           </div>
           
           {featuredPost ? (
-              <Link href={`/posts/${featuredPost.slug}`} className="block bg-stone-900 rounded-3xl p-8 text-white relative overflow-hidden aspect-[4/5] flex flex-col justify-end group cursor-pointer">
-                <div className="absolute top-8 left-8 bg-amber-400 text-stone-900 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest z-20">
+            <div className="relative overflow-visible">
+              <div className="absolute -top-8 -left-4 -right-4 -bottom-4 bg-gradient-to-tr from-amber-100/40 to-orange-50/30 rounded-[2rem] -z-10 transform -rotate-4 -translate-y-4" />
+              <Link href={`/posts/${featuredPost.slug}`} className="relative block z-10 bg-stone-900 rounded-[2.5rem] p-8 text-white overflow-hidden aspect-[4/5] flex flex-col justify-end group cursor-pointer shadow-xl shadow-stone-200/20 hover:-translate-y-1 transition-transform duration-500">
+                <div className="absolute top-8 left-8 bg-amber-400 text-stone-900 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest z-20 shadow-sm shadow-amber-400/25">
                   Featured
                 </div>
                 <div className="absolute inset-0 bg-stone-900/40 z-0">
-                  <img src={getPublicThumbnailUrl(featuredPost.thumbnail) || '/images/no-image.png'} alt="thumbnail" className="w-full h-full object-cover mix-blend-overlay opacity-30 group-hover:opacity-50 transition-opacity" />
+                  <img src={getPublicThumbnailUrl(featuredPost.thumbnail) || '/images/no-image.png'} alt="thumbnail" className="w-full h-full object-cover mix-blend-overlay opacity-30 group-hover:opacity-50 transition-opacity duration-700" />
                 </div>
+                <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-amber-200/25 blur-3xl pointer-events-none" />
                 <div className="relative z-10 space-y-4">
                   <h3 className="text-3xl font-black leading-tight line-clamp-2">{featuredPost.title}</h3>
                   <div className="inline-flex items-center gap-2 text-amber-400 font-bold text-sm group-hover:gap-4 transition-all">
@@ -100,6 +108,7 @@ export default async function HomePage() {
                   </div>
                 )}
               </Link>
+            </div>
           ) : (
              <div className="bg-stone-100 rounded-3xl p-8 aspect-[4/5] flex items-center justify-center text-stone-400">
                 記事がありません
