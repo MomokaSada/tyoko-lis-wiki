@@ -26,7 +26,7 @@ export const Header = ({ userRole }: HeaderProps) => {
           <div className="w-10 h-10 bg-stone-900 rounded-xl flex items-center justify-center group-hover:rotate-6 transition-transform">
             <TyokoreIcon className="w-7 h-7" />
           </div>
-          <h1 className="text-xl font-black tracking-tighter text-stone-900 uppercase">Tyokore Wiki</h1>
+          <h1 className="text-xl font-black tracking-tighter text-stone-900 uppercase">ちょこちょこ大百科</h1>
         </Link>
 
         {/* Navigation */}
