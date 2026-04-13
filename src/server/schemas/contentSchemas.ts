@@ -29,7 +29,20 @@ const thumbnailUrlSchema = z.preprocess(
   },
   z.string()
     .refine(
-      (val) => val.startsWith('http') || val.startsWith('/'),
+      (val) => {
+        // 絶対パスは許可
+        if (val.startsWith('/')) return true;
+        // http/https スキームのみ許可し、httpsomething のような不正な形式は除外
+        if (val.startsWith('https://') || val.startsWith('http://')) {
+          try {
+            new URL(val);
+            return true;
+          } catch {
+            return false;
+          }
+        }
+        return false;
+      },
       'サムネイルはURLまたはパスの形式で入力してください'
     )
     .nullable(),

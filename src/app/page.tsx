@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { TrendingUp, Award, ChevronRight, Users, BookOpen, PenTool, ExternalLink } from 'lucide-react';
+import { TrendingUp, Award, ChevronRight } from 'lucide-react';
 import { TyokoreIcon } from '../components/icons/TyokoreIcon';
 import { searchVisibleContentList, getWeeklyPopularContentList } from '@/server/services/contentService';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
@@ -29,9 +29,6 @@ export default async function HomePage() {
           <div className="flex gap-3">
             <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
               公開済み {posts.length} 記事
-            </span>
-            <span className="bg-stone-200 text-stone-600 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
-              オンライン: 1人
             </span>
           </div>
         </div>
@@ -71,7 +68,7 @@ export default async function HomePage() {
                       <TrendingUp size={14} className={index < 3 ? 'text-amber-500' : 'text-stone-300'} />
                       {article.viewCount} views
                     </span>
-                    <span className="text-[10px] text-stone-300 font-bold">{article.updatedAt.toISOString().split('T')[0]}</span>
+                    <span className="text-[10px] text-stone-300 font-bold">{article.updatedAt instanceof Date ? article.updatedAt.toISOString().split('T')[0] : String(article.updatedAt).split('T')[0]}</span>
                   </div>
                 </Link>
                 ))
@@ -93,7 +90,7 @@ export default async function HomePage() {
                   Featured
                 </div>
                 <div className="absolute inset-0 bg-stone-900/40 z-0">
-                  <img src={getPublicThumbnailUrl(featuredPost.thumbnail) || '/images/no-image.png'} alt="thumbnail" className="w-full h-full object-cover mix-blend-overlay opacity-30 group-hover:opacity-50 transition-opacity duration-700" />
+                  <img src={getPublicThumbnailUrl(featuredPost.thumbnail) || '/images/no-image.png'} alt={featuredPost.title} className="w-full h-full object-cover mix-blend-overlay opacity-30 group-hover:opacity-50 transition-opacity duration-700" />
                 </div>
                 <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-amber-200/25 blur-3xl pointer-events-none" />
                 <div className="relative z-10 space-y-4">

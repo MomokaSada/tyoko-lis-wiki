@@ -1,4 +1,13 @@
+import { type Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'プライバシーポリシー | Tyokore Wiki',
+  description: 'Tyokore Wiki のプライバシーポリシーです。個人情報の取扱いについての説明を掲載しています。',
+};
+
 export default function PrivacyPage() {
+  const lastUpdateDate = '2026年4月13日';
+
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
       <h1 className="text-3xl font-black text-stone-800 mb-8">プライバシーポリシー</h1>
@@ -81,7 +90,7 @@ export default function PrivacyPage() {
         </p>
 
         <p className="text-stone-500 text-sm mt-8">
-          最終更新日: 2024年4月12日
+          最終更新日: {lastUpdateDate}
         </p>
       </div>
     </div>

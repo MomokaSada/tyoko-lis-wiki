@@ -5,9 +5,21 @@
 export function getPublicThumbnailUrl(path: string | null | undefined): string | null {
   if (!path) return null;
 
-  // すでにフルURL（http...）の場合はそのまま返す
-  if (path.startsWith('http')) {
-    return path;
+  // http/https スキームのフルURL の場合、許可されたドメインのホワイトリスト検証
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    try {
+      const url = new URL(path);
+      // Supabase のドメインのみ許可
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, '') || '';
+      if (supabaseUrl && url.origin === new URL(supabaseUrl).origin) {
+        return path;
+      }
+      // ホワイトリストに含まれていない場合は null を返す（SSRF/Open Redirect 防止）
+      return null;
+    } catch {
+      // 不正な URL は null を返す
+      return null;
+    }
   }
 
   // / から始まる相対パスの場合は、Supabaseのドメインを付与する
@@ -18,5 +30,5 @@ export function getPublicThumbnailUrl(path: string | null | undefined): string |
     return `${supabaseUrl}${path}`;
   }
 
-  return path;
+  return null;
 }

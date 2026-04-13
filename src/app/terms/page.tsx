@@ -1,4 +1,12 @@
+import { type Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: '利用規約 | Tyokore Wiki',
+  description: 'Tyokore Wiki の利用規約です。サービス利用時のルール・条件を掲載しています。',
+};
+
 export default function TermsPage() {
+  const lastUpdateDate = '2026年4月13日';
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
       <h1 className="text-3xl font-black text-stone-800 mb-8">利用規約</h1>
@@ -96,7 +104,7 @@ export default function TermsPage() {
         </p>
 
         <p className="text-stone-500 text-sm mt-8">
-          最終更新日: 2024年4月12日
+          最終更新日: {lastUpdateDate}
         </p>
       </div>
     </div>

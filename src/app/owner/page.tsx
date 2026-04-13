@@ -1,11 +1,16 @@
 import { headers } from 'next/headers';
-import { Crown, UserX, ShieldBan, Link2, KeySquare, ImageMinus, Clock, Shield } from 'lucide-react';
+import { type Metadata } from 'next';
+import { Crown, Clock, Shield } from 'lucide-react';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
 import { getManageableAccounts } from '@/server/services/accountBanService';
 import { getActiveIpBans, getIpDeviceRecords } from '@/server/services/ipBanService';
 import { getDeviceSessionUsageRecords } from '@/server/services/deviceService';
 import { OwnerDashboardClient } from './owner-dashboard-client';
+
+export const metadata: Metadata = {
+  robots: { index: false },
+};
 
 export default async function OwnerPage() {
   const headersList = await headers();
@@ -56,11 +61,11 @@ export default async function OwnerPage() {
       {/* Main content */}
       <OwnerDashboardClient
         isOwner={isOwner}
-        accountCreateLinks={accountCreateLinks as any}
-        manageableAccounts={manageableAccounts as any}
-        activeIpBans={activeIpBans as any}
-        ipDeviceRecords={ipDeviceRecords as any}
-        deviceSessionUsageRecords={deviceSessionUsageRecords as any}
+        accountCreateLinks={accountCreateLinks}
+        manageableAccounts={manageableAccounts}
+        activeIpBans={activeIpBans}
+        ipDeviceRecords={ipDeviceRecords}
+        deviceSessionUsageRecords={deviceSessionUsageRecords}
       />
 
     </div>
