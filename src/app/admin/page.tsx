@@ -1,56 +1,38 @@
 import { headers } from 'next/headers';
+import { type Metadata } from 'next';
 import Link from 'next/link';
 import { 
   Settings, 
   Link as LinkIcon, 
-  FolderTree, 
-  AlertCircle,
   FileText,
   Users,
-  TrendingUp,
   Clock,
-  Activity,
   Eye,
-  Edit3,
-  BarChart3,
   Shield,
-  Database,
-  Plus,
-  CheckCircle,
-  XCircle
+  Plus
 } from 'lucide-react';
 import { searchVisibleContentList, countVisibleContents, getTaxonomyOptions } from '@/server/services/contentService';
 import { findEditSessions } from '@/server/repositories/editLinkRepository';
 import { findAccountCreateSessions } from '@/server/repositories/accountCreateLinkRepository';
 import { getEditLinks } from '@/server/services/editLinkService';
 import { getCurrentActor } from '@/server/lib/currentActor';
-import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
-import { CategoryCreateForm } from './categories/category-create-form';
-import { CategoryUpdateForm } from './categories/category-update-form';
-import { EditLinkForm } from './edit-links/edit-link-form';
 import { AdminFormsClient } from './admin-forms-client';
+
+export const metadata: Metadata = {
+  robots: { index: false },
+};
 
 export default async function AdminPage() {
   const headersList = await headers();
   const userRole = headersList.get('x-user-role');
 
   // ステータスバッジ関数
-  function getStatusBadge(status: 'active' | 'expired' | 'inactive' | 'limit-reached') {
-    switch (status) {
-      case 'active':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-100 text-green-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> 有効</span>;
-      case 'expired':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-100 text-red-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> 期限切れ</span>;
-      case 'inactive':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-stone-100 text-stone-500 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-stone-400"></div> 無効化済み</span>;
-      case 'limit-reached':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div> 上限到達</span>;
-    }
-  }
-
   // 統計データ取得
-  const { posts: allPosts } = await searchVisibleContentList('', true, 'updatedAt', 'desc', 1, 100);
-  const { posts: publishedPosts } = await searchVisibleContentList('', false, 'updatedAt', 'desc', 1, 100);
+  const [{ posts: recentPosts }, { posts: publishedPosts }] = await Promise.all([
+    searchVisibleContentList('', true, 'updatedAt', 'desc', 1, 5),
+    searchVisibleContentList('', false, 'updatedAt', 'desc', 1, 100),
+  ]);
+  
   const totalPosts = await countVisibleContents('', true);
   const publishedCount = await countVisibleContents('', false);
   
@@ -62,30 +44,13 @@ export default async function AdminPage() {
   const taxonomy = await getTaxonomyOptions();
   const actor = await getCurrentActor();
   const editLinks = actor ? await getEditLinks(actor) : [];
-  
-  // 最新の記事（公開・非公開両方）
-  const recentPosts = allPosts.slice(0, 5);
-  
+
   // アクティブなリンク数
   const activeEditLinks = editSessions.filter(session => session.isActive).length;
   const activeAccountLinks = accountCreateSessions.filter(session => session.isActive).length;
 
   // 本日の日付
   const today = new Date().toLocaleDateString('ja-JP');
-
-  // ステータスバッジ関数
-  function getStatusBadge(status: 'active' | 'expired' | 'inactive' | 'limit-reached') {
-    switch (status) {
-      case 'active':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-100 text-green-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> 有効</span>;
-      case 'expired':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-100 text-red-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> 期限切れ</span>;
-      case 'inactive':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-stone-100 text-stone-500 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-stone-400"></div> 無効化済み</span>;
-      case 'limit-reached':
-        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-100 text-amber-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div> 上限到達</span>;
-    }
-  }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500">
@@ -152,6 +117,11 @@ export default async function AdminPage() {
               <Eye className="w-6 h-6" />
             </div>
             <span className="text-2xl font-black text-stone-800">
+              {/**
+                * 注: publishedPosts は最新100件から計算した合計。
+                * 公開記事が100件を超える場合、この値は概算値です。
+                * 正確な総閲覧数を取得するには、SUM(viewCount) クエリが必要です。
+                */}
               {publishedPosts.reduce((sum, post) => sum + (post.viewCount || 0), 0).toLocaleString()}
             </span>
           </div>
@@ -182,36 +152,6 @@ export default async function AdminPage() {
             →
           </div>
         </Link>
-      </div>
-
-      {/* システムステータス */}
-      <div className="bg-stone-50 border border-stone-200 rounded-3xl p-8">
-        <div className="flex items-center gap-2 text-stone-800 font-black text-xl mb-6">
-          <Database size={24} className="text-stone-600" /> システムステータス
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-            <div>
-              <p className="font-bold text-stone-800">データベース</p>
-              <p className="text-sm text-stone-500">正常に稼働中</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-            <div>
-              <p className="font-bold text-stone-800">認証システム</p>
-              <p className="text-sm text-stone-500">正常に稼働中</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-            <div>
-              <p className="font-bold text-stone-800">コンテンツ管理</p>
-              <p className="text-sm text-stone-500">正常に稼働中</p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -63,13 +63,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       if (user && ADMIN_ROLES.includes(requestRole)) {
         return createForwardResponse(response);
       }
-      if (isServerActionRequest(request)) {
-        return createForwardResponse(response);
-      }
       const editSessionToken = request.nextUrl.searchParams.get('session');
       if (editSessionToken) {
         return createForwardResponse(response);
       }
+      // Server Action の認証はサーバーアクション内部 (contentActions.ts) で行われる
+      // ミドルウェアレベルではセッショントークンの有無で判定する
       return NextResponse.redirect(new URL(PATHS.UNAUTHORIZED, request.url));
     }
 

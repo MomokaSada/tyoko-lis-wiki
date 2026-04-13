@@ -1,6 +1,7 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { searchVisibleContentList } from '@/server/services/contentService';
 import Link from 'next/link';
+import { type Metadata } from 'next';
 import { 
   Eye, 
   AlertCircle, 
@@ -17,6 +18,11 @@ import { PostSearchControl } from '@/components/posts/PostSearchControl';
 import { PrivacyToggle } from '@/components/posts/PrivacyToggle';
 import { PostPagination } from '@/components/posts/PostPagination';
 import type { ContentSortKey, SortOrder } from '@/server/repositories/contentRepository';
+
+export const metadata: Metadata = {
+  title: '記事一覧 | Tyokore Wiki',
+  description: 'Tyokore Wiki の記事一覧ページです。カテゴリやタグで検索・フィルタリングできます。',
+};
 
 export default async function PostsPage({
   searchParams,

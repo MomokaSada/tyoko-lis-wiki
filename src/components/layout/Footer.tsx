@@ -4,6 +4,7 @@ import { TyokoreIcon } from '../icons/TyokoreIcon';
 import { socialLinks } from '@/lib/socialLinks';
 
 export const Footer = () => {
+  const currentYear = new Date().getFullYear();
   return (
     <footer className="border-t border-stone-100 py-16 mt-20 bg-stone-50/50">
       <div className="max-w-7xl mx-auto px-6">
@@ -45,11 +46,8 @@ export const Footer = () => {
           </div>
         </div>
         <div className="mt-16 pt-8 border-t border-stone-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <p className="text-[10px] text-stone-400 font-black tracking-widest uppercase">© 2024 Tyokore Wiki Project</p>
-          <div className="flex gap-4 items-center">
-            <div className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]"></div>
-            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Server Status: Online</span>
-          </div>
+          <p className="text-[10px] text-stone-400 font-black tracking-widest uppercase">© {currentYear} Tyokore Wiki Project</p>
+
         </div>
       </div>
     </footer>

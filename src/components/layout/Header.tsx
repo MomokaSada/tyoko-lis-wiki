@@ -1,9 +1,9 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { Search, FilePlus, Settings, Shield } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
 
 interface HeaderProps {
@@ -11,13 +11,23 @@ interface HeaderProps {
 }
 
 export const Header = ({ userRole }: HeaderProps) => {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState('');
   const isLoginParam = searchParams.get('login') === 'true';
   const hasEditSession = searchParams.has('session') || searchParams.has('edit');
   
   const isAdmin = userRole === 'admin' || userRole === 'owner';
   const isOwner = userRole === 'owner';
   const showLogin = !userRole && isLoginParam;
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/posts?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery('');
+    }
+  };
 
   return (
     <header className="border-b border-stone-100 sticky top-0 bg-white/80 backdrop-blur-md z-50">
@@ -91,14 +101,22 @@ export const Header = ({ userRole }: HeaderProps) => {
 
         {/* Search Bar Area */}
         <div className="flex-1 flex items-center justify-end">
-          <div className="w-full max-w-[180px] lg:max-w-[240px] relative group hidden sm:block">
+          <form onSubmit={handleSearch} className="w-full max-w-[180px] lg:max-w-[240px] relative group hidden sm:block">
             <input
               type="text"
               placeholder="検索..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-stone-100 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-stone-200 transition-all outline-none"
             />
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-800 transition-colors" />
-          </div>
+            <button
+              type="submit"
+              disabled={!searchQuery.trim()}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-800 transition-colors disabled:opacity-50 cursor-pointer hover:text-stone-600"
+            >
+              <Search size={14} />
+            </button>
+          </form>
         </div>
       </div>
     </header>

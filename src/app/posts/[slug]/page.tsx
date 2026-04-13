@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation';
+import { type Metadata } from 'next';
+import { cache } from 'react';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { getAccessibleContentDetail } from '@/server/services/contentService';
 import Link from 'next/link';
@@ -6,11 +8,7 @@ import {
   Edit3,
   History,
   ChevronRight,
-  Clock,
   Eye,
-  Hash,
-  BookOpen,
-  Calendar,
   Layers,
   Tag as TagIcon,
   Info,
@@ -56,6 +54,68 @@ function extractToc(markdown: string) {
   return toc;
 }
 
+// React.cache でリクエスト単位での二重フェッチを防止
+const getCachedContentDetail = cache(getAccessibleContentDetail);
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> }
+): Promise<Metadata> {
+  const { slug: rawSlug } = await params;
+  const slug = (() => {
+    try {
+      return decodeURIComponent(rawSlug);
+    } catch {
+      return rawSlug;
+    }
+  })();
+
+  try {
+    const post = await getCachedContentDetail(slug, null);
+
+    if (!post) {
+      return {
+        title: '記事が見つかりません | Tyokore Wiki',
+      };
+    }
+
+    const description = post.content
+      ? post.content.substring(0, 160).replace(/[#*\[\]]/g, '').trim()
+      : post.title;
+
+    const thumbnailUrl = getPublicThumbnailUrl(post.thumbnail);
+    const ogImage = thumbnailUrl || '/images/no-image.png';
+
+    return {
+      title: `${post.title} | Tyokore Wiki`,
+      description: description || '記事詳細ページ',
+      openGraph: {
+        title: post.title,
+        description: description || '記事詳細ページ',
+        type: 'article',
+        images: [
+          {
+            url: ogImage,
+            width: 1200,
+            height: 630,
+            alt: post.title,
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: post.title,
+        description: description || '記事詳細ページ',
+        images: [ogImage],
+      },
+    };
+  } catch (error) {
+    return {
+      title: '記事詳細 | Tyokore Wiki',
+      description: 'Tyokore Wiki の記事詳細ページです。',
+    };
+  }
+}
+
 export default async function PostDetailPage({
   params,
   searchParams,
@@ -79,7 +139,7 @@ export default async function PostDetailPage({
   if (showPrivate) backParams.set('showPrivate', '1');
   const postsIndexHref = `/posts${backParams.toString() ? `?${backParams.toString()}` : ''}`;
   const editor = await getCurrentEditor(session);
-  const post = await getAccessibleContentDetail(slug, editor);
+  const post = await getCachedContentDetail(slug, editor);
 
   if (!post) {
     notFound();
@@ -88,21 +148,33 @@ export default async function PostDetailPage({
   // タクソノミー情報の取得
   const { tags: rawTags, categories: rawPostCategories, allCategories: rawAllCategories } = await getFullContentTaxonomy(post.id);
 
-  // 防御的なマッピング
-  const tags = Array.isArray(rawTags) 
-    ? rawTags.filter(t => t && typeof t === 'object').map(t => ({ id: (t as any).id, name: (t as any).name || '' }))
-    : [];
+  // 型安全な処理：各要素に必要なプロパティがあるかチェック
+  const isValidTag = (t: unknown): t is { id: number; name: string } => {
+    if (typeof t !== 'object' || t === null) return false;
+    const obj = t as Record<string, unknown>;
+    return 'id' in obj && 'name' in obj && typeof obj.id === 'number' && typeof obj.name === 'string';
+  };
+
+  const isValidCategory = (c: unknown): c is { id: number; name: string; parentId: number | null } => {
+    if (typeof c !== 'object' || c === null) return false;
+    const obj = c as Record<string, unknown>;
+    return 'id' in obj && 'name' in obj && 'parentId' in obj &&
+      typeof obj.id === 'number' && typeof obj.name === 'string' &&
+      (obj.parentId === null || typeof obj.parentId === 'number');
+  };
+
+  const tags = Array.isArray(rawTags) ? rawTags.filter(isValidTag) : [];
   
   const allCategories = Array.isArray(rawAllCategories)
-    ? rawAllCategories.filter(c => c && typeof c === 'object').map(c => ({ 
-        id: (c as any).id, 
-        name: (c as any).name || '', 
-        parentId: (c as any).parentId ?? null 
-      }))
+    ? rawAllCategories.filter(isValidCategory)
     : [];
 
   const postCategories = Array.isArray(rawPostCategories)
-    ? rawPostCategories.filter(c => c && typeof c === 'object').map(c => ({ id: (c as any).id, name: (c as any).name || '' }))
+    ? rawPostCategories.filter((c): c is { id: number; name: string } => {
+        if (typeof c !== 'object' || c === null) return false;
+        const obj = c as Record<string, unknown>;
+        return 'id' in obj && 'name' in obj && typeof obj.id === 'number' && typeof obj.name === 'string';
+      })
     : [];
 
   // 最初のカテゴリ（あれば）をベースに階層パスを解決

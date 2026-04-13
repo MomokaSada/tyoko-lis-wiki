@@ -114,7 +114,7 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
                       {article.viewCount} views
                     </span>
                     <span className="text-[10px] text-stone-300 font-bold">
-                      {new Date(article.updatedAt).toISOString().split('T')[0]}
+                      {article.updatedAt instanceof Date ? article.updatedAt.toISOString().split('T')[0] : String(article.updatedAt).split('T')[0]}
                     </span>
                   </div>
                 </Link>
