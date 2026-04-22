@@ -6,9 +6,9 @@ import { socialLinks } from '@/lib/socialLinks';
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
   return (
-    <footer className="border-t border-stone-100 py-16 mt-20 bg-stone-50/50">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-start gap-16">
+    <footer className="border-t border-stone-100 py-12 md:py-14 mt-16 md:mt-20 bg-stone-50/50">
+      <div className="max-w-[72rem] mx-auto px-4 sm:px-6">
+        <div className="flex flex-col md:flex-row justify-between items-start gap-10 md:gap-14">
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <TyokoreIcon className="w-8 h-8 opacity-70" />
@@ -18,10 +18,10 @@ export const Footer = () => {
               ちょこちょこ大百科はファンによって運営されている公式コミュニティサイトです。コンテンツの無断転載を禁じます。
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 w-full">
             <div className="space-y-4">
               <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Follow</p>
-              <div className="space-y-2">
+              <div className="grid gap-2">
                 {socialLinks.map((service) => (
                   <Link
                     key={service.name}
@@ -45,7 +45,7 @@ export const Footer = () => {
             </div>
           </div>
         </div>
-        <div className="mt-16 pt-8 border-t border-stone-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="mt-10 md:mt-12 pt-6 border-t border-stone-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <p className="text-[10px] text-stone-400 font-black tracking-widest uppercase">© {currentYear} Tyokore Wiki Project</p>
 
         </div>
