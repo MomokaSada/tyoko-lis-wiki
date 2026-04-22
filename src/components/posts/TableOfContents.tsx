@@ -11,9 +11,10 @@ interface TocItem {
 
 interface TableOfContentsProps {
   toc: TocItem[];
+  isMobile?: boolean;
 }
 
-export default function TableOfContents({ toc }: TableOfContentsProps) {
+export default function TableOfContents({ toc, isMobile = false }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedRootId, setExpandedRootId] = useState<string | null>(null);
   const isInitialRender = useRef(true);
@@ -158,11 +159,13 @@ export default function TableOfContents({ toc }: TableOfContentsProps) {
   const visibleRootId = activeRootId ?? expandedRootId;
 
   return (
-    <div className="bg-white border border-stone-200 rounded-[2.5rem] p-9 shadow-sm sticky top-[100px] animate-in fade-in slide-in-from-right-4 duration-500 delay-400">
-      <div className="flex items-center justify-between mb-8">
-        <h4 className="text-xl font-black text-stone-900 tracking-tight">目次</h4>
-        <Hash size={18} className="text-stone-300" />
-      </div>
+    <div className={isMobile ? "w-full" : "bg-white border border-stone-200 rounded-[2.5rem] p-9 shadow-sm sticky top-[100px] animate-in fade-in slide-in-from-right-4 duration-500 delay-400"}>
+      {!isMobile && (
+        <div className="flex items-center justify-between mb-8">
+          <h4 className="text-xl font-black text-stone-900 tracking-tight">目次</h4>
+          <Hash size={18} className="text-stone-300" />
+        </div>
+      )}
 
       <div className="relative">
         {/* 垂直ガイドライン */}

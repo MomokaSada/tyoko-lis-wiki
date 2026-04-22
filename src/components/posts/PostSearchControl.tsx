@@ -78,16 +78,16 @@ export function PostSearchControl({
   const CurrentSortIcon = currentSortOption.icon;
 
   return (
-    <div className="w-full max-w-4xl ml-auto animate-in fade-in slide-in-from-right-8 duration-1000 delay-200">
-      <div className="relative flex items-stretch h-[72px] bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.25rem] shadow-[0_30px_100px_-15px_rgba(0,0,0,0.5)] focus-within:border-amber-500/30 focus-within:bg-white/10 transition-all duration-500 overflow-visible group">
+    <div className="w-full max-w-3xl ml-auto animate-in fade-in slide-in-from-right-8 duration-1000 delay-200 px-2 sm:px-0">
+      <div className="relative flex flex-col md:flex-row items-stretch md:h-[68px] bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl md:rounded-[2rem] shadow-[0_30px_100px_-15px_rgba(0,0,0,0.5)] focus-within:border-amber-500/30 focus-within:bg-white/10 transition-all duration-500 overflow-visible group">
         
         {/* 検索セクション */}
-        <div className="flex-1 flex items-center pl-8 relative">
-          <div className="shrink-0 mr-4">
+        <div className="flex-1 flex items-center pl-5 md:pl-7 py-3.5 md:py-0 relative">
+          <div className="shrink-0 mr-3">
             {isPending ? (
-              <Loader2 className="w-5 h-5 text-amber-500 animate-spin" />
+              <Loader2 className="w-[18px] h-[18px] text-amber-500 animate-spin" />
             ) : (
-              <Search className="w-5 h-5 text-stone-500 group-focus-within:text-amber-400 transition-colors duration-500" />
+              <Search className="w-[18px] h-[18px] text-stone-500 group-focus-within:text-amber-400 transition-colors duration-500" />
             )}
           </div>
           <input
@@ -95,25 +95,25 @@ export function PostSearchControl({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="タイトル・本文・スラグで検索..."
-            className="w-full bg-transparent border-none focus:outline-none focus:ring-0 font-bold text-white placeholder:text-stone-600 text-lg"
+            className="w-full bg-transparent border-none focus:outline-none focus:ring-0 font-bold text-white placeholder:text-stone-600 text-[15px] md:text-[1.05rem]"
           />
         </div>
 
-        {/* 区切り線 */}
-        <div className="w-px h-10 self-center bg-white/10 mx-2" />
+        {/* 区切り線 (モバイルでは非表示) */}
+        <div className="hidden md:block w-px h-10 self-center bg-white/10 mx-2" />
 
         {/* 並べ替えセクション */}
-        <div className="relative flex items-center pr-2" ref={dropdownRef}>
-          <div className="flex items-center gap-1 h-[56px] bg-white/5 rounded-full p-1 transition-all hover:bg-white/10">
+        <div className="relative flex items-center px-4 pb-4 md:pb-0 md:pr-2" ref={dropdownRef}>
+          <div className="w-full flex items-center gap-1 h-12 md:h-[52px] bg-white/5 rounded-2xl md:rounded-full p-1 transition-all hover:bg-white/10">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`flex items-center gap-3 px-6 h-full rounded-full transition-all text-sm font-black whitespace-nowrap ${
+              className={`flex-1 md:flex-none flex items-center justify-center md:justify-start gap-2.5 px-4 md:px-5 h-full rounded-xl md:rounded-full transition-all text-xs md:text-sm font-black whitespace-nowrap ${
                 isDropdownOpen ? 'bg-amber-500 text-stone-900 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.4)]' : 'text-stone-400 hover:text-white'
               }`}
             >
-              <CurrentSortIcon size={18} className={isDropdownOpen ? 'text-stone-900' : 'text-amber-500'} />
+              <CurrentSortIcon size={16} className={isDropdownOpen ? 'text-stone-900' : 'text-amber-500'} />
               <span>{currentSortOption.label}</span>
-              <ListFilter size={16} className={`transition-transform duration-500 ${isDropdownOpen ? 'rotate-180' : 'text-stone-600'}`} />
+              <ListFilter size={14} className={`transition-transform duration-500 ${isDropdownOpen ? 'rotate-180' : 'text-stone-600'}`} />
             </button>
             
             <div className="w-px h-6 bg-white/10 mx-1" />
@@ -124,20 +124,20 @@ export function PostSearchControl({
                 setOrder(newOrder);
                 updateParams({ order: newOrder });
               }}
-              className="w-12 h-full flex items-center justify-center rounded-full transition-all text-stone-500 hover:text-amber-400 hover:bg-white/5 group/order"
+              className="w-11 h-full flex items-center justify-center rounded-full transition-all text-stone-500 hover:text-amber-400 hover:bg-white/5 group/order"
               title={order === 'asc' ? '昇順' : '降順'}
             >
               {order === 'asc' ? (
-                <ArrowUpNarrowWide size={20} className="group-hover/order:-translate-y-0.5 transition-transform" />
+                <ArrowUpNarrowWide size={18} className="group-hover/order:-translate-y-0.5 transition-transform" />
               ) : (
-                <ArrowDownWideNarrow size={20} className="group-hover/order:translate-y-0.5 transition-transform" />
+                <ArrowDownWideNarrow size={18} className="group-hover/order:translate-y-0.5 transition-transform" />
               )}
             </button>
           </div>
 
           {/* ドロップダウンメニュー */}
           {isDropdownOpen && (
-            <div className="absolute top-[calc(100%+16px)] right-0 w-64 bg-[#0a0a0a]/95 backdrop-blur-3xl border border-white/10 rounded-[1.75rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="absolute top-[calc(100%+16px)] right-0 w-60 bg-[#0a0a0a]/95 backdrop-blur-3xl border border-white/10 rounded-[1.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-500">
               <div className="p-2.5 space-y-1">
                 <div className="px-4 py-3 mb-1">
                   <span className="text-[10px] font-black uppercase tracking-[0.25em] text-stone-500">並べ替え項目</span>
@@ -153,7 +153,7 @@ export function PostSearchControl({
                         updateParams({ sort: option.key });
                         setIsDropdownOpen(false);
                       }}
-                      className={`w-full flex items-center justify-between px-4 py-4 rounded-[1.25rem] transition-all text-sm font-bold group/item ${
+                      className={`w-full flex items-center justify-between px-4 py-3.5 rounded-[1.1rem] transition-all text-sm font-bold group/item ${
                         isSelected 
                           ? 'bg-amber-500 text-stone-900 shadow-[0_10px_20px_-5px_rgba(245,158,11,0.3)]' 
                           : 'text-stone-400 hover:bg-white/5 hover:text-white'

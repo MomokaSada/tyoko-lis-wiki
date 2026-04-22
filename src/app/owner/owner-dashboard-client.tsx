@@ -47,12 +47,12 @@ type ActiveIpBan = {
 };
 
 type IpDeviceRecord = {
-  deviceId: string;
+  deviceId: number | string;
   ip: string;
   browser: string;
   firstSeenAt: Date;
   lastSeenAt: Date;
-  isBanned: boolean;
+  isBanned: boolean | null;
   banReason: string | null;
   bannedBy: number | null;
   bannedByName: string | null;
@@ -60,7 +60,7 @@ type IpDeviceRecord = {
 };
 
 type DeviceSessionUsageRecord = {
-  recordId: string;
+  recordId: number | string;
   sessionId: string;
   sessionIsActive: boolean;
   sessionStartAt: Date;
