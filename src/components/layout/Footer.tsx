@@ -30,7 +30,7 @@ export const Footer = () => {
                     rel="noopener noreferrer"
                     className="group flex items-center gap-2 rounded-2xl bg-white pl-2 pr-3 py-2 text-xs font-bold text-stone-700 hover:bg-stone-50 transition"
                   >
-                    <img src={service.icon} alt={service.name} className="w-4 h-4" />
+                    <img src={service.icon} alt={service.name} className="w-3 h-3" />
                     <span>{service.name}</span>
                   </Link>
                 ))}

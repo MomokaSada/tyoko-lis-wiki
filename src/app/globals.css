@@ -267,25 +267,57 @@ h6 {
 }
 
 .article-viewer .toastui-editor-contents table {
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   width: 100%;
   overflow: hidden;
-  border-radius: 1.5rem;
-  border-style: hidden;
-  box-shadow: 0 0 0 1px #e7e5e4;
+  border-radius: 1rem;
+  border: 1px solid #e7e5e4;
+  margin-bottom: 1.5rem;
+  background: #ffffff;
 }
 
 .article-viewer .toastui-editor-contents th {
-  background: #f5f5f4;
+  background: #f8f8f7;
   color: #1c1917;
   font-weight: 800;
+  text-align: left;
 }
 
 .article-viewer .toastui-editor-contents th,
 .article-viewer .toastui-editor-contents td {
-  border: 1px solid #e7e5e4;
-  padding: 0.8rem 0.9rem;
+  border-right: 1px solid #e7e5e4;
+  border-bottom: 1px solid #e7e5e4;
+  padding: 0.8rem 1rem;
   vertical-align: top;
+}
+
+.article-viewer .toastui-editor-contents tr:last-child td {
+  border-bottom: 0;
+}
+
+.article-viewer .toastui-editor-contents th:last-child,
+.article-viewer .toastui-editor-contents td:last-child {
+  border-right: 0;
+}
+
+/* Rounded corners for cells to follow the table border-radius accurately */
+.article-viewer .toastui-editor-contents tr:first-child th:first-child,
+.article-viewer .toastui-editor-contents tr:first-child td:first-child {
+  border-top-left-radius: 1rem;
+}
+
+.article-viewer .toastui-editor-contents tr:first-child th:last-child,
+.article-viewer .toastui-editor-contents tr:first-child td:last-child {
+  border-top-right-radius: 1rem;
+}
+
+.article-viewer .toastui-editor-contents tr:last-child td:first-child {
+  border-bottom-left-radius: 1rem;
+}
+
+.article-viewer .toastui-editor-contents tr:last-child td:last-child {
+  border-bottom-right-radius: 1rem;
 }
 
 .toc-scroll-hidden {
@@ -327,10 +359,13 @@ h6 {
     padding: 0.8rem 0.95rem;
   }
 
-  .article-viewer .toastui-editor-contents table {
-    display: block;
-    width: 100%;
+  .article-viewer .toastui-editor-contents {
     overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .article-viewer .toastui-editor-contents table {
+    min-width: 600px;
   }
 }
 

@@ -36,6 +36,7 @@ export function PostSearchControl({
   const [order, setOrder] = useState<SortOrder>(initialOrder as SortOrder || 'desc');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Debounced search update
   useEffect(() => {
@@ -82,7 +83,13 @@ export function PostSearchControl({
       <div className="relative flex flex-col md:flex-row items-stretch md:h-[68px] bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl md:rounded-[2rem] shadow-[0_30px_100px_-15px_rgba(0,0,0,0.5)] focus-within:border-amber-500/30 focus-within:bg-white/10 transition-all duration-500 overflow-visible group">
         
         {/* 検索セクション */}
-        <div className="flex-1 flex items-center pl-5 md:pl-7 py-3.5 md:py-0 relative">
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            inputRef.current?.blur();
+          }}
+          className="flex-1 flex items-center pl-5 md:pl-7 py-3.5 md:py-0 relative"
+        >
           <div className="shrink-0 mr-3">
             {isPending ? (
               <Loader2 className="w-[18px] h-[18px] text-amber-500 animate-spin" />
@@ -91,13 +98,15 @@ export function PostSearchControl({
             )}
           </div>
           <input
+            ref={inputRef}
             type="text"
+            inputMode="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="タイトル・本文・スラグで検索..."
             className="w-full bg-transparent border-none focus:outline-none focus:ring-0 font-bold text-white placeholder:text-stone-600 text-[15px] md:text-[1.05rem]"
           />
-        </div>
+        </form>
 
         {/* 区切り線 (モバイルでは非表示) */}
         <div className="hidden md:block w-px h-10 self-center bg-white/10 mx-2" />
@@ -113,7 +122,7 @@ export function PostSearchControl({
             >
               <CurrentSortIcon size={16} className={isDropdownOpen ? 'text-stone-900' : 'text-amber-500'} />
               <span>{currentSortOption.label}</span>
-              <ListFilter size={14} className={`transition-transform duration-500 ${isDropdownOpen ? 'rotate-180' : 'text-stone-600'}`} />
+              <ListFilter size={14} className={`transition-transform duration-500 ${isDropdownOpen ? 'rotate-180' : 'text-stone-400'}`} />
             </button>
             
             <div className="w-px h-6 bg-white/10 mx-1" />
@@ -123,8 +132,9 @@ export function PostSearchControl({
                 const newOrder = order === 'asc' ? 'desc' : 'asc';
                 setOrder(newOrder);
                 updateParams({ order: newOrder });
+                inputRef.current?.blur();
               }}
-              className="w-11 h-full flex items-center justify-center rounded-full transition-all text-stone-500 hover:text-amber-400 hover:bg-white/5 group/order"
+              className="w-11 h-full flex items-center justify-center rounded-full transition-all text-stone-400 hover:text-amber-400 hover:bg-white/5 group/order"
               title={order === 'asc' ? '昇順' : '降順'}
             >
               {order === 'asc' ? (
@@ -152,6 +162,7 @@ export function PostSearchControl({
                         setSort(option.key as ContentSortKey);
                         updateParams({ sort: option.key });
                         setIsDropdownOpen(false);
+                        inputRef.current?.blur();
                       }}
                       className={`w-full flex items-center justify-between px-4 py-3.5 rounded-[1.1rem] transition-all text-sm font-bold group/item ${
                         isSelected 
