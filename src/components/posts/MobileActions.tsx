@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Menu, X, BookOpen, User, Share2, Home, List,
-  FilePlus, Settings, Shield, Compass, Check
+  FilePlus, Settings, Shield, Compass, Check, ChevronLeft
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -36,7 +36,7 @@ export function MobileActions({
   articleProfileProps
 }: MobileActionsProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'none' | 'toc' | 'profile' | 'nav'>('none');
+  const [activeTab, setActiveTab] = useState<'nav' | 'toc' | 'profile'>('nav');
   const [isCopied, setIsCopied] = useState(false);
 
   const isAdmin = userRole === 'admin' || userRole === 'owner';
@@ -58,7 +58,7 @@ export function MobileActions({
 
   const closeAll = () => {
     setIsOpen(false);
-    setActiveTab('none');
+    setActiveTab('nav');
   };
 
   const handleCopyLink = async () => {
@@ -90,26 +90,33 @@ export function MobileActions({
   return (
     <>
       {/* オーバーレイ */}
-      {(isOpen || activeTab !== 'none') && (
+      {isOpen && (
         <div
           className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-[100] transition-opacity duration-300"
-          onClick={() => {
-            setIsOpen(false);
-            setActiveTab('none');
-          }}
+          onClick={closeAll}
         />
       )}
 
       {/* ポップアップコンテンツ (ボトムシート風) */}
-      <div className={`fixed inset-x-4 bottom-24 z-[110] transition-all duration-300 transform ${activeTab !== 'none' ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'
+      <div className={`fixed inset-x-4 bottom-24 z-[110] transition-all duration-300 transform ${isOpen ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'
         }`}>
         <div className="bg-white rounded-[2rem] shadow-2xl overflow-hidden border border-stone-100 max-h-[70vh] flex flex-col">
           <div className="p-5 border-b border-stone-100 flex items-center justify-between shrink-0 bg-white sticky top-0 z-10">
-            <h3 className="font-black text-stone-900">
-              {activeTab === 'toc' && '目次'}
-              {activeTab === 'profile' && 'プロフィール'}
-              {activeTab === 'nav' && 'メニュー'}
-            </h3>
+            <div className="flex items-center gap-2">
+              {activeTab !== 'nav' && (
+                <button
+                  onClick={() => setActiveTab('nav')}
+                  className="p-2 hover:bg-stone-100 rounded-full transition-colors mr-1"
+                >
+                  <ChevronLeft size={20} className="text-stone-600" />
+                </button>
+              )}
+              <h3 className="font-black text-stone-900">
+                {activeTab === 'toc' && '目次'}
+                {activeTab === 'profile' && 'プロフィール'}
+                {activeTab === 'nav' && 'メニュー'}
+              </h3>
+            </div>
             <button onClick={closeAll} className="p-2 bg-stone-100 rounded-full hover:bg-stone-200 transition-colors">
               <X size={16} />
             </button>
@@ -137,44 +144,104 @@ export function MobileActions({
             )}
 
             {activeTab === 'nav' && (
-              <div className="grid gap-3">
-                <Link href="/" onClick={closeAll} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition">
-                  <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
-                    <Home size={20} className="text-stone-500" />
-                  </div>
-                  メインページ
-                </Link>
-                <Link href="/posts" onClick={closeAll} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition">
-                  <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
-                    <List size={20} className="text-stone-500" />
-                  </div>
-                  記事一覧
-                </Link>
-                {isAdmin && (
-                  <div className="grid gap-2 border-t border-stone-100 pt-3">
-                    <Link href="/admin" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-stone-600 transition">
-                      <Settings size={18} /> 管理画面
-                    </Link>
-                    {isOwner && (
-                      <Link href="/owner" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-stone-600 transition">
-                        <Shield size={18} /> オーナー画面
+              <div className="flex flex-col gap-6">
+                <div className="grid gap-3">
+                  <Link href="/" onClick={closeAll} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition">
+                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                      <Home size={20} className="text-stone-500" />
+                    </div>
+                    メインページ
+                  </Link>
+                  <Link href="/posts" onClick={closeAll} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition">
+                    <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                      <List size={20} className="text-stone-500" />
+                    </div>
+                    記事一覧
+                  </Link>
+
+                  {(isAdmin || hasEditSession) && (
+                    <div className="grid grid-cols-1 gap-2 pt-1">
+                      {isAdmin && (
+                        <>
+                          <Link href="/admin" onClick={closeAll} className="flex items-center justify-center gap-2 px-4 py-3 bg-stone-100 hover:bg-stone-200 rounded-xl text-[13px] font-bold text-stone-600 transition">
+                            <Settings size={16} /> 管理画面
+                          </Link>
+                          {isOwner && (
+                            <Link href="/owner" onClick={closeAll} className="flex items-center justify-center gap-2 px-4 py-3 bg-stone-100 hover:bg-stone-200 rounded-xl text-[13px] font-bold text-stone-600 transition">
+                              <Shield size={16} /> オーナー画面
+                            </Link>
+                          )}
+                        </>
+                      )}
+                      <Link href="/posts/create" onClick={closeAll} className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-50 hover:bg-amber-100 rounded-xl text-[13px] font-black text-amber-700 transition">
+                        <FilePlus size={16} /> 記事を作成
                       </Link>
-                    )}
-                    {(isAdmin || hasEditSession) && (
-                      <Link href="/posts/create" onClick={closeAll} className="flex items-center gap-3 px-4 py-3 text-sm font-black text-amber-600 transition">
-                        <FilePlus size={18} /> 記事を作成
-                      </Link>
-                    )}
-                  </div>
-                )}
-                {showLogin && (
-                  <div className="grid gap-2 border-t border-stone-100 pt-3">
+                    </div>
+                  )}
+
+                  {showLogin && (
                     <Link href="/auth/login" onClick={closeAll} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition">
                       <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
                         <User size={20} className="text-stone-500" />
                       </div>
                       ログイン
                     </Link>
+                  )}
+                </div>
+
+                {/* 記事詳細ページ専用のナビゲーション */}
+                {postTitle && (
+                  <div className="space-y-4 pt-6 border-t border-stone-100">
+                    <div className="flex items-center gap-3 px-1">
+                      <Compass size={16} className="text-stone-400" />
+                      <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">記事ナビゲーション</span>
+                    </div>
+                    <div className="grid gap-3">
+                      {toc && toc.length > 0 && (
+                        <button
+                          onClick={() => setActiveTab('toc')}
+                          className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition text-left"
+                        >
+                          <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                            <BookOpen size={20} className="text-stone-500" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm">目次</div>
+                            <div className="text-[10px] text-stone-400 font-normal">記事の構成を確認</div>
+                          </div>
+                        </button>
+                      )}
+
+                      {!hideProfile && (
+                        <button
+                          onClick={() => setActiveTab('profile')}
+                          className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition text-left"
+                        >
+                          <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                            <User size={20} className="text-stone-500" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm">プロフィール</div>
+                            <div className="text-[10px] text-stone-400 font-normal">記事情報</div>
+                          </div>
+                        </button>
+                      )}
+
+                      {!hideShare && (
+                        <button
+                          onClick={handleCopyLink}
+                          className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition text-left"
+                        >
+                          <div className={`w-10 h-10 rounded-xl shadow-sm flex items-center justify-center transition-colors ${isCopied ? 'bg-green-500 text-white' : 'bg-white text-stone-500'}`}>
+                            {isCopied ? <Check size={20} /> : <Share2 size={20} />}
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm">リンクをコピー</div>
+                            <div className="text-[10px] text-stone-400 font-normal">{isCopied ? 'コピーしました！' : 'URLをクリップボードへ'}</div>
+                          </div>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -183,72 +250,18 @@ export function MobileActions({
         </div>
       </div>
 
-      {/* フローティングボタン群 */}
       <div className="fixed bottom-6 right-6 z-[120] flex flex-col items-end gap-3 pointer-events-none lg:hidden">
-        {/* サブボタン (展開時) */}
-        <div className={`flex flex-col items-end gap-3 transition-all duration-300 ${isOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-50 pointer-events-none'
-          }`}>
-          {toc && toc.length > 0 && (
-            <button
-              onClick={() => activeTab === 'toc' ? closeAll() : setActiveTab('toc')}
-              className="flex items-center gap-3 pointer-events-auto group"
-            >
-              <span className="bg-stone-800 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg opacity-0 group-active:opacity-100 transition-opacity">目次</span>
-              <div className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-stone-100 text-stone-700 active:bg-amber-100 active:text-amber-700 transition-all">
-                <BookOpen size={20} />
-              </div>
-            </button>
-          )}
-
-          {postTitle && !hideProfile && (
-            <button
-              onClick={() => activeTab === 'profile' ? closeAll() : setActiveTab('profile')}
-              className="flex items-center gap-3 pointer-events-auto group"
-            >
-              <span className="bg-stone-800 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg opacity-0 group-active:opacity-100 transition-opacity">プロフィール</span>
-              <div className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-stone-100 text-stone-700 active:bg-blue-100 active:text-blue-700 transition-all">
-                <User size={20} />
-              </div>
-            </button>
-          )}
-
-          {!hideShare && (
-            <button
-              onClick={handleCopyLink}
-              className="flex items-center gap-3 pointer-events-auto group"
-            >
-              <span className="bg-stone-800 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg opacity-0 group-active:opacity-100 transition-opacity">リンクをコピー</span>
-              <div className={`w-12 h-12 rounded-2xl shadow-xl flex items-center justify-center border transition-all ${isCopied ? 'bg-green-500 border-green-400 text-white' : 'bg-white border-stone-100 text-stone-700 active:bg-stone-100'
-                }`}>
-                {isCopied ? <Check size={20} /> : <Share2 size={20} />}
-              </div>
-            </button>
-          )}
-
-          <button
-            onClick={() => activeTab === 'nav' ? closeAll() : setActiveTab('nav')}
-            className="flex items-center gap-3 pointer-events-auto group"
-          >
-            <span className="bg-stone-800 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg opacity-0 group-active:opacity-100 transition-opacity">ナビゲーション</span>
-            <div className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center border border-stone-100 text-stone-700 active:bg-stone-100 transition-all">
-              <Compass size={20} />
-            </div>
-          </button>
-        </div>
 
         {/* メインボタン */}
         <button
           onClick={() => {
-            if (isOpen || activeTab !== 'none') {
-              closeAll();
-            } else {
-              setIsOpen(true);
-            }
+            setIsOpen(!isOpen);
+            if (!isOpen) setActiveTab('nav');
           }}
-          className={`pointer-events-auto w-16 h-16 rounded-[2rem] shadow-2xl flex items-center justify-center transition-all duration-300 transform ${isOpen || activeTab !== 'none' ? 'bg-stone-800 text-white rotate-0' : 'bg-stone-900 shadow-amber-500/20 text-white'
+          className={`pointer-events-auto w-16 h-16 rounded-[2rem] shadow-2xl flex items-center justify-center transition-all duration-300 transform ${isOpen ? 'bg-stone-800 text-white rotate-0' : 'bg-stone-900 shadow-amber-500/20 text-white'
             } active:scale-90`}
         >
-          {isOpen || activeTab !== 'none' ? <X size={28} /> : <Menu size={28} />}
+          {isOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
       </div>
     </>

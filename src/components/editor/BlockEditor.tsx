@@ -18,6 +18,7 @@ declare global {
   interface Window {
     toastui?: {
       Editor: (new (options: Record<string, unknown>) => ToastUiEditorInstance) & {
+        setLanguage?: (codes: string[] | string, dict: Record<string, string>) => void;
         factory?: (options: {
           el: HTMLElement;
           viewer: boolean;
@@ -131,9 +132,61 @@ export default function BlockEditor({
         // Toast UI manages its internal subtree and can throw when external code mutates it mid-destroy.
         mountRef.current.replaceChildren();
 
+        toastui.Editor.setLanguage?.(['ja', 'ja-JP'], {
+          Markdown: 'Markdown',
+          WYSIWYG: 'WYSIWYG',
+          Write: '編集',
+          Preview: 'プレビュー',
+          Headings: '見出し',
+          Paragraph: '段落',
+          Bold: '太字',
+          Italic: '斜体',
+          Strike: '取り消し線',
+          Code: 'インラインコード',
+          Line: '区切り線',
+          Blockquote: '引用',
+          'Unordered list': '箇条書きリスト',
+          'Ordered list': '番号付きリスト',
+          Task: 'チェックリスト',
+          Indent: 'インデント',
+          Outdent: 'インデント解除',
+          'Insert link': 'リンクを挿入',
+          'Insert CodeBlock': 'コードブロックを挿入',
+          'Insert table': '表を挿入',
+          'Insert image': '画像を挿入',
+          Heading: '見出し',
+          'Image URL': '画像URL',
+          'Select image file': '画像ファイルを選択',
+          'Choose a file': 'ファイルを選択',
+          'No file': 'ファイル未選択',
+          Description: '説明',
+          OK: 'OK',
+          More: 'その他',
+          Cancel: 'キャンセル',
+          File: 'ファイル',
+          URL: 'URL',
+          'Link text': 'リンクテキスト',
+          'Add row to up': '上に行を追加',
+          'Add row to down': '下に行を追加',
+          'Add column to left': '左に列を追加',
+          'Add column to right': '右に列を追加',
+          'Remove row': '行を削除',
+          'Remove column': '列を削除',
+          'Align column to left': '左揃え',
+          'Align column to center': '中央揃え',
+          'Align column to right': '右揃え',
+          'Remove table': '表を削除',
+          'Would you like to paste as table?': '表として貼り付けますか？',
+          'Text color': '文字色',
+          'Auto scroll enabled': '自動スクロール有効',
+          'Auto scroll disabled': '自動スクロール無効',
+          'Choose language': '言語を選択',
+        });
+
         const editor = new toastui.Editor({
           el: mountRef.current,
           height: '100%',
+          language: 'ja-JP',
           initialEditType: 'wysiwyg',
           previewStyle: 'tab',
           hideModeSwitch: !showModeSwitch,
@@ -141,6 +194,13 @@ export default function BlockEditor({
           usageStatistics: false,
           autofocus: false,
           placeholder: '本文を入力してください',
+          toolbarItems: [
+            ['heading', 'bold', 'italic', 'strike'],
+            ['hr', 'quote'],
+            ['ul', 'ol', 'task', 'indent', 'outdent'],
+            ['table', 'image', 'link'],
+            ['code', 'codeblock'],
+          ],
         });
 
         editor.on('change', () => {
@@ -204,7 +264,7 @@ export default function BlockEditor({
     <div className="w-full rounded-2xl border border-stone-200 bg-white shadow-sm transition-colors focus-within:border-amber-400 overflow-hidden">
       <input type="hidden" name={name} value={markdown} />
 
-      <div className="relative h-[calc(100vh-6rem)] min-h-[800px]">
+      <div className="relative h-[75vh] sm:h-[calc(100vh-6rem)] min-h-[600px] sm:min-h-[800px]">
         {status === 'loading' ? (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white text-sm text-stone-500">
             エディタを読み込み中...

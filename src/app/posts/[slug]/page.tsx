@@ -23,7 +23,7 @@ import TableOfContents from '@/components/posts/TableOfContents';
 import { BlockViewerDynamic } from '@/components/editor/BlockViewerDynamic';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 import { getFullContentTaxonomy, resolveCategoryPath } from '@/server/services/taxonomyService';
-import { ShareButton } from '@/components/posts/ShareButton';
+import { PostShareActions } from '@/components/posts/PostShareActions';
 import { ArticleProfile } from '@/components/posts/ArticleProfile';
 import { createHeadingIdBase, createUniqueHeadingId, normalizeHeadingText } from '@/lib/heading';
 import { MobileActions } from '@/components/posts/MobileActions';
@@ -266,18 +266,17 @@ export default async function PostDetailPage({
                   <Edit3 size={18} /> 記事を編集
                 </Link>
               )}
-              <ShareButton title={post.title} />
             </div>
           </div>
         </div>
       </div>
 
       {/* 2. メインコンテンツ & サイドパネル */}
-      <div className="max-w-[72rem] mx-auto px-4 sm:px-6 -mt-28 md:-mt-[280px] relative z-5">
+      <div className="max-w-[72rem] mx-auto px-4 sm:px-6 -mt-40 md:-mt-[280px] relative z-5">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
 
           {/* 左側：メインコンテンツエリア */}
-          <div className="flex-1 order-1 lg:order-1 pb-32 sm:pb-0 pt-8 md:pt-0">
+          <div className="flex-1 order-1 lg:order-1 pb-32 sm:pb-0 pt-0">
             <div className="bg-white border border-stone-200 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden animate-in slide-in-from-bottom-4 duration-500 delay-200">
               <div className="p-4 sm:p-6 md:p-8 lg:p-10">
 
@@ -313,6 +312,9 @@ export default async function PostDetailPage({
                     <BlockViewerDynamic markdown={post.content} />
                   </div>
                 </div>
+
+                {/* 記事末尾の共有エリア */}
+                <PostShareActions title={post.title} />
               </div>
             </div>
           </div>

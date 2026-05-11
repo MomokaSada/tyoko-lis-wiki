@@ -51,47 +51,95 @@ export default async function EditLinkUsagePage() {
           {records.length === 0 ? (
             <p className="text-stone-500">編集リンクの使用記録はまだありません。</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap">
-                <thead>
-                  <tr className="text-stone-400 border-b border-stone-100 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="pb-3 px-4">Status & UUID</th>
-                    <th className="pb-3 px-4">Author Info</th>
-                    <th className="pb-3 px-4">Device & IP</th>
-                    <th className="pb-3 px-4">Usage (Edits/Revs)</th>
-                    <th className="pb-3 px-4">Recorded Dates</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-50">
-                  {records.map((record) => (
-                    <tr key={record.recordId} className="hover:bg-stone-50 transition-colors group">
-                      <td className="py-4 px-4">
-                        <div className="mb-2">{getSessionStatusBadge(record)}</div>
-                        <div className="font-mono text-xs text-stone-600 block">{record.sessionId}</div>
-                      </td>
-                      <td className="py-4 px-4">
+            <div>
+              {/* Mobile View: Card List */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
+                {records.map((record) => (
+                  <div key={record.recordId} className="bg-stone-50 border border-stone-100 rounded-2xl p-5 space-y-4">
+                    <div className="flex justify-between items-start">
+                      {getSessionStatusBadge(record)}
+                      <div className="text-right">
+                        <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Usage</div>
+                        <div className="text-sm font-black text-stone-800">{record.editsUsed} / {record.maxEdits} 回</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Session ID</div>
+                      <div className="font-mono text-xs text-stone-600 break-all bg-white border border-stone-100 p-2 rounded-lg">{record.sessionId}</div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Author & Network</div>
+                      <div className="flex justify-between items-end">
                         <div className="font-medium text-stone-700">{record.sessionAuthorName ?? `user:${record.sessionAuthorId}`}</div>
-                        <div className="text-[10px] text-stone-400 mt-1">
-                           Start: {formatDateTimeJst(record.sessionStartAt).split(' ')[0]}<br/>
-                           End: {formatDateTimeJst(record.sessionEndAt).split(' ')[0]}
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="font-mono text-stone-800 mb-1">{record.ip}</div>
-                        <div className="text-[10px] text-stone-400 max-w-[150px] truncate" title={record.browser}>{record.browser}</div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="font-bold text-stone-800 mb-1">{record.editsUsed} / {record.maxEdits} 回</div>
-                        <div className="text-xs text-stone-500">Revisions: {record.revisionCount}</div>
-                      </td>
-                      <td className="py-4 px-4 text-xs font-medium text-stone-500">
-                        <div><span className="text-stone-400">First:</span> {formatDateTimeJst(record.firstRecordedAt)}</div>
-                        <div><span className="text-stone-400">Last:</span> {formatDateTimeJst(record.lastRecordedAt)}</div>
-                      </td>
+                        <div className="font-mono text-xs text-stone-500">{record.ip}</div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div className="text-xs">
+                        <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">First Recorded</div>
+                        <div className="font-medium text-stone-500">{formatDateTimeJst(record.firstRecordedAt)}</div>
+                      </div>
+                      <div className="text-xs">
+                        <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Last Recorded</div>
+                        <div className="font-medium text-stone-500">{formatDateTimeJst(record.lastRecordedAt)}</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Browser & Revisions</div>
+                      <div className="text-xs text-stone-500 line-clamp-1">{record.browser}</div>
+                      <div className="text-[10px] text-stone-400 font-bold">Total Revisions: {record.revisionCount}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop View: Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                  <thead>
+                    <tr className="text-stone-400 border-b border-stone-100 font-bold uppercase tracking-wider text-[10px]">
+                      <th className="pb-3 px-4">Status & UUID</th>
+                      <th className="pb-3 px-4">Author Info</th>
+                      <th className="pb-3 px-4">Device & IP</th>
+                      <th className="pb-3 px-4">Usage (Edits/Revs)</th>
+                      <th className="pb-3 px-4">Recorded Dates</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-stone-50">
+                    {records.map((record) => (
+                      <tr key={record.recordId} className="hover:bg-stone-50 transition-colors group">
+                        <td className="py-4 px-4">
+                          <div className="mb-2">{getSessionStatusBadge(record)}</div>
+                          <div className="font-mono text-xs text-stone-600 block">{record.sessionId}</div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="font-medium text-stone-700">{record.sessionAuthorName ?? `user:${record.sessionAuthorId}`}</div>
+                          <div className="text-[10px] text-stone-400 mt-1">
+                             Start: {formatDateTimeJst(record.sessionStartAt).split(' ')[0]}<br/>
+                             End: {formatDateTimeJst(record.sessionEndAt).split(' ')[0]}
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="font-mono text-stone-800 mb-1">{record.ip}</div>
+                          <div className="text-[10px] text-stone-400 max-w-[150px] truncate" title={record.browser}>{record.browser}</div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="font-bold text-stone-800 mb-1">{record.editsUsed} / {record.maxEdits} 回</div>
+                          <div className="text-xs text-stone-500">Revisions: {record.revisionCount}</div>
+                        </td>
+                        <td className="py-4 px-4 text-xs font-medium text-stone-500">
+                          <div><span className="text-stone-400">First:</span> {formatDateTimeJst(record.firstRecordedAt)}</div>
+                          <div><span className="text-stone-400">Last:</span> {formatDateTimeJst(record.lastRecordedAt)}</div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

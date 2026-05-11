@@ -34,44 +34,88 @@ export default async function AccountBansPage() {
           {accounts.length === 0 ? (
             <p className="text-stone-500">BAN対象の（または管理可能な）アカウントはありません。</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="text-stone-400 border-b border-stone-100 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="pb-3 px-4">Status</th>
-                    <th className="pb-3 px-4">UserName & Type</th>
-                    <th className="pb-3 px-4">Created At</th>
-                    <th className="pb-3 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-50">
-                  {accounts.map((account) => (
-                    <tr key={account.id} className="hover:bg-stone-50 transition-colors group">
-                      <td className="py-4 px-4">
+            <div>
+              {/* Mobile View: Card List */}
+              <div className="grid grid-cols-1 gap-4 md:hidden">
+                {accounts.map((account) => (
+                  <div key={account.id} className="bg-stone-50 border border-stone-100 rounded-2xl p-5 space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex flex-col gap-1">
                         {account.isActive ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-100 text-green-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> 有効</span>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-100 text-green-700 font-bold text-xs w-fit"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> 有効</span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-100 text-red-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> BAN済み</span>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-100 text-red-700 font-bold text-xs w-fit"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> BAN済み</span>
                         )}
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="font-bold text-stone-800 mb-1">{account.name}</div>
-                        <div className="text-[10px] text-stone-400 uppercase tracking-widest">{account.type}</div>
-                      </td>
-                      <td className="py-4 px-4 text-xs font-medium text-stone-500">
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Type</div>
+                        <div className="text-xs font-black text-stone-800 uppercase tracking-widest">{account.type}</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">UserName</div>
+                      <div className="font-bold text-stone-800 text-lg">{account.name}</div>
+                    </div>
+
+                    <div className="pt-2">
+                      <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-1">Created At</div>
+                      <div className="text-xs font-medium text-stone-500">
                         {formatDateTimeJst(account.createdAt)}
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        {account.isActive ? (
-                          <BanButton userId={account.id} />
-                        ) : (
-                          <UnbanButton userId={account.id} />
-                        )}
-                      </td>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-stone-100 flex justify-end">
+                      {account.isActive ? (
+                        <BanButton userId={account.id} />
+                      ) : (
+                        <UnbanButton userId={account.id} />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop View: Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="text-stone-400 border-b border-stone-100 font-bold uppercase tracking-wider text-[10px]">
+                      <th className="pb-3 px-4">Status</th>
+                      <th className="pb-3 px-4">UserName & Type</th>
+                      <th className="pb-3 px-4">Created At</th>
+                      <th className="pb-3 px-4 text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-stone-50">
+                    {accounts.map((account) => (
+                      <tr key={account.id} className="hover:bg-stone-50 transition-colors group">
+                        <td className="py-4 px-4">
+                          {account.isActive ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-100 text-green-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> 有効</span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-100 text-red-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> BAN済み</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="font-bold text-stone-800 mb-1">{account.name}</div>
+                          <div className="text-[10px] text-stone-400 uppercase tracking-widest">{account.type}</div>
+                        </td>
+                        <td className="py-4 px-4 text-xs font-medium text-stone-500">
+                          {formatDateTimeJst(account.createdAt)}
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          {account.isActive ? (
+                            <BanButton userId={account.id} />
+                          ) : (
+                            <UnbanButton userId={account.id} />
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

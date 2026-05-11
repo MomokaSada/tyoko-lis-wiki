@@ -149,12 +149,6 @@ export default async function PostsPage({
             </div>
           ) : (
             <>
-              <div className="mb-10">
-                <PostPagination 
-                  totalPages={pagination.totalPages} 
-                  currentPage={pagination.currentPage} 
-                />
-              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
               {posts.map((post, idx) => {
                 const thumbnailUrl = getPublicThumbnailUrl(post.thumbnail);

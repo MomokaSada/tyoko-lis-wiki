@@ -43,45 +43,89 @@ export default async function AccountCreateLinksPage() {
         {links.length === 0 ? (
           <p className="text-stone-500">まだ発行されたリンクはありません。</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="text-stone-400 border-b border-stone-100 font-bold uppercase tracking-wider text-[10px]">
-                  <th className="pb-3 px-4">Status</th>
-                  <th className="pb-3 px-4">UUID / URL</th>
-                  <th className="pb-3 px-4">Author</th>
-                  <th className="pb-3 px-4">Dates</th>
-                  <th className="pb-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-50">
-                {links.map((link) => (
-                  <tr key={link.uuid} className="hover:bg-stone-50 transition-colors group">
-                    <td className="py-4 px-4">{getStatusBadge(link.status)}</td>
-                    <td className="py-4 px-4">
-                      <div className="font-mono text-stone-600 mb-1">{link.uuid}</div>
-                      <div className="text-[10px] text-blue-500 hover:underline max-w-[200px] truncate break-all">
-                        <a href={`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`} target="_blank" rel="noreferrer">
-                           {`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}
-                        </a>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 text-stone-700 font-medium">
+          <div>
+            {/* Mobile View: Card List */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
+              {links.map((link) => (
+                <div key={link.uuid} className="bg-stone-50 border border-stone-100 rounded-2xl p-5 space-y-4">
+                  <div className="flex justify-between items-start">
+                    {getStatusBadge(link.status)}
+                    <div className="text-xs font-bold text-stone-700">
                       {link.authorName ?? `user:${link.authorId}`}
-                    </td>
-                    <td className="py-4 px-4 text-xs font-medium text-stone-500">
-                      <div><span className="text-stone-400">開始:</span> {formatDateTimeJst(link.startAt).split(' ')[0]}</div>
-                      <div><span className="text-stone-400">終了:</span> {formatDateTimeJst(link.endAt).split(' ')[0]}</div>
-                    </td>
-                    <td className="py-4 px-4 text-right">
-                      {link.status === 'active' && (
-                        <InvalidButton uuid={link.uuid} />
-                      )}
-                    </td>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">UUID / URL</div>
+                    <div className="font-mono text-xs text-stone-600 break-all bg-white border border-stone-100 p-2 rounded-lg mb-2">{link.uuid}</div>
+                    <div className="text-[10px] text-blue-500 truncate hover:underline">
+                      <a href={`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`} target="_blank" rel="noreferrer">
+                         {`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="text-xs">
+                      <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Start</div>
+                      <div className="font-bold text-stone-700">{formatDateTimeJst(link.startAt).split(' ')[0]}</div>
+                    </div>
+                    <div className="text-xs">
+                      <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">End</div>
+                      <div className="font-bold text-stone-700">{formatDateTimeJst(link.endAt).split(' ')[0]}</div>
+                    </div>
+                  </div>
+
+                  {link.status === 'active' && (
+                    <div className="pt-3 border-t border-stone-100">
+                      <InvalidButton uuid={link.uuid} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop View: Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="text-stone-400 border-b border-stone-100 font-bold uppercase tracking-wider text-[10px]">
+                    <th className="pb-3 px-4">Status</th>
+                    <th className="pb-3 px-4">UUID / URL</th>
+                    <th className="pb-3 px-4">Author</th>
+                    <th className="pb-3 px-4">Dates</th>
+                    <th className="pb-3 px-4 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-stone-50">
+                  {links.map((link) => (
+                    <tr key={link.uuid} className="hover:bg-stone-50 transition-colors group">
+                      <td className="py-4 px-4">{getStatusBadge(link.status)}</td>
+                      <td className="py-4 px-4">
+                        <div className="font-mono text-stone-600 mb-1">{link.uuid}</div>
+                        <div className="text-[10px] text-blue-500 hover:underline max-w-[200px] truncate break-all">
+                          <a href={`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`} target="_blank" rel="noreferrer">
+                             {`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}
+                          </a>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-stone-700 font-medium">
+                        {link.authorName ?? `user:${link.authorId}`}
+                      </td>
+                      <td className="py-4 px-4 text-xs font-medium text-stone-500">
+                        <div><span className="text-stone-400">開始:</span> {formatDateTimeJst(link.startAt).split(' ')[0]}</div>
+                        <div><span className="text-stone-400">終了:</span> {formatDateTimeJst(link.endAt).split(' ')[0]}</div>
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        {link.status === 'active' && (
+                          <InvalidButton uuid={link.uuid} />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

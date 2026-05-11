@@ -34,8 +34,8 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
           
           {featuredAllTime ? (
             <div className="relative overflow-visible">
-              <div className="absolute -top-12 -left-3 -right-3 -bottom-3 bg-gradient-to-tr from-amber-100/50 to-orange-50/50 rounded-[2.5rem] -z-10 transform -rotate-4 -translate-y-6" />
-              <Link href={`/posts/${featuredAllTime.slug}`} className="relative block z-10 bg-stone-900 rounded-[2.25rem] p-6 md:p-8 text-white overflow-hidden aspect-[3/4] flex flex-col justify-end group cursor-pointer shadow-2xl shadow-stone-200/40 hover:-translate-y-2 transition-transform duration-500">
+              <div className="absolute -top-12 -left-3 -right-3 -bottom-3 bg-linear-to-tr from-amber-100/50 to-orange-50/50 rounded-[2.5rem] -z-10 transform -rotate-4 -translate-y-6" />
+              <Link href={`/posts/${featuredAllTime.slug}`} className="relative z-10 bg-stone-900 rounded-[2.25rem] p-6 md:p-8 text-white overflow-hidden aspect-3/4 flex flex-col justify-end group cursor-pointer shadow-2xl shadow-stone-200/40 hover:-translate-y-2 transition-transform duration-500">
                 <div className="absolute top-6 left-6 md:top-8 md:left-8 bg-amber-400 text-stone-900 text-[10px] md:text-xs font-black px-2.5 py-1 rounded shadow-sm shadow-amber-400/20 uppercase tracking-widest z-20">
                   All Time Rank 1
                 </div>
@@ -61,7 +61,7 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
             </Link>
             </div>
           ) : (
-             <div className="bg-stone-100 rounded-3xl p-8 aspect-[3/4] flex items-center justify-center text-stone-400">
+             <div className="bg-stone-100 rounded-3xl p-8 aspect-3/4 flex items-center justify-center text-stone-400">
                 記事がありません
              </div>
           )}
@@ -79,46 +79,73 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
                  まだランクインしている記事が存在しません。
                </p>
             ) : (
-              displayWeekly.map((article, index) => (
-                <Link 
-                  href={`/posts/${article.slug}`} 
-                  key={article.id} 
-                  className={`bg-white border hover:border-transparent rounded-3xl p-4 md:p-5 flex items-center gap-4 md:gap-6 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer group relative overflow-hidden
-                    ${
-                      index === 0 ? 'ml-0 lg:-ml-4 border-amber-100 z-30' :
-                      index === 1 ? 'ml-0 lg:ml-4 border-stone-100 z-20' :
-                      'ml-0 lg:ml-10 border-stone-100 z-10'
-                    }`}
-                >
-                  <span className={`text-3xl md:text-4xl font-black italic w-10 md:w-12 transition-colors ${
-                    index === 0 ? 'text-amber-400 group-hover:text-amber-500' :
-                    index === 1 ? 'text-stone-300 group-hover:text-stone-400' :
-                    index === 2 ? 'text-orange-300 group-hover:text-orange-400' :
-                    'text-stone-200 group-hover:text-stone-300'
-                  }`}>
-                    {(index + 1).toString().padStart(2, '0')}
-                  </span>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-stone-800 text-base md:text-lg group-hover:text-blue-600 transition-colors mb-2">
-                      {article.title}
-                    </h3>
-                    <div className="flex gap-2">
-                       <span className="text-[10px] text-stone-400 font-bold uppercase p-1 bg-stone-50 rounded">
-                         #{article.slug}
-                       </span>
+              displayWeekly.map((article, index) => {
+                const config = [
+                  { color: 'text-amber-500', glow: 'bg-amber-100/40' },
+                  { color: 'text-stone-400', glow: 'bg-stone-100/40' },
+                  { color: 'text-orange-400', glow: 'bg-orange-100/40' },
+                ][index] || { color: 'text-stone-500', glow: 'bg-stone-100/40' };
+
+                return (
+                  <Link 
+                    href={`/posts/${article.slug}`} 
+                    key={article.id} 
+                    className={`bg-white border hover:border-transparent rounded-3xl p-4 md:p-5 flex items-center gap-4 md:gap-6 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer group relative overflow-hidden
+                      ${
+                        index === 0 ? 'ml-0 lg:-ml-4 border-amber-100 z-30' :
+                        index === 1 ? 'ml-0 lg:ml-4 border-stone-100 z-20' :
+                        'ml-0 lg:ml-10 border-stone-100 z-10'
+                      }`}
+                  >
+                    {/* Accent Glow */}
+                    <div className={`absolute -left-10 top-1/2 h-32 w-32 rounded-full ${config.glow} blur-3xl opacity-0 group-hover:opacity-100 transform -translate-y-1/2 group-hover:scale-150 transition-all duration-700`} />
+
+                    {/* Rank Number */}
+                    <div className="relative flex flex-col items-center justify-center min-w-10 md:min-w-12">
+                      <span className={`text-3xl md:text-4xl font-black italic transition-colors duration-300 ${
+                        index === 0 ? 'text-amber-400 group-hover:text-amber-500' :
+                        index === 1 ? 'text-stone-300 group-hover:text-stone-400' :
+                        index === 2 ? 'text-orange-300 group-hover:text-orange-400' :
+                        'text-stone-200 group-hover:text-stone-300'
+                      }`}>
+                        {(index + 1).toString().padStart(2, '0')}
+                      </span>
                     </div>
-                  </div>
-                  <div className="text-right flex flex-col justify-end gap-1">
-                    <span className="text-xs text-stone-500 font-bold flex items-center justify-end gap-1">
-                      <TrendingUp size={14} className={index < 3 ? 'text-amber-500' : 'text-stone-300'} />
-                      {article.viewCount} views
-                    </span>
-                    <span className="text-[10px] text-stone-300 font-bold">
-                      {article.updatedAt instanceof Date ? article.updatedAt.toISOString().split('T')[0] : String(article.updatedAt).split('T')[0]}
-                    </span>
-                  </div>
-                </Link>
-              ))
+
+                    {/* Thumbnail */}
+                    <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden shrink-0 border-2 border-white shadow-sm group-hover:scale-105 transition-transform duration-500 z-10">
+                       <img 
+                         src={getPublicThumbnailUrl(article.thumbnail) || '/images/no-image.png'} 
+                         alt="" 
+                         className="w-full h-full object-cover"
+                       />
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0 z-10">
+                      <h3 className="font-bold text-stone-800 text-base md:text-lg group-hover:text-blue-600 transition-colors mb-2 truncate">
+                        {article.title}
+                      </h3>
+                      <div className="flex gap-2">
+                         <span className="text-[10px] text-stone-400 font-bold uppercase p-1 bg-stone-50 rounded">
+                           #{article.slug}
+                         </span>
+                      </div>
+                    </div>
+
+                    {/* Stats & Date (Right Aligned) */}
+                    <div className="text-right flex flex-col justify-end gap-1 z-10">
+                      <span className="text-xs text-stone-500 font-bold flex items-center justify-end gap-1">
+                        <TrendingUp size={14} className={config.color} />
+                        {article.viewCount} views
+                      </span>
+                      <span className="text-[10px] text-stone-300 font-bold">
+                        {article.updatedAt instanceof Date ? article.updatedAt.toISOString().split('T')[0] : String(article.updatedAt).split('T')[0]}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })
             )}
           </div>
         </div>
