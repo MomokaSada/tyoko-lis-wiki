@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
-import { getFirstZodErrorMessage } from '@/server/lib/zodError';
+import { getFirstZodErrorMessage, getZodFieldErrors } from '@/server/lib/zodError';
 import {
   createContentSchema,
   deleteContentSchema,
@@ -20,6 +20,7 @@ import { recordAuditLog } from '@/server/services/auditLogService';
 export type ContentActionState = BaseActionState & {
   slug: string | null;
   title: string | null;
+  fieldErrors?: Record<string, string>;
 };
 
 export async function createContentAction(
@@ -54,6 +55,7 @@ export async function createContentAction(
   if (!parsed.success) {
     return {
       error: getFirstZodErrorMessage(parsed.error),
+      fieldErrors: getZodFieldErrors(parsed.error),
       slug: null,
       title: null,
     };
@@ -145,6 +147,7 @@ export async function updateContentAction(
   if (!parsed.success) {
     return {
       error: getFirstZodErrorMessage(parsed.error),
+      fieldErrors: getZodFieldErrors(parsed.error),
       slug: null,
       title: null,
     };
