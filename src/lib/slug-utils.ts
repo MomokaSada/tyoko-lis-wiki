@@ -26,14 +26,14 @@ export function slugify(input: string) {
   );
 
   if (!base) {
-    base = 'post';
+    base = '';
   }
 
   if (containsNonAscii) {
     const suffix = shortStableHash(normalized);
     const maxBaseLength = Math.max(1, MAX_SLUG_LENGTH - suffix.length - 1);
     const shortened = trimHyphens(base.slice(0, maxBaseLength));
-    const safeBase = shortened || 'post';
+    const safeBase = shortened || '';
     return `${safeBase}-${suffix}`;
   }
 

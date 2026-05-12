@@ -1,6 +1,5 @@
 import { requireEditSession } from '@/lib/auth/guards';
 import { getEditableContentDetail, getTaxonomyOptions } from '@/server/services/contentService';
-import { DeletePostForm } from './delete-post-form';
 import { PostForm } from '@/components/features/posts/PostForm';
 import Link from 'next/link';
 
@@ -43,11 +42,6 @@ export default async function ModifyPostPage({
         </Link>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-black text-stone-900 tracking-tighter leading-none">記事編集</h1>
-          {user && content && (
-            <div className="flex items-center">
-              <DeletePostForm contentId={content.id} compact />
-            </div>
-          )}
         </div>
       </div>
 

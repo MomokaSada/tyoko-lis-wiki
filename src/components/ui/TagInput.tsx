@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useRef, KeyboardEvent } from 'react';
+import { useState, useRef, useCallback, useEffect, KeyboardEvent } from 'react';
 import { X } from 'lucide-react';
 
 export type TagItem = {
   id: number;
   name: string;
   label?: string;
+  depth?: number; // 階層表示用の深さ（カテゴリのみ）
 };
 
 export type SelectedItem = {
@@ -21,6 +22,7 @@ export function TagInput({
   nameForNew,
   placeholder = "入力して検索...",
   allowMultipleNew = true,
+  onNewItemChange,
 }: {
   availableItems: TagItem[];
   initialSelectedItems?: SelectedItem[];
@@ -28,11 +30,24 @@ export function TagInput({
   nameForNew: string;
   placeholder?: string;
   allowMultipleNew?: boolean;
+  /** Newアイテム（id無し）の有無が変わったときに呼ばれる */
+  onNewItemChange?: (hasNewItem: boolean) => void;
 }) {
   const [selected, setSelected] = useState<SelectedItem[]>(initialSelectedItems);
   const [inputValue, setInputValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const justSelectedRef = useRef(false); // サジェスト選択直後か（blur時の二重確定防止）
+  const prevHasNewRef = useRef<boolean | null>(null); // 初回発火防止用
+
+  // Newアイテム（id無し）の有無を外部に通知
+  useEffect(() => {
+    const hasNew = selected.some((s) => s.id === undefined);
+    if (hasNew !== prevHasNewRef.current) {
+      prevHasNewRef.current = hasNew;
+      onNewItemChange?.(hasNew);
+    }
+  }, [selected, onNewItemChange]);
 
   // 入力値に基づいてサジェストを生成
   const suggestions = inputValue.trim() ? availableItems.filter(
@@ -42,24 +57,27 @@ export function TagInput({
       !selected.some((s) => s.id === item.id)
   ) : [];
 
+  // 現在の入力を確定する（既存一致 or 新規追加）
+  const commitInput = useCallback((val: string) => {
+    const trimmed = val.trim();
+    if (!trimmed) return;
+
+    const preciseMatch = suggestions.find(
+      (s) => s.name.toLowerCase() === trimmed.toLowerCase() || s.label?.toLowerCase() === trimmed.toLowerCase()
+    );
+
+    if (preciseMatch) {
+      addSelectedItem({ id: preciseMatch.id, name: preciseMatch.label ?? preciseMatch.name });
+    } else {
+      addSelectedItem({ name: trimmed });
+    }
+  }, [suggestions]);
+
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     // フォーム自体のエンター送信を防ぐ
     if (e.key === 'Enter') {
       e.preventDefault();
-      
-      const val = inputValue.trim();
-      if (!val) return;
-
-      // ガッチリ一致するサジェストがあればそれを追加
-      const preciseMatch = suggestions.find(
-        (s) => s.name.toLowerCase() === val.toLowerCase() || s.label?.toLowerCase() === val.toLowerCase()
-      );
-
-      if (preciseMatch) {
-         addSelectedItem({ id: preciseMatch.id, name: preciseMatch.label ?? preciseMatch.name });
-      } else {
-         addSelectedItem({ name: val });
-      }
+      commitInput(inputValue);
     } else if (e.key === 'Backspace' && inputValue === '' && selected.length > 0) {
       removeSelectedItem(selected[selected.length - 1]);
     }
@@ -132,23 +150,82 @@ export function TagInput({
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => setIsFocused(true)}
-          onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+          onBlur={() => {
+            // サジェスト未選択＆未確定テキストがある場合、自動確定する
+            setTimeout(() => {
+              setIsFocused(false);
+              if (justSelectedRef.current) {
+                justSelectedRef.current = false;
+                return;
+              }
+              commitInput(inputValue);
+            }, 200);
+          }}
           placeholder={selected.length === 0 ? placeholder : ''}
           className="flex-1 min-w-[120px] outline-none bg-transparent text-sm font-medium text-stone-800 py-0.5"
         />
       </div>
 
       {isFocused && suggestions.length > 0 && (
-        <ul className="absolute z-20 w-full mt-1.5 bg-white border border-stone-200 rounded-lg shadow-lg max-h-60 overflow-y-auto custom-scrollbar">
-          {suggestions.map((item) => (
-            <li
-              key={item.id}
-              onClick={() => addSelectedItem({ id: item.id, name: item.label ?? item.name })}
-              className="px-3 py-2 text-sm font-medium cursor-pointer hover:bg-stone-50 text-stone-700 transition-colors border-b last:border-0 border-stone-100"
-            >
-              {item.label ?? item.name}
-            </li>
-          ))}
+        <ul className="absolute z-20 w-full mt-1 bg-white border border-stone-300 rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar py-1">
+          {suggestions.map((item) => {
+            // ラベルからパスセグメントを抽出
+            const pathSegments = item.label && item.name
+              ? item.label.split(' > ')
+              : [item.name];
+            const selfName = item.name;
+            // selfName の位置を特定（最後の一致）
+            const selfIdx = pathSegments.lastIndexOf(selfName);
+            // 表示するパス（最大3セグメント＝自身＋2祖先）
+            const MAX_SEGMENTS = 3;
+            let displaySegments: string[];
+            let showEllipsis = false;
+            if (selfIdx <= 0 || pathSegments.length <= MAX_SEGMENTS) {
+              displaySegments = pathSegments;
+            } else {
+              // 深すぎる場合は末尾MAX_SEGMENTS個だけ表示し先頭に ... を付ける
+              const start = Math.max(0, selfIdx - MAX_SEGMENTS + 1);
+              if (start > 0) showEllipsis = true;
+              displaySegments = pathSegments.slice(start);
+            }
+            return (
+              <li
+                key={item.id}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  justSelectedRef.current = true;
+                  addSelectedItem({ id: item.id, name: item.label ?? item.name });
+                }}
+                className="cursor-pointer px-3 py-2.5 hover:bg-amber-50 transition-colors border-b last:border-0 border-stone-100"
+              >
+                <div className="flex items-center gap-0.5 flex-wrap min-w-0">
+                  {showEllipsis && (
+                    <span className="text-[11px] text-stone-400 font-medium shrink-0 mr-0.5">…</span>
+                  )}
+                  {displaySegments.map((seg, si) => {
+                    const isLast = si === displaySegments.length - 1;
+                    const isSelf = seg === selfName && isLast;
+                    return (
+                      <span key={si} className="inline-flex items-center gap-0.5 min-w-0">
+                        {si > 0 && (
+                          <span className="text-stone-300 mx-1 text-xs select-none shrink-0">›</span>
+                        )}
+                        <span
+                          className={`truncate ${
+                            isSelf
+                              ? 'text-sm font-bold text-stone-800'
+                              : 'text-[11px] font-medium text-stone-400'
+                          }`}
+                        >
+                          {seg}
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

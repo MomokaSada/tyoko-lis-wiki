@@ -25,7 +25,7 @@ export default function LoginForm() {
           name="username"
           type="text"
           required
-          placeholder="admin"
+          placeholder="ユーザーネームを入力"
           className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all font-medium text-stone-900"
         />
       </div>
@@ -43,7 +43,7 @@ export default function LoginForm() {
           name="password"
           type="password"
           required
-          placeholder="••••••••"
+          placeholder="パスワードを入力"
           className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all font-medium text-stone-900"
         />
       </div>
@@ -56,16 +56,6 @@ export default function LoginForm() {
       >
         {isPending ? '認証中...' : 'ログイン'}
       </button>
-
-      {/* テスト用ヒント (モックでは消してもいいが元のロジック維持のためスタイリングして残す) */}
-      <div className="mt-8 rounded-xl border border-stone-200 bg-stone-50 p-4 text-xs text-stone-500">
-        <p className="mb-2 font-bold flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-500"></span>テスト用アカウント:</p>
-        <ul className="space-y-1 ml-4 list-disc marker:text-stone-300">
-          <li><strong>admin</strong> / password123 (Admin)</li>
-          <li><strong>owner</strong> / password123 (Owner)</li>
-          <li><strong>user</strong> / password123 (一般)</li>
-        </ul>
-      </div>
     </form>
   );
 }
