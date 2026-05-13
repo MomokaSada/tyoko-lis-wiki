@@ -11,6 +11,7 @@ import { UserX, AlertTriangle } from 'lucide-react';
 
 export default async function AccountBansPage() {
   const actor = await getCurrentActor();
+  const isOwner = actor?.role === 'owner';
   const accounts = actor ? await getManageableAccounts(actor) : [];
 
   const headersList = await headers();
