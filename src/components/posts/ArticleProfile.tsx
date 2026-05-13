@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { History, Eye, Layers, Box, Tag as TagIcon, Info, ChevronRight, Activity } from 'lucide-react';
 
 interface CategoryPathItem {
@@ -49,11 +50,14 @@ export function ArticleProfile({
       </div>
 
       {/* サムネイル (ヘッダー直下に隙間なく配置) */}
-      <div className="aspect-video w-full bg-stone-100 border-b border-stone-100">
-        <img
+      <div className="relative aspect-video w-full bg-stone-100 border-b border-stone-100">
+        <Image
           src={thumbnailUrl || fallbackThumbnail}
           alt={postTitle}
-          className="w-full h-full object-cover"
+          fill
+          sizes="288px"
+          className="object-cover"
+          unoptimized
         />
       </div>
 
@@ -128,15 +132,15 @@ export function ArticleProfile({
                 <span key={cat.id} className="flex items-center gap-1.5">
                   {i > 0 && <ChevronRight size={10} className="text-stone-300" />}
                   <Link
-                    href={`/posts?q=${encodeURIComponent(cat.name)}`}
-                    className={`font-black hover:text-blue-600 transition-colors ${i === categoryPath.length - 1 ? 'text-stone-900' : 'text-stone-300'}`}
+                    href={`/posts?categoryId=${cat.id}`}
+                    className={`font-black hover:text-blue-600 transition-colors ${i === categoryPath.length - 1 ? 'text-stone-900' : 'text-stone-400'}`}
                   >
                     {cat.name}
                   </Link>
                 </span>
               ))
             ) : (
-              <span className="text-stone-300 font-bold italic">未設定</span>
+              <span className="text-stone-500 font-bold italic">未設定</span>
             )}
           </div>
         </div>
@@ -165,7 +169,7 @@ export function ArticleProfile({
 
       {/* 底部フッター */}
       <div className="mt-4 pt-6 pb-6 border-t border-stone-100/50 flex justify-center">
-        <p className="text-[9px] font-bold text-stone-300 uppercase tracking-widest">tyoko-lis-wiki v1.0</p>
+        <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">tyoko-lis-wiki v1.0</p>
       </div>
     </div>
   );

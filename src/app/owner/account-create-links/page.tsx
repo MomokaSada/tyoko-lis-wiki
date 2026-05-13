@@ -2,7 +2,12 @@ import { AccountCreateLinkForm } from './account-create-link-form';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { formatDateTimeJst } from '@/lib/format/formatDateTime';
 import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
+import { CopyableLink } from '@/components/ui/CopyableLink';
+import { MobileActions } from '@/components/posts/MobileActions';
 import { InvalidButton } from './invalid-button';
+import { headers } from 'next/headers';
+import { HEADER_USER_ROLE } from '@/lib/auth/constants';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
 import Link from 'next/link';
 import { KeySquare } from 'lucide-react';
 
@@ -21,7 +26,13 @@ export default async function AccountCreateLinksPage() {
   const actor = await getCurrentActor();
   const links = actor ? await getAccountCreateLinks(actor) : [];
 
+  const headersList = await headers();
+  const userRole = headersList.get(HEADER_USER_ROLE);
+  const editor = await getCurrentEditor();
+  const hasEditSession = !!(editor && editor.type === 'session');
+
   return (
+    <>
     <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500 text-stone-900">
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
@@ -58,11 +69,10 @@ export default async function AccountCreateLinksPage() {
                   <div className="space-y-1">
                     <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">UUID / URL</div>
                     <div className="font-mono text-xs text-stone-600 break-all bg-white border border-stone-100 p-2 rounded-lg mb-2">{link.uuid}</div>
-                    <div className="text-[10px] text-blue-500 truncate hover:underline">
-                      <a href={`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`} target="_blank" rel="noreferrer">
-                         {`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}
-                      </a>
-                    </div>
+                    <CopyableLink
+                      url={`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}
+                      className="text-[10px]"
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 pt-2">
@@ -103,11 +113,10 @@ export default async function AccountCreateLinksPage() {
                       <td className="py-4 px-4">{getStatusBadge(link.status)}</td>
                       <td className="py-4 px-4">
                         <div className="font-mono text-stone-600 mb-1">{link.uuid}</div>
-                        <div className="text-[10px] text-blue-500 hover:underline max-w-[200px] truncate break-all">
-                          <a href={`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`} target="_blank" rel="noreferrer">
-                             {`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}
-                          </a>
-                        </div>
+                        <CopyableLink
+                          url={`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}
+                          className="text-[10px] max-w-[200px]"
+                        />
                       </td>
                       <td className="py-4 px-4 text-stone-700 font-medium">
                         {link.authorName ?? `user:${link.authorId}`}
@@ -136,5 +145,13 @@ export default async function AccountCreateLinksPage() {
         </Link>
       </div>
     </div>
+
+      <MobileActions
+        userRole={userRole}
+        hasEditSession={hasEditSession}
+        hideShare={true}
+        hideProfile={true}
+      />
+    </>
   );
 }

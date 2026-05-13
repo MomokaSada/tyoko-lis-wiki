@@ -17,6 +17,7 @@ import { findAccountCreateSessions } from '@/server/repositories/accountCreateLi
 import { getEditLinks } from '@/server/services/editLinkService';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { AdminFormsClient } from './admin-forms-client';
+import { StatCard } from '@/components/ui/StatCard';
 import { MobileActions } from '@/components/posts/MobileActions';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
@@ -85,56 +86,34 @@ export default async function AdminPage() {
 
         {/* 統計カード */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white border border-stone-200 rounded-2xl p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
-                <FileText className="w-6 h-6" />
-              </div>
-              <span className="text-2xl font-black text-stone-800">{totalPosts}</span>
-            </div>
-            <h3 className="font-bold text-stone-800 mb-1">全記事数</h3>
-            <p className="text-sm text-stone-500">公開: {publishedCount} | 下書き: {totalPosts - publishedCount}</p>
-          </div>
-
-          <div className="bg-white border border-stone-200 rounded-2xl p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
-                <LinkIcon className="w-6 h-6" />
-              </div>
-              <span className="text-2xl font-black text-stone-800">{activeEditLinks}</span>
-            </div>
-            <h3 className="font-bold text-stone-800 mb-1">アクティブ編集リンク</h3>
-            <p className="text-sm text-stone-500">合計 {editSessions.length} 件中</p>
-          </div>
-
-          <div className="bg-white border border-stone-200 rounded-2xl p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
-                <Users className="w-6 h-6" />
-              </div>
-              <span className="text-2xl font-black text-stone-800">{activeAccountLinks}</span>
-            </div>
-            <h3 className="font-bold text-stone-800 mb-1">アクティブ招待リンク</h3>
-            <p className="text-sm text-stone-500">合計 {accountCreateSessions.length} 件中</p>
-          </div>
-
-          <div className="bg-white border border-stone-200 rounded-2xl p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center">
-                <Eye className="w-6 h-6" />
-              </div>
-              <span className="text-2xl font-black text-stone-800">
-                {/**
-                  * 注: publishedPosts は最新100件から計算した合計。
-                  * 公開記事が100件を超える場合、この値は概算値です。
-                  * 正確な総閲覧数を取得するには、SUM(viewCount) クエリが必要です。
-                  */}
-                {publishedPosts.reduce((sum, post) => sum + (post.viewCount || 0), 0).toLocaleString()}
-              </span>
-            </div>
-            <h3 className="font-bold text-stone-800 mb-1">総閲覧数</h3>
-            <p className="text-sm text-stone-500">公開記事のみ</p>
-          </div>
+          <StatCard
+            icon={<FileText className="w-6 h-6" />}
+            label="全記事数"
+            value={totalPosts}
+            subtext={`公開: ${publishedCount} | 下書き: ${totalPosts - publishedCount}`}
+            theme="blue"
+          />
+          <StatCard
+            icon={<LinkIcon className="w-6 h-6" />}
+            label="アクティブ編集リンク"
+            value={activeEditLinks}
+            subtext={`合計 ${editSessions.length} 件中`}
+            theme="emerald"
+          />
+          <StatCard
+            icon={<Users className="w-6 h-6" />}
+            label="アクティブ招待リンク"
+            value={activeAccountLinks}
+            subtext={`合計 ${accountCreateSessions.length} 件中`}
+            theme="purple"
+          />
+          <StatCard
+            icon={<Eye className="w-6 h-6" />}
+            label="総閲覧数"
+            value={publishedPosts.reduce((sum, post) => sum + (post.viewCount || 0), 0).toLocaleString()}
+            subtext="公開記事のみ"
+            theme="orange"
+          />
         </div>
 
         <AdminFormsClient

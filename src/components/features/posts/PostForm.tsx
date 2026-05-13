@@ -202,8 +202,8 @@ export function PostForm({
       {isEdit && <input type="hidden" name="contentId" value={content.id} />}
       <input type="hidden" name="thumbnail" value={removeThumbnail ? '' : thumbnailUrl} />
 
-      {/* Editor Main Content Area */}
-      <div className="space-y-6">
+      {/* === メインエリア: タイトル + スラッグ === */}
+      <div className="bg-white border border-stone-200 rounded-2xl p-6 space-y-6">
         <label className="block space-y-2">
           <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">タイトル</span>
           <input
@@ -275,7 +275,7 @@ export function PostForm({
         </div>
       </div>
 
-      {/* Toolbar / Options Area */}
+      {/* === メタデータエリア: サムネイル / タグ / カテゴリ / 公開設定 === */}
       <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 space-y-5">
         <div>
           <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block mb-3">サムネイル画像</span>
@@ -483,12 +483,12 @@ export function PostForm({
         </div>
       </div>
 
-      {/* Markdown Area */}
-      <div className="mt-12">
-        <div className="block space-y-2">
-          <span className="text-xs font-bold text-stone-500 uppercase tracking-wider flex justify-between">
-            本文内容
-          </span>
+      {/* === メインコンテンツ: 本文 === */}
+      <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden">
+        <div className="px-6 pt-5 pb-2 border-b border-stone-100">
+          <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">本文内容</span>
+        </div>
+        <div className="p-1">
           <BlockEditor initialMarkdown={content?.content ?? ''} name="content" />
           {state.fieldErrors?.content && (
             <p className="text-[10px] font-bold text-red-500 ml-1">{state.fieldErrors.content}</p>

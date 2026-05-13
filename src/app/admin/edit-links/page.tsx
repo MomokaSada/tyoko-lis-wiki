@@ -1,6 +1,11 @@
 import { EditLinkForm } from './edit-link-form';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getEditLinks } from '@/server/services/editLinkService';
+import { CopyableLink } from '@/components/ui/CopyableLink';
+import { MobileActions } from '@/components/posts/MobileActions';
+import { headers } from 'next/headers';
+import { HEADER_USER_ROLE } from '@/lib/auth/constants';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
 import Link from 'next/link';
 
 function getStatusBadge(status: 'active' | 'expired' | 'inactive' | 'limit-reached') {
@@ -20,7 +25,13 @@ export default async function EditLinksPage() {
   const actor = await getCurrentActor();
   const links = actor ? await getEditLinks(actor) : [];
 
+  const headersList = await headers();
+  const userRole = headersList.get(HEADER_USER_ROLE);
+  const editor = await getCurrentEditor();
+  const hasEditSession = !!(editor && editor.type === 'session');
+
   return (
+    <>
     <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-3xl font-black text-stone-800 tracking-tighter mb-2">記事編集リンク管理</h1>
@@ -54,9 +65,10 @@ export default async function EditLinksPage() {
                   <div className="space-y-1">
                     <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">UUID / URL</div>
                     <div className="font-mono text-xs text-stone-600 break-all bg-white border border-stone-100 p-2 rounded-lg">{link.uuid}</div>
-                    <div className="text-[10px] text-blue-500 truncate mt-1">
-                      {`${process.env.NEXT_PUBLIC_APP_URL}/posts/create?session=${link.uuid}`}
-                    </div>
+                    <CopyableLink
+                      url={`${process.env.NEXT_PUBLIC_APP_URL}/posts/create?session=${link.uuid}`}
+                      className="text-[10px] mt-1"
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 pt-2">
@@ -96,7 +108,10 @@ export default async function EditLinksPage() {
                       <td className="py-4 px-4">{getStatusBadge(link.status)}</td>
                       <td className="py-4 px-4">
                         <div className="font-mono text-stone-600 mb-1">{link.uuid}</div>
-                        <div className="text-[10px] text-stone-400 truncate max-w-xs">{`${process.env.NEXT_PUBLIC_APP_URL}/posts/create?session=${link.uuid}`}</div>
+                        <CopyableLink
+                          url={`${process.env.NEXT_PUBLIC_APP_URL}/posts/create?session=${link.uuid}`}
+                          className="text-[10px] max-w-xs"
+                        />
                       </td>
                       <td className="py-4 px-4">
                         <div className="font-bold text-stone-700">{link.editsUsed} / {link.maxEdits} 回</div>
@@ -121,5 +136,13 @@ export default async function EditLinksPage() {
         </Link>
       </div>
     </div>
+
+      <MobileActions
+        userRole={userRole}
+        hasEditSession={hasEditSession}
+        hideShare={true}
+        hideProfile={true}
+      />
+    </>
   );
 }

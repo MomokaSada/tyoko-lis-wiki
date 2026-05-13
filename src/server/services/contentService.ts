@@ -129,16 +129,19 @@ export async function searchVisibleContentList(
   sort?: ContentSortKey,
   order?: SortOrder,
   page: number = 1,
-  pageSize: number = 10
+  pageSize: number = 10,
+  categoryId?: number
 ) {
   const trimmedQuery = query.trim();
   const offset = (page - 1) * pageSize;
 
+  const searchQuery = trimmedQuery || undefined;
+
   const [totalCount, rows] = await Promise.all([
-    countVisibleContents(trimmedQuery || undefined, includeUnpublished),
-    trimmedQuery
-      ? await searchVisibleContents(trimmedQuery, includeUnpublished, sort, order, pageSize, offset)
-      : await listVisibleContents(includeUnpublished, sort, order, pageSize, offset),
+    countVisibleContents(searchQuery, includeUnpublished, categoryId),
+    searchQuery
+      ? await searchVisibleContents(searchQuery, includeUnpublished, sort, order, pageSize, offset, categoryId)
+      : await listVisibleContents(includeUnpublished, sort, order, pageSize, offset, categoryId),
   ]);
 
   const totalPages = Math.ceil(totalCount / pageSize);

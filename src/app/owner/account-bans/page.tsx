@@ -2,15 +2,24 @@ import { BanButton, UnbanButton } from './ban-unban-buttons';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { formatDateTimeJst } from '@/lib/format/formatDateTime';
 import { getManageableAccounts } from '@/server/services/accountBanService';
+import { MobileActions } from '@/components/posts/MobileActions';
+import { headers } from 'next/headers';
+import { HEADER_USER_ROLE } from '@/lib/auth/constants';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
 import Link from 'next/link';
 import { UserX, AlertTriangle } from 'lucide-react';
 
 export default async function AccountBansPage() {
   const actor = await getCurrentActor();
   const accounts = actor ? await getManageableAccounts(actor) : [];
-  const isOwner = actor?.role === 'owner';
+
+  const headersList = await headers();
+  const userRole = headersList.get(HEADER_USER_ROLE);
+  const editor = await getCurrentEditor();
+  const hasEditSession = !!(editor && editor.type === 'session');
 
   return (
+    <>
     <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500 text-stone-900">
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center shrink-0">
@@ -127,5 +136,13 @@ export default async function AccountBansPage() {
         </Link>
       </div>
     </div>
+
+      <MobileActions
+        userRole={userRole}
+        hasEditSession={hasEditSession}
+        hideShare={true}
+        hideProfile={true}
+      />
+    </>
   );
 }

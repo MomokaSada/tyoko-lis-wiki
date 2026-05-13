@@ -1,6 +1,7 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { searchVisibleContentList } from '@/server/services/contentService';
 import Link from 'next/link';
+import Image from 'next/image';
 import { type Metadata } from 'next';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
@@ -40,6 +41,7 @@ export default async function PostsPage({
   const session = typeof sp.session === 'string' ? sp.session : '';
   const sort = typeof sp.sort === 'string' ? sp.sort as ContentSortKey : 'updatedAt';
   const order = typeof sp.order === 'string' ? sp.order as SortOrder : 'desc';
+  const categoryId = typeof sp.categoryId === 'string' ? parseInt(sp.categoryId) : undefined;
   
   const actor = await getCurrentActor();
   const canViewPrivate = Boolean(actor);
@@ -56,7 +58,8 @@ export default async function PostsPage({
     sort, 
     order, 
     page, 
-    pageSize
+    pageSize,
+    categoryId
   );
 
   const fallbackThumbnail = '/images/no-image.png';
@@ -69,7 +72,7 @@ export default async function PostsPage({
         </Suspense>
 
         {/* 1. ヒーローセクション: 検索とタイトルの統合 */}
-        <div className="relative bg-[#0c0c0c] text-white pt-20 md:pt-24 pb-36 md:pb-40 border-b border-white/5 z-20">
+        <div className="relative bg-[#0c0c0c] text-white pt-20 md:pt-24 pb-24 md:pb-32 border-b border-white/5">
           {/* 装飾用背景要素（ここでは overflow-hidden を適用） */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-amber-500/10 to-transparent" />
@@ -101,7 +104,7 @@ export default async function PostsPage({
                 </p>
               </div>
 
-              <div className="w-full lg:flex-1 animate-in slide-in-from-bottom-8 duration-700 delay-200">
+              <div className="w-full lg:flex-1 relative z-30 animate-in slide-in-from-bottom-8 duration-700 delay-200">
                 <PostSearchControl 
                   initialQuery={query}
                   initialSort={sort}
@@ -115,17 +118,17 @@ export default async function PostsPage({
         </div>
 
         {/* 2. メインコンテンツエリア */}
-        <div className="max-w-[72rem] mx-auto px-4 sm:px-6 -mt-14 md:-mt-16 relative z-10">
+        <div className="max-w-[72rem] mx-auto px-4 sm:px-6 -mt-6 md:-mt-8 relative z-20">
           
           {/* フィルタリング・ステータスバー */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 md:mb-10 bg-white/80 backdrop-blur-md border border-stone-200 p-3.5 md:p-4 rounded-[1.25rem] shadow-xl">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 md:mb-10 bg-white border border-stone-200 p-3.5 md:p-4 rounded-[1.25rem] shadow-md">
             <div className="flex items-center gap-4 text-sm font-bold text-stone-500 px-2">
               <div className="flex items-center gap-2">
                 <Filter size={16} />
                 <span>表示中:</span>
               </div>
               <span className="text-stone-900 bg-stone-100 px-3 py-1 rounded-full text-xs">
-                {query ? `「${query}」の検索結果` : 'すべての記事'}
+                {query ? `「${query}」の検索結果` : categoryId ? `カテゴリ #${categoryId} の記事` : 'すべての記事'}
               </span>
               <span className="text-stone-400">|</span>
               <span className="text-stone-600 italic">全 {pagination.totalCount} 件</span>
@@ -139,9 +142,13 @@ export default async function PostsPage({
               </div>
               <h3 className="text-xl md:text-2xl font-black text-stone-800 mb-3 tracking-tighter">記事が見つかりません</h3>
               <p className="text-stone-500 font-medium max-w-md mx-auto leading-relaxed">
-                {query ? `「${query}」に一致する記事はありませんでした。キーワードを変えてお試しください。` : '現在、表示できる記事がありません。'}
+                {query
+                  ? `「${query}」に一致する記事はありませんでした。キーワードを変えてお試しください。`
+                  : categoryId
+                    ? 'このカテゴリにはまだ記事がありません。'
+                    : '現在、表示できる記事がありません。'}
               </p>
-              {query && (
+              {(query || categoryId) && (
                 <Link href="/posts" className="mt-8 inline-flex items-center gap-2 text-amber-600 font-black hover:gap-3 transition-all">
                   検索をリセット <ArrowRight size={18} />
                 </Link>
@@ -165,20 +172,24 @@ export default async function PostsPage({
                         if (sort !== 'updatedAt') params.set('sort', sort);
                         if (order !== 'desc') params.set('order', order);
                         if (showPrivate) params.set('showPrivate', '1');
+                        if (categoryId) params.set('categoryId', String(categoryId));
                         const qs = params.toString();
                         return qs ? `?${qs}` : '';
                       })()
                     }`}
                     key={post.id} 
                     className="group bg-white border border-stone-200 hover:border-amber-400 rounded-[2rem] flex flex-col transition-all hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 block h-full overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700"
-                    style={{ animationDelay: `${idx * 50}ms` }}
+                    style={{ animationDelay: `${idx * 30}ms` }}
                   >
                     {/* サムネイルエリア */}
                     <div className="relative aspect-[2/1] overflow-hidden bg-stone-100 border-b border-stone-100">
-                      <img
+                      <Image
                         src={thumbnailUrl || fallbackThumbnail}
                         alt={post.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        unoptimized
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       
@@ -209,7 +220,7 @@ export default async function PostsPage({
                       <div className="mt-auto pt-6 border-t border-stone-100 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div className="flex flex-col">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-stone-300 mb-0.5">Views</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-stone-500 mb-0.5">Views</span>
                             <div className="flex items-center gap-1.5 text-xs font-bold text-stone-600">
                               <Eye className="w-3.5 h-3.5" />
                               {post.viewCount}
@@ -217,7 +228,7 @@ export default async function PostsPage({
                           </div>
                           <div className="w-px h-6 bg-stone-100" />
                           <div className="flex flex-col">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-stone-300 mb-0.5">Updated</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-stone-500 mb-0.5">Updated</span>
                             <div className="flex items-center gap-1.5 text-xs font-bold text-stone-600">
                               <Calendar className="w-3.5 h-3.5" />
                               {formattedDate}

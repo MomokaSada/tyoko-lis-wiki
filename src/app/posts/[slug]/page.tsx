@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { type Metadata } from 'next';
+import Image from 'next/image';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { cache } from 'react';
@@ -229,7 +230,7 @@ export default async function PostDetailPage({
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               <Layers size={12} className="text-stone-500" />
-              <span className="text-[9px] font-black uppercase tracking-[0.4em] text-stone-500">Category Archive</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-500">Category Archive</span>
             </div>
 
             {'isPublished' in post && !post.isPublished && (
@@ -241,12 +242,12 @@ export default async function PostDetailPage({
 
           {/* 第2行: パンくずリスト + アクションボタン */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-6">
-            <nav className="flex flex-wrap items-center gap-2 text-[10px] md:text-[11px] text-stone-300 font-bold uppercase tracking-[0.2em] drop-shadow">
+            <nav className="flex flex-wrap items-center gap-2 text-[11px] md:text-[12px] text-stone-400 font-bold uppercase tracking-[0.2em] drop-shadow">
               {categoryPath.map((cat, i) => (
                 <span key={cat.id} className="flex items-center gap-2">
                   {i > 0 && <ChevronRight size={12} className="text-stone-500 opacity-60" />}
                   <Link
-                    href={`/posts?q=${encodeURIComponent(cat.name)}`}
+                    href={`/posts?categoryId=${cat.id}`}
                     className="hover:text-white transition-colors"
                   >
                     {cat.name}
@@ -293,17 +294,20 @@ export default async function PostDetailPage({
                   </div>
                 </div>
 
-                <div className="max-w-4xl">
-                  <h1 className="text-xl sm:text-2xl md:text-5xl lg:text-[3.25rem] font-black tracking-tighter leading-[1.1] drop-shadow-sm mb-8">
+                <div className="max-w-4xl pt-8 md:pt-12">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-black tracking-tighter leading-[1.1] drop-shadow-sm mb-6 md:mb-8">
                     {post.title}
                   </h1>
                 </div>
                 {/* 記事冒頭のアイキャッチ */}
-                <div className="mb-10 md:mb-12 rounded-3xl overflow-hidden border border-stone-100 shadow-sm bg-stone-50">
-                  <img
+                <div className="mb-10 md:mb-12 rounded-3xl overflow-hidden border border-stone-100 shadow-sm bg-stone-50 relative aspect-video">
+                  <Image
                     src={thumbnailUrl || fallbackThumbnail}
                     alt={post.title}
-                    className="w-full aspect-video object-cover"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 800px"
+                    className="object-cover"
+                    unoptimized
                   />
                 </div>
 

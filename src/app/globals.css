@@ -5,6 +5,18 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --header-height: 64px;
+  --header-height-md: 80px;
+  --card-radius: 2rem;
+  --card-radius-lg: 2.25rem;
+  --card-radius-xl: 2.5rem;
+  --max-content-width: 72rem;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-height: 80px;
+  }
 }
 
 @theme inline {
@@ -27,55 +39,14 @@ body {
   color: var(--foreground);
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
   font-size: clamp(15px, 0.18vw + 14.3px, 16px);
-  overflow-x: clip; /* 横揺れ防止 */
+  overflow-x: clip;
+  /* 横揺れ防止 */
   position: relative;
   width: 100%;
 }
 
-/* Fix MDXEditor inline images causing text to flow to their right */
-.md-editor-container img {
-  display: block;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-  clear: both;
-}
-
-/* --- MDXEditor UI Fixes --- */
-
-/* 1. CodeBlock の行のズレ問題を修正 */
-.md-editor-container pre,
-.md-editor-container .cm-scroller {
-  margin: 0 !important;
-  padding: 0 !important;
-  background: transparent !important;
-}
-
-/* CodeMirror の行番号とハイライトの高さを揃える */
-.md-editor-container .cm-editor,
-.md-editor-container .cm-line,
-.md-editor-container .cm-gutterElement {
-  line-height: 1.6 !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-}
-
-/* 2. プルダウン（テキスト種類選択等）のUIを分かりやすく立体的にする */
-.md-editor-container [role="combobox"] {
-  background-color: #ffffff !important;
-  border: 1px solid #d6d3d1 !important;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
-  border-radius: 0.5rem !important;
-  padding: 0.25rem 0.75rem !important;
-  transition: all 0.2s ease-in-out !important;
-}
-
-.md-editor-container [role="combobox"]:hover {
-  background-color: #f5f5f4 !important;
-  border-color: #a8a29e !important;
-}
-
-/* 3. 引用 (blockquote) のデザイン修正と連続時の隙間解消 - プレミアムWiki風 */
-:where(.prose, .md-editor-container) blockquote {
+/* 引用 (blockquote) のデザイン修正 - プレミアムWiki風 */
+:where(.prose) blockquote {
   border-left: 3px solid #e5e7eb !important;
   background-color: #f9fafb !important;
   padding: 0.75rem 1rem !important;
@@ -85,29 +56,14 @@ body {
   overflow: hidden;
 }
 
-/* 連続する引用の隙間を縮めて繋げる（完全にはくっつけない） */
-:where(.prose, .md-editor-container) blockquote:has(+ blockquote) {
-  margin-bottom: 0.125rem !important;
-}
-
-:where(.prose, .md-editor-container) blockquote+blockquote {
-  margin-top: 0.125rem !important;
-}
-
-:where(.prose, .md-editor-container) blockquote .cm-editor,
-:where(.prose, .md-editor-container) blockquote pre {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* スムーズスクロール時の見出し被り防止 */
+/* スムーズスクロール時の見出し被り防止 (ヘッダーの高さ 80px に合わせる) */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-  scroll-margin-top: 100px;
+  scroll-margin-top: 80px;
 }
 
 .toastui-host .toastui-editor-defaultUI {
@@ -183,7 +139,7 @@ h6 {
   padding: 0;
 }
 
-.article-viewer .toastui-editor-contents > :first-child {
+.article-viewer .toastui-editor-contents> :first-child {
   margin-top: 0;
 }
 
@@ -267,14 +223,23 @@ h6 {
 }
 
 .article-viewer .toastui-editor-contents table {
-  border-collapse: separate;
-  border-spacing: 0;
-  width: 100%;
-  overflow: hidden;
-  border-radius: 1rem;
-  border: 1px solid #e7e5e4;
-  margin-bottom: 1.5rem;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  display: block !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  border-radius: 0.85rem !important;
+  border: none !important;
   background: #ffffff;
+}
+
+/* テーブルスクロール用ラッパー（overflow-x を table から分離） */
+.article-viewer .table-scroll-wrapper {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100% !important;
+  border-radius: 0.85rem !important;
+  margin-bottom: 1.5rem;
 }
 
 .article-viewer .toastui-editor-contents th {
@@ -284,41 +249,65 @@ h6 {
   text-align: left;
 }
 
+/* 全セル共通: 右 + 下のボーダー (内部区切り) */
 .article-viewer .toastui-editor-contents th,
 .article-viewer .toastui-editor-contents td {
   border-right: 1px solid #e7e5e4;
   border-bottom: 1px solid #e7e5e4;
   padding: 0.8rem 1rem;
   vertical-align: top;
+  white-space: nowrap !important;
 }
 
-.article-viewer .toastui-editor-contents tr:last-child td {
-  border-bottom: 0;
+/* ── 外周ボーダーはセル自身に持たせる ── */
+
+/* 左端: 全行の先頭セルに border-left（2px で外枠強調） */
+.article-viewer .toastui-editor-contents th:first-child,
+.article-viewer .toastui-editor-contents td:first-child {
+  border-left: 2px solid #e7e5e4;
 }
 
+/* 上端: 先頭行に border-top（2px / thead / tbody 両対応） */
+.article-viewer .toastui-editor-contents thead:first-child tr:first-child th,
+.article-viewer .toastui-editor-contents thead:first-child tr:first-child td,
+.article-viewer .toastui-editor-contents tbody:first-child tr:first-child td,
+.article-viewer .toastui-editor-contents tr:first-child th,
+.article-viewer .toastui-editor-contents tr:first-child td {
+  border-top: 2px solid #e7e5e4;
+}
+
+/* 右端: 最終列に border-right（2px） */
 .article-viewer .toastui-editor-contents th:last-child,
 .article-viewer .toastui-editor-contents td:last-child {
-  border-right: 0;
+  border-right: 2px solid #e7e5e4;
 }
 
-/* Rounded corners for cells to follow the table border-radius accurately */
-.article-viewer .toastui-editor-contents tr:first-child th:first-child,
-.article-viewer .toastui-editor-contents tr:first-child td:first-child {
-  border-top-left-radius: 1rem;
+/* 下端: 最終行に border-bottom（2px） */
+.article-viewer .toastui-editor-contents tr:last-child th,
+.article-viewer .toastui-editor-contents tr:last-child td {
+  border-bottom: 2px solid #e7e5e4;
 }
 
-.article-viewer .toastui-editor-contents tr:first-child th:last-child,
-.article-viewer .toastui-editor-contents tr:first-child td:last-child {
-  border-top-right-radius: 1rem;
+/* ── 四隅の角丸 ── */
+/* table 自身の border が無いので、セルの radius は table の radius に一致させる */
+.article-viewer .toastui-editor-contents thead:first-child tr:first-child th:first-child,
+.article-viewer .toastui-editor-contents thead:first-child tr:first-child td:first-child {
+  border-top-left-radius: 0.85rem;
 }
 
-.article-viewer .toastui-editor-contents tr:last-child td:first-child {
-  border-bottom-left-radius: 1rem;
+.article-viewer .toastui-editor-contents thead:first-child tr:first-child th:last-child,
+.article-viewer .toastui-editor-contents thead:first-child tr:first-child td:last-child {
+  border-top-right-radius: 0.85rem;
 }
 
-.article-viewer .toastui-editor-contents tr:last-child td:last-child {
-  border-bottom-right-radius: 1rem;
+.article-viewer .toastui-editor-contents tbody:last-child tr:last-child td:first-child {
+  border-bottom-left-radius: 0.85rem;
 }
+
+.article-viewer .toastui-editor-contents tbody:last-child tr:last-child td:last-child {
+  border-bottom-right-radius: 0.85rem;
+}
+
 
 .toc-scroll-hidden {
   scrollbar-width: none;
@@ -358,15 +347,19 @@ h6 {
   .article-viewer .toastui-editor-contents blockquote {
     padding: 0.8rem 0.95rem;
   }
+}
 
-  .article-viewer .toastui-editor-contents {
-    overflow-x: auto;
-    scrollbar-width: thin;
-  }
 
-  .article-viewer .toastui-editor-contents table {
-    min-width: 600px;
-  }
+.article-viewer .toastui-editor-contents img,
+.article-viewer .toastui-editor-contents video {
+  max-width: 100%;
+  height: auto;
+}
+
+.article-viewer .toastui-editor-contents pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 @media (max-width: 768px) {

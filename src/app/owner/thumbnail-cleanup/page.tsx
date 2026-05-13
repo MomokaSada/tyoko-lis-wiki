@@ -1,5 +1,9 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { OrphanThumbnailCleanupForm } from '../orphan-thumbnail-cleanup-form';
+import { MobileActions } from '@/components/posts/MobileActions';
+import { headers } from 'next/headers';
+import { HEADER_USER_ROLE } from '@/lib/auth/constants';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
 import Link from 'next/link';
 import { ImageMinus, AlertTriangle } from 'lucide-react';
 
@@ -7,7 +11,13 @@ export default async function ThumbnailCleanupPage() {
   const actor = await getCurrentActor();
   const isOwner = actor?.role === 'owner';
 
+  const headersList = await headers();
+  const userRole = headersList.get(HEADER_USER_ROLE);
+  const editor = await getCurrentEditor();
+  const hasEditSession = !!(editor && editor.type === 'session');
+
   return (
+    <>
     <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500 text-stone-900">
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 bg-stone-100 text-stone-600 rounded-2xl flex items-center justify-center shrink-0">
@@ -37,5 +47,13 @@ export default async function ThumbnailCleanupPage() {
         </Link>
       </div>
     </div>
+
+      <MobileActions
+        userRole={userRole}
+        hasEditSession={hasEditSession}
+        hideShare={true}
+        hideProfile={true}
+      />
+    </>
   );
 }

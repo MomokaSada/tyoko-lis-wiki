@@ -118,26 +118,18 @@ export const Header = ({ userRole }: HeaderProps) => {
             </button>
           </form>
 
-          {/* タブレット用の検索ボタン (lg未満で表示) */}
+          {/* タブレット/モバイル用の検索ボタン (lg未満で表示) */}
           <Link
             href="/posts"
-            className="hidden sm:flex lg:hidden items-center justify-center rounded-2xl border border-stone-200 bg-white px-3 py-2 text-stone-700 shadow-sm transition hover:bg-stone-50"
+            className="flex lg:hidden items-center justify-center rounded-2xl border border-stone-200 bg-white px-3 py-2 text-stone-700 shadow-sm transition hover:bg-stone-50"
           >
             <Search size={20} />
           </Link>
-
-          {/* モバイルメニューボタン (FAB統合のため削除/非表示) */}
-          <button
-            type="button"
-            className="sm:hidden hidden items-center justify-center rounded-2xl border border-stone-200 bg-white px-3 py-2 text-stone-700 shadow-sm transition hover:bg-stone-50"
-          >
-            <Menu size={20} />
-          </button>
         </div>
       </div>
 
-      {/* モバイルメニュー (FAB統合のため非表示) */}
-      <div className={`sm:hidden hidden overflow-hidden transition-[max-height,padding] duration-300 ${mobileOpen ? 'max-h-screen py-4' : 'max-h-0 py-0'}`}>
+      {/* モバイルメニュー */}
+      <div className={`sm:hidden overflow-hidden transition-[max-height,padding] duration-300 ${mobileOpen ? 'max-h-screen py-4' : 'max-h-0 py-0'}`}>
         <div className="max-w-[72rem] mx-auto px-4 sm:px-6 space-y-3">
           <form onSubmit={handleSearch} className="w-full">
             <div className="relative">
