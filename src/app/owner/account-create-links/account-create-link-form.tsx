@@ -5,6 +5,7 @@ import {
   createAccountCreateLinkAction,
   type CreateAccountCreateLinkActionState,
 } from '@/server/actions/accountCreateLinkActions';
+import { CopyableLink } from '@/components/ui/CopyableLink';
 
 const initialState: CreateAccountCreateLinkActionState = {
   error: null,
@@ -59,9 +60,10 @@ export function AccountCreateLinkForm() {
             <h3 className="font-bold text-green-800">生成されたリンク</h3>
           </div>
           <div className="bg-white rounded-lg p-4 border border-green-100">
-            <code className="text-sm text-stone-700 break-all block">
-              {process.env.NEXT_PUBLIC_APP_URL}{state.generatedUrl}
-            </code>
+            <CopyableLink
+              url={`${process.env.NEXT_PUBLIC_APP_URL}${state.generatedUrl}`}
+              className="font-mono text-sm"
+            />
           </div>
           <div className="text-sm text-stone-600">
             <span className="font-medium">有効期限:</span> {state.expiresAt}

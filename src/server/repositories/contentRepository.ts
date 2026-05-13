@@ -157,9 +157,15 @@ export async function listPublishedContents(sort?: ContentSortKey, order?: SortO
     .orderBy(getOrderBy(sort, order));
 }
 
-export async function listVisibleContents(includeUnpublished: boolean, sort?: ContentSortKey, order?: SortOrder, limit?: number, offset?: number) {
+export async function listVisibleContents(includeUnpublished: boolean, sort?: ContentSortKey, order?: SortOrder, limit?: number, offset?: number, categoryId?: number) {
+  const conditions: ReturnType<typeof eq>[] = [];
+  
+  if (!includeUnpublished) {
+    conditions.push(eq(contents.isPublished, true));
+  }
+
   let query = db
-    .select({
+    .selectDistinct({
       id: contents.id,
       slug: contents.slug,
       title: contents.currentTitle,
@@ -172,8 +178,17 @@ export async function listVisibleContents(includeUnpublished: boolean, sort?: Co
       updatedAt: contents.updatedAt,
     })
     .from(contents)
-    .where(includeUnpublished ? undefined : eq(contents.isPublished, true))
-    .orderBy(getOrderBy(sort, order));
+    .orderBy(getOrderBy(sort, order))
+    .$dynamic();
+
+  if (categoryId !== undefined) {
+    query = query.leftJoin(contentCategories, eq(contents.id, contentCategories.contentId));
+    conditions.push(eq(contentCategories.categoryId, categoryId));
+  }
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions));
+  }
 
   if (limit !== undefined) {
     query = query.limit(limit);
@@ -185,11 +200,27 @@ export async function listVisibleContents(includeUnpublished: boolean, sort?: Co
   return query;
 }
 
-export async function countVisibleContents(queryText?: string, includeUnpublished?: boolean) {
-  const visibilityClause = includeUnpublished ? undefined : eq(contents.isPublished, true);
+export async function countVisibleContents(queryText?: string, includeUnpublished?: boolean, categoryId?: number) {
+  const conditions: Array<ReturnType<typeof eq> | ReturnType<typeof or>> = [];
+  
+  if (!includeUnpublished) {
+    conditions.push(eq(contents.isPublished, true));
+  }
   
   if (queryText) {
     const escapedQuery = escapeLikePattern(queryText);
+    if (categoryId !== undefined) {
+      conditions.push(eq(contentCategories.categoryId, categoryId));
+    }
+    conditions.push(
+      or(
+        ilike(contents.currentTitle, `%${escapedQuery}%`),
+        ilike(contents.currentContent, `%${escapedQuery}%`),
+        ilike(contents.slug, `%${escapedQuery}%`),
+        ilike(tags.name, `%${escapedQuery}%`),
+        ilike(categories.name, `%${escapedQuery}%`),
+      ),
+    );
     const [count] = await db
       .select({ count: sql<number>`count(distinct ${contents.id})` })
       .from(contents)
@@ -197,25 +228,24 @@ export async function countVisibleContents(queryText?: string, includeUnpublishe
       .leftJoin(tags, eq(contentTags.tagId, tags.id))
       .leftJoin(contentCategories, eq(contents.id, contentCategories.contentId))
       .leftJoin(categories, eq(contentCategories.categoryId, categories.id))
-      .where(
-        and(
-          visibilityClause,
-          or(
-            ilike(contents.currentTitle, `%${escapedQuery}%`),
-            ilike(contents.currentContent, `%${escapedQuery}%`),
-            ilike(contents.slug, `%${escapedQuery}%`),
-            ilike(tags.name, `%${escapedQuery}%`),
-            ilike(categories.name, `%${escapedQuery}%`),
-          ),
-        ),
-      );
+      .where(and(...conditions));
+    return count?.count ?? 0;
+  }
+
+  if (categoryId !== undefined) {
+    conditions.push(eq(contentCategories.categoryId, categoryId));
+    const [count] = await db
+      .select({ count: sql<number>`count(distinct ${contents.id})` })
+      .from(contents)
+      .leftJoin(contentCategories, eq(contents.id, contentCategories.contentId))
+      .where(and(...conditions));
     return count?.count ?? 0;
   }
 
   const [count] = await db
     .select({ count: sql<number>`count(*)` })
     .from(contents)
-    .where(visibilityClause);
+    .where(and(...conditions));
   
   return count?.count ?? 0;
 }
@@ -254,9 +284,25 @@ export async function searchPublishedContents(query: string, sort?: ContentSortK
     .orderBy(getOrderBy(sort, order));
 }
 
-export async function searchVisibleContents(queryText: string, includeUnpublished: boolean, sort?: ContentSortKey, order?: SortOrder, limit?: number, offset?: number) {
-  const visibilityClause = includeUnpublished ? undefined : eq(contents.isPublished, true);
+export async function searchVisibleContents(queryText: string, includeUnpublished: boolean, sort?: ContentSortKey, order?: SortOrder, limit?: number, offset?: number, categoryId?: number) {
+  const conditions: Array<ReturnType<typeof eq> | ReturnType<typeof or>> = [];
+  if (!includeUnpublished) {
+    conditions.push(eq(contents.isPublished, true));
+  }
   const escapedQuery = escapeLikePattern(queryText);
+
+  conditions.push(
+    or(
+      ilike(contents.currentTitle, `%${escapedQuery}%`),
+      ilike(contents.currentContent, `%${escapedQuery}%`),
+      ilike(contents.slug, `%${escapedQuery}%`),
+      ilike(tags.name, `%${escapedQuery}%`),
+      ilike(categories.name, `%${escapedQuery}%`),
+    ),
+  );
+  if (categoryId !== undefined) {
+    conditions.push(eq(contentCategories.categoryId, categoryId));
+  }
 
   let query = db
     .selectDistinct({
@@ -276,19 +322,9 @@ export async function searchVisibleContents(queryText: string, includeUnpublishe
     .leftJoin(tags, eq(contentTags.tagId, tags.id))
     .leftJoin(contentCategories, eq(contents.id, contentCategories.contentId))
     .leftJoin(categories, eq(contentCategories.categoryId, categories.id))
-    .where(
-      and(
-        visibilityClause,
-        or(
-          ilike(contents.currentTitle, `%${escapedQuery}%`),
-          ilike(contents.currentContent, `%${escapedQuery}%`),
-          ilike(contents.slug, `%${escapedQuery}%`),
-          ilike(tags.name, `%${escapedQuery}%`),
-          ilike(categories.name, `%${escapedQuery}%`),
-        ),
-      ),
-    )
-    .orderBy(getOrderBy(sort, order));
+    .where(and(...conditions))
+    .orderBy(getOrderBy(sort, order))
+    .$dynamic();
 
   if (limit !== undefined) {
     query = query.limit(limit);

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useScrollLock } from '@/lib/useScrollLock';
 
 interface ModalProps {
   isOpen: boolean;
@@ -14,17 +15,9 @@ interface ModalProps {
 export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md' }: ModalProps) {
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
+  useEffect(() => { setMounted(true); }, []);
+
+  useScrollLock(isOpen);
 
   if (!mounted || !isOpen) return null;
 

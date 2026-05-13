@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Award, TrendingUp, ChevronRight, BookOpen } from 'lucide-react';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
@@ -35,13 +36,14 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
           {featuredAllTime ? (
             <div className="relative overflow-visible">
               <div className="absolute -top-12 -left-3 -right-3 -bottom-3 bg-linear-to-tr from-amber-100/50 to-orange-50/50 rounded-[2.5rem] -z-10 transform -rotate-4 -translate-y-6" />
-              <Link href={`/posts/${featuredAllTime.slug}`} className="relative z-10 bg-stone-900 rounded-[2.25rem] p-6 md:p-8 text-white overflow-hidden aspect-3/4 flex flex-col justify-end group cursor-pointer shadow-2xl shadow-stone-200/40 hover:-translate-y-2 transition-transform duration-500">
+              <Link href={`/posts/${featuredAllTime.slug}`} className="relative z-10 bg-stone-900 rounded-[2.25rem] p-6 md:p-8 text-white overflow-hidden aspect-4/5 sm:aspect-3/4 flex flex-col justify-end group cursor-pointer shadow-2xl shadow-stone-200/40 hover:-translate-y-2 transition-transform duration-500">
                 <div className="absolute top-6 left-6 md:top-8 md:left-8 bg-amber-400 text-stone-900 text-[10px] md:text-xs font-black px-2.5 py-1 rounded shadow-sm shadow-amber-400/20 uppercase tracking-widest z-20">
                   All Time Rank 1
                 </div>
-              <div className="absolute inset-0 bg-stone-900/30 z-0 group-hover:bg-stone-900/10 transition-colors duration-700">
-                <img src={getPublicThumbnailUrl(featuredAllTime.thumbnail) || '/images/no-image.png'} alt="thumbnail" className="w-full h-full object-cover mix-blend-overlay opacity-50 group-hover:scale-110 transition-transform duration-700" />
-              </div>
+                <div className="absolute inset-0 z-0">
+                  <Image src={getPublicThumbnailUrl(featuredAllTime.thumbnail) || '/images/no-image.png'} alt="" fill className="object-cover opacity-60 group-hover:scale-110 group-hover:opacity-80 transition-all duration-700" />
+                  <div className="absolute inset-0 bg-linear-to-t from-stone-900 via-stone-900/40 to-transparent" />
+                </div>
               <div className="relative z-10 space-y-4">
                 <h3 className="text-2xl md:text-3xl lg:text-[2.2rem] font-black leading-tight line-clamp-3">{featuredAllTime.title}</h3>
                 <div className="flex items-center justify-between border-t border-stone-700/50 pt-4">
@@ -102,7 +104,7 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
 
                     {/* Rank Number */}
                     <div className="relative flex flex-col items-center justify-center min-w-10 md:min-w-12">
-                      <span className={`text-3xl md:text-4xl font-black italic transition-colors duration-300 ${
+                      <span className={`text-3xl md:text-4xl font-black italic tabular-nums transition-colors duration-300 ${
                         index === 0 ? 'text-amber-400 group-hover:text-amber-500' :
                         index === 1 ? 'text-stone-300 group-hover:text-stone-400' :
                         index === 2 ? 'text-orange-300 group-hover:text-orange-400' :
@@ -114,10 +116,13 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
 
                     {/* Thumbnail */}
                     <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden shrink-0 border-2 border-white shadow-sm group-hover:scale-105 transition-transform duration-500 z-10">
-                       <img 
+                       <Image 
                          src={getPublicThumbnailUrl(article.thumbnail) || '/images/no-image.png'} 
                          alt="" 
-                         className="w-full h-full object-cover"
+                         fill
+                         sizes="64px"
+                         className="object-cover"
+                         unoptimized
                        />
                     </div>
 
@@ -139,7 +144,7 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
                         <TrendingUp size={14} className={config.color} />
                         {article.viewCount} views
                       </span>
-                      <span className="text-[10px] text-stone-300 font-bold">
+                      <span className="text-[10px] text-stone-500 font-bold">
                         {article.updatedAt instanceof Date ? article.updatedAt.toISOString().split('T')[0] : String(article.updatedAt).split('T')[0]}
                       </span>
                     </div>

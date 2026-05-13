@@ -2,13 +2,23 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getTaxonomyOptions } from '@/server/services/contentService';
 import { CategoryCreateForm } from './category-create-form';
 import { CategoryUpdateForm } from './category-update-form';
+import { MobileActions } from '@/components/posts/MobileActions';
+import { headers } from 'next/headers';
+import { HEADER_USER_ROLE } from '@/lib/auth/constants';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
 import Link from 'next/link';
 
 export default async function CategoriesAdminPage() {
   const actor = await getCurrentActor();
   const taxonomy = await getTaxonomyOptions();
 
+  const headersList = await headers();
+  const userRole = headersList.get(HEADER_USER_ROLE);
+  const editor = await getCurrentEditor();
+  const hasEditSession = !!(editor && editor.type === 'session');
+
   return (
+    <>
     <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-3xl font-black text-stone-800 tracking-tighter mb-2">カテゴリ管理</h1>
@@ -55,5 +65,13 @@ export default async function CategoriesAdminPage() {
         </Link>
       </div>
     </div>
+
+      <MobileActions
+        userRole={userRole}
+        hasEditSession={hasEditSession}
+        hideShare={true}
+        hideProfile={true}
+      />
+    </>
   );
 }

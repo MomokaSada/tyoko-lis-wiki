@@ -6,6 +6,7 @@ import {
   type CreateEditLinkActionState,
 } from '@/server/actions/editLinkActions';
 import { Link2, Loader2 } from 'lucide-react';
+import { CopyableLink } from '@/components/ui/CopyableLink';
 
 const initialState: CreateEditLinkActionState = {
   error: null,
@@ -72,9 +73,11 @@ export function EditLinkForm() {
       {state.generatedUrl && (
         <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
           <div className="text-xs font-bold text-stone-600 mb-2">生成されたリンク</div>
-          <div className="font-mono text-xs text-stone-700 break-all">
-            {process.env.NEXT_PUBLIC_APP_URL}
-            {state.generatedUrl}
+          <div className="w-full">
+            <CopyableLink
+              url={`${process.env.NEXT_PUBLIC_APP_URL}${state.generatedUrl}`}
+              className="font-mono text-xs w-full"
+            />
           </div>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-stone-600">
             <div className="rounded-xl bg-white border border-stone-200 px-3 py-2">

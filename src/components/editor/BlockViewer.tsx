@@ -87,6 +87,18 @@ function normalizeMarkdownForViewer(markdown: string) {
   return normalized.join('\n');
 }
 
+function wrapTables(container: HTMLElement) {
+  container.querySelectorAll('table').forEach((table) => {
+    // 既にラップ済みの場合はスキップ
+    if (table.parentElement?.classList.contains('table-scroll-wrapper')) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'table-scroll-wrapper';
+    table.parentElement?.insertBefore(wrapper, table);
+    wrapper.appendChild(table);
+  });
+}
+
 function normalizeRenderedContent(container: HTMLElement) {
   const usedIds = new Map<string, number>();
   container.querySelectorAll<HTMLElement>('h1, h2, h3, h4, h5, h6').forEach((heading) => {
@@ -201,6 +213,7 @@ export default function BlockViewer({ markdown }: { markdown: string }) {
         }
 
         normalizeRenderedContent(mountRef.current);
+        wrapTables(mountRef.current);
         await renderMath(mountRef.current);
 
         if (cancelled) {

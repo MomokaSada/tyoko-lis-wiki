@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { TrendingUp, Award, ChevronRight } from 'lucide-react';
 import { TyokoreIcon } from '../components/icons/TyokoreIcon';
 import { searchVisibleContentList, getWeeklyPopularContentList } from '@/server/services/contentService';
@@ -78,17 +79,20 @@ export default async function HomePage() {
                         
                         {/* Rank Number */}
                         <div className="relative flex flex-col items-center justify-center min-w-10 md:min-w-12">
-                          <span className={`text-2xl md:text-4xl font-black italic transition-colors duration-300 ${config.color.replace('500', '400')} group-hover:${config.color}`}>
+                          <span className={`text-2xl md:text-4xl font-black italic tabular-nums transition-colors duration-300 ${config.color.replace('500', '400')} group-hover:${config.color}`}>
                             {(index + 1).toString().padStart(2, '0')}
                           </span>
                         </div>
 
                         {/* Thumbnail */}
                         <div className="relative w-14 h-14 md:w-20 md:h-20 rounded-2xl overflow-hidden shrink-0 border-2 border-white shadow-sm group-hover:scale-105 transition-transform duration-500 z-10">
-                           <img 
+                           <Image 
                              src={getPublicThumbnailUrl(article.thumbnail) || '/images/no-image.png'} 
-                             alt="" 
-                             className="w-full h-full object-cover"
+                             alt=""
+                             fill
+                             sizes="80px"
+                             className="object-cover"
+                             unoptimized
                            />
                            <div className={`absolute inset-0 ${config.color.replace('text-', 'bg-')}/10 opacity-0 group-hover:opacity-100 transition-opacity`} />
                         </div>
@@ -109,7 +113,7 @@ export default async function HomePage() {
                             <TrendingUp size={14} className={config.color} />
                             {article.viewCount} views
                           </span>
-                          <span className="text-[10px] text-stone-300 font-bold">
+                          <span className="text-[10px] text-stone-500 font-bold">
                             {article.updatedAt instanceof Date ? article.updatedAt.toISOString().split('T')[0] : String(article.updatedAt).split('T')[0]}
                           </span>
                         </div>
@@ -133,8 +137,9 @@ export default async function HomePage() {
                   <div className="absolute top-6 left-6 md:top-8 md:left-8 bg-amber-400 text-stone-900 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest z-20 shadow-sm shadow-amber-400/25">
                     Featured
                   </div>
-                  <div className="absolute inset-0 bg-stone-900/40 z-0">
-                    <img src={getPublicThumbnailUrl(featuredPost.thumbnail) || '/images/no-image.png'} alt={featuredPost.title} className="w-full h-full object-cover mix-blend-overlay opacity-30 group-hover:opacity-50 transition-opacity duration-700" />
+                  <div className="absolute inset-0 z-0">
+                    <Image src={getPublicThumbnailUrl(featuredPost.thumbnail) || '/images/no-image.png'} alt={featuredPost.title} fill className="object-cover opacity-50 group-hover:opacity-70 transition-opacity duration-700" />
+                    <div className="absolute inset-0 bg-linear-to-t from-stone-900 via-stone-900/40 to-transparent opacity-80" />
                   </div>
                   <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-amber-200/25 blur-3xl pointer-events-none" />
                   <div className="relative z-10 space-y-4">

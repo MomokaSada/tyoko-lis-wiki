@@ -159,7 +159,7 @@ export default function TableOfContents({ toc, isMobile = false }: TableOfConten
   const visibleRootId = activeRootId ?? expandedRootId;
 
   return (
-    <div className={isMobile ? "w-full" : "bg-white border border-stone-200 rounded-[2.5rem] p-9 shadow-sm sticky top-[100px] animate-in fade-in slide-in-from-right-4 duration-500 delay-400"}>
+    <div className={isMobile ? "w-full" : "bg-white border border-stone-200 rounded-[2.5rem] p-9 shadow-sm sticky top-[80px] animate-in fade-in slide-in-from-right-4 duration-500 delay-400"}>
       {!isMobile && (
         <div className="flex items-center justify-between mb-8">
           <h4 className="text-xl font-black text-stone-900 tracking-tight">目次</h4>

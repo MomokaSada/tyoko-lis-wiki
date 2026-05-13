@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { TyokoreIcon } from '../icons/TyokoreIcon';
 import { socialLinks } from '@/lib/socialLinks';
 
@@ -30,7 +31,7 @@ export const Footer = () => {
                     rel="noopener noreferrer"
                     className="group flex items-center gap-2 rounded-2xl bg-white pl-2 pr-3 py-2 text-xs font-bold text-stone-700 hover:bg-stone-50 transition"
                   >
-                    <img src={service.icon} alt={service.name} className="w-3 h-3" />
+                    <Image src={service.icon} alt="" width={12} height={12} className="shrink-0" unoptimized />
                     <span>{service.name}</span>
                   </Link>
                 ))}

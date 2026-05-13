@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Menu, X, BookOpen, User, Share2, Home, List,
   FilePlus, Settings, Shield, Compass, Check, ChevronLeft
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useScrollLock } from '@/lib/useScrollLock';
 import { ArticleProfile, ArticleProfileProps } from './ArticleProfile';
 import TableOfContents from './TableOfContents';
 
@@ -47,14 +48,7 @@ export function MobileActions({
   const showLogin = !userRole && isLoginParam;
 
   // 背景クリックで閉じる処理
-  useEffect(() => {
-    if (activeTab !== 'none' || isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [activeTab, isOpen]);
+  useScrollLock(isOpen || activeTab !== 'nav');
 
   const closeAll = () => {
     setIsOpen(false);

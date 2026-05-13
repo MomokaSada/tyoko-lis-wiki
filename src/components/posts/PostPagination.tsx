@@ -55,9 +55,14 @@ export function PostPagination({ totalPages, currentPage }: PostPaginationProps)
           <ChevronLeft size={20} />
         </Link>
       ) : (
-        <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-stone-50 border border-stone-100 text-stone-300 cursor-not-allowed">
+        <span
+          role="button"
+          aria-disabled="true"
+          tabIndex={-1}
+          className="w-12 h-12 flex items-center justify-center rounded-2xl bg-stone-50 border border-stone-100 text-stone-300 cursor-not-allowed"
+        >
           <ChevronLeft size={20} />
-        </div>
+        </span>
       )}
 
       {/* ページ番号 */}
@@ -97,9 +102,14 @@ export function PostPagination({ totalPages, currentPage }: PostPaginationProps)
           <ChevronRight size={20} />
         </Link>
       ) : (
-        <div className="w-12 h-12 flex items-center justify-center rounded-2xl bg-stone-50 border border-stone-100 text-stone-300 cursor-not-allowed">
+        <span
+          role="button"
+          aria-disabled="true"
+          tabIndex={-1}
+          className="w-12 h-12 flex items-center justify-center rounded-2xl bg-stone-50 border border-stone-100 text-stone-300 cursor-not-allowed"
+        >
           <ChevronRight size={20} />
-        </div>
+        </span>
       )}
     </div>
   );
