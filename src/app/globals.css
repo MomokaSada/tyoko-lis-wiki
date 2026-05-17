@@ -76,6 +76,8 @@ h6 {
   background: #fafaf9;
   border-bottom: 1px solid #e7e5e4;
   padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
 }
 
 .toastui-host .toastui-editor-main {
@@ -387,6 +389,8 @@ h6 {
 
   .toastui-host .toastui-editor-defaultUI-toolbar {
     padding: 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
   }
 
   .toastui-host .toastui-editor-md-container .CodeMirror,
