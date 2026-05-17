@@ -13,7 +13,7 @@ import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 import { Modal } from '@/components/ui/Modal';
 import { ImageCropper } from '@/components/ui/ImageCropper';
 import { DeletePostForm } from '@/components/features/posts/DeletePostForm';
-import { slugify } from '@/lib/slug-utils';
+  import { slugify } from '@/lib/slug-utils';
 
 const BlockEditor = dynamic(() => import('@/components/editor/BlockEditor'), { ssr: false, loading: () => <p>エディタを読み込み中...</p> });
 
@@ -389,14 +389,16 @@ export function PostForm({
                   <button
                     type="button"
                     onClick={() => setSelectedCategoryParentId(null)}
-                    className={`w-full text-left px-3 py-2 text-xs font-medium rounded-md transition-colors ${selectedCategoryParentId === null
-                      ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                      : 'text-stone-500 hover:bg-stone-50'
-                      }`}
+                    className={`w-full text-left px-3 py-2 text-xs font-medium rounded-md transition-colors ${
+                      selectedCategoryParentId === null
+                        ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+                        : 'text-stone-500 hover:bg-stone-50'
+                    }`}
                   >
                     <span className="flex items-center gap-2">
-                      <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${selectedCategoryParentId === null ? 'border-amber-500' : 'border-stone-300'
-                        }`}>
+                      <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                        selectedCategoryParentId === null ? 'border-amber-500' : 'border-stone-300'
+                      }`}>
                         {selectedCategoryParentId === null && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
                       </span>
                       親なし（トップレベル）
@@ -413,10 +415,11 @@ export function PostForm({
                         key={cat.id}
                         type="button"
                         onClick={() => setSelectedCategoryParentId(cat.id)}
-                        className={`w-full text-left px-3 py-2 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${isSelected
-                          ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                          : 'text-stone-600 hover:bg-stone-50'
-                          }`}
+                        className={`w-full text-left px-3 py-2 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
+                          isSelected
+                            ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+                            : 'text-stone-600 hover:bg-stone-50'
+                        }`}
                         style={{ paddingLeft: `${10 + depth * 24}px` }}
                       >
                         <span className="flex items-center shrink-0 text-stone-300 select-none" style={{ width: depth * 12 + 10 }}>
@@ -429,8 +432,9 @@ export function PostForm({
                             </>
                           )}
                         </span>
-                        <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? 'border-amber-500' : 'border-stone-300'
-                          }`}>
+                        <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                          isSelected ? 'border-amber-500' : 'border-stone-300'
+                        }`}>
                           {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
                         </span>
                         <span className="font-medium text-stone-800">{cat.name}</span>
@@ -457,12 +461,14 @@ export function PostForm({
                 <span className="ml-3 text-sm font-extrabold text-stone-800 peer-checked:text-amber-700">記事を公開状態にする</span>
               </label>
             ) : isEdit ? (
-              <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md ${content?.isPublished
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-stone-100 text-stone-500 border border-stone-200'
-                }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${content?.isPublished ? 'bg-emerald-500' : 'bg-stone-400'
-                  }`} />
+              <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md ${
+                content?.isPublished
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-stone-100 text-stone-500 border border-stone-200'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  content?.isPublished ? 'bg-emerald-500' : 'bg-stone-400'
+                }`} />
                 {content?.isPublished ? '公開中' : '下書き'}
                 <span className="text-[10px] opacity-70">（変更不可）</span>
               </span>
@@ -478,13 +484,16 @@ export function PostForm({
       </div>
 
       {/* === メインコンテンツ: 本文 === */}
-      <div className="mt-8">
-        <div className="">
-          <BlockEditor initialMarkdown={content?.content ?? ''} name="content" />
+      <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden">
+        <div className="px-6 pt-5 pb-2 border-b border-stone-100">
+          <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">本文内容</span>
         </div>
-        {state.fieldErrors?.content && (
-          <p className="text-[10px] font-bold text-red-500 mt-2">{state.fieldErrors.content}</p>
-        )}
+        <div className="p-1">
+          <BlockEditor initialMarkdown={content?.content ?? ''} name="content" />
+          {state.fieldErrors?.content && (
+            <p className="text-[10px] font-bold text-red-500 ml-1">{state.fieldErrors.content}</p>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center justify-between pt-4">
