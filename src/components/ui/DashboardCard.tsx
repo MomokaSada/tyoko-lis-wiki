@@ -1,16 +1,6 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import {
-  ArrowRight,
-  FolderTree,
-  Link as LinkIcon,
-  ShieldBan,
-  UserX,
-  ImageMinus,
-  KeySquare,
-  FileText,
-  Eye,
-} from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface DashboardCardProps {
   href: string;
@@ -18,46 +8,17 @@ interface DashboardCardProps {
   title: string;
   description: string;
   badgeText?: string;
-  theme?: 'amber' | 'emerald' | 'blue' | 'red' | 'stone';
+  theme?: 'amber' | 'emerald' | 'blue' | 'red' | 'stone' | 'purple' | 'orange';
 }
 
-const themeMap: Record<string, string> = {
-  amber: 'bg-amber-100 text-amber-700',
-  emerald: 'bg-emerald-100 text-emerald-700',
-  blue: 'bg-blue-100 text-blue-700',
-  red: 'bg-red-100 text-red-700',
-  stone: 'bg-stone-100 text-stone-700',
-};
-
-/** タイトル文字列から決定論的なハッシュを生成 */
-function hashStr(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = (h * 31 + s.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h);
-}
-
-/** ひょっこり覗く破片アイコン設定 */
-const debrisPresets = [
-  // [positionClasses, rotateDeg, scale, sizeClass]
-  { pos: 'bottom-[-14px] right-[-18px]', rotate: -8, scale: 1.0,  size: 'w-28 h-28' },
-  { pos: 'bottom-[-6px]  right-[-8px]',  rotate: 14, scale: 0.7,  size: 'w-20 h-20' },
-  { pos: 'top-[-12px]    left-[-14px]',   rotate: -22, scale: 0.8, size: 'w-24 h-24' },
-  { pos: 'top-[-6px]     right-[-10px]',  rotate: 10,  scale: 0.65, size: 'w-20 h-20' },
-  { pos: 'bottom-[-8px]  left-[-12px]',   rotate: 18,  scale: 0.85, size: 'w-24 h-24' },
-  { pos: 'top-[-10px]    right-[-16px]',  rotate: -14, scale: 1.1,  size: 'w-28 h-28' },
-  { pos: 'bottom-[-4px]  left-[-8px]',    rotate: 24,  scale: 0.6,  size: 'w-16 h-16' },
-  { pos: 'top-[-8px]     left-[-10px]',   rotate: -6,  scale: 0.75, size: 'w-22 h-22' },
-] as const;
-
-/** カードのテーマ→割り当てる破片アイコン候補 */
-const debrisIconsByTheme: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>[]> = {
-  amber:   [LinkIcon, FileText],
-  emerald: [FolderTree, FileText],
-  blue:    [KeySquare, LinkIcon],
-  red:     [UserX, ShieldBan],
-  stone:   [ImageMinus, Eye],
+const themeStyles: Record<string, { iconWrapper: string; textHover: string }> = {
+  amber: { iconWrapper: 'bg-amber-50 text-amber-500', textHover: 'group-hover:text-amber-500' },
+  emerald: { iconWrapper: 'bg-emerald-50 text-emerald-500', textHover: 'group-hover:text-emerald-500' },
+  blue: { iconWrapper: 'bg-blue-50 text-blue-500', textHover: 'group-hover:text-blue-500' },
+  red: { iconWrapper: 'bg-red-50 text-red-500', textHover: 'group-hover:text-red-500' },
+  purple: { iconWrapper: 'bg-purple-50 text-purple-500', textHover: 'group-hover:text-purple-500' },
+  orange: { iconWrapper: 'bg-orange-50 text-orange-500', textHover: 'group-hover:text-orange-500' },
+  stone: { iconWrapper: 'bg-stone-50 text-stone-500', textHover: 'group-hover:text-stone-600' },
 };
 
 export function DashboardCard({
@@ -68,50 +29,39 @@ export function DashboardCard({
   badgeText,
   theme = 'amber',
 }: DashboardCardProps) {
-  const h = useMemo(() => hashStr(title + href), [title, href]);
-  const icons = debrisIconsByTheme[theme] ?? debrisIconsByTheme.amber;
-  const preset = debrisPresets[h % debrisPresets.length];
-  const DebrisIcon = icons[h % icons.length];
-
-  // 2つ目の破片（variant用、別の位置・角度・アイコン）
-  const preset2 = debrisPresets[(h + 3) % debrisPresets.length];
-  const DebrisIcon2 = icons[(h + 1) % icons.length];
+  const style = themeStyles[theme] || themeStyles.amber;
 
   return (
     <Link
       href={href}
-      className="block bg-white border border-stone-200 rounded-3xl p-5 hover:shadow-lg hover:border-stone-300 transition-all group relative overflow-hidden min-h-[148px]"
+      className="group relative block bg-white p-5 rounded-2xl border border-stone-200 shadow-sm transition-all duration-300 hover:shadow-md hover:border-stone-300"
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shrink-0 ${themeMap[theme]}`}>
-            {icon}
+      <div className="flex flex-col h-full justify-between gap-5">
+        <div className="flex items-start justify-between">
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${style.iconWrapper}`}>
+            {React.cloneElement(icon as React.ReactElement, { className: "w-5 h-5" })}
           </div>
-          <div className="min-w-0">
-            <h3 className="text-lg font-bold text-stone-800 leading-tight group-hover:text-stone-900">{title}</h3>
-            <p className="text-xs text-stone-500 font-medium mt-1">{description}</p>
-          </div>
+          {badgeText && (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold text-stone-500 bg-stone-100">
+              {badgeText}
+            </span>
+          )}
         </div>
-        {badgeText !== undefined && (
-          <span className="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-bold">
-            {badgeText}
-          </span>
-        )}
-      </div>
-      <div className="mt-4 w-full py-2.5 bg-stone-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 group-hover:bg-stone-800 transition-colors">
-        管理画面を開く
-        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-      </div>
 
-      {/* ─── テキストの残骸 ─── ひょっこり覗く破片たち ─── */}
-      <DebrisIcon
-        className={`absolute ${preset.pos} ${preset.size} text-stone-50 opacity-25 pointer-events-none`}
-        style={{ transform: `rotate(${preset.rotate}deg) scale(${preset.scale})` }}
-      />
-      <DebrisIcon2
-        className={`absolute ${preset2.pos} ${preset2.size} text-stone-50 opacity-15 pointer-events-none`}
-        style={{ transform: `rotate(${preset2.rotate}deg) scale(${preset2.scale})` }}
-      />
+        <div>
+          <h3 className={`text-base sm:text-lg font-bold text-stone-900 mb-1 transition-colors ${style.textHover}`}>
+            {title}
+          </h3>
+          <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed line-clamp-2">
+            {description}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-stone-400 group-hover:text-stone-600 transition-colors mt-2">
+          <span>管理画面へ</span>
+          <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+        </div>
+      </div>
     </Link>
   );
 }

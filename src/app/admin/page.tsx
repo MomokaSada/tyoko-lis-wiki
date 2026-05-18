@@ -9,7 +9,8 @@ import {
   Clock,
   Eye,
   Shield,
-  Plus
+  Plus,
+  LayoutDashboard
 } from 'lucide-react';
 import { searchVisibleContentList, countVisibleContents, getTaxonomyOptions } from '@/server/services/contentService';
 import { findEditSessions } from '@/server/repositories/editLinkRepository';
@@ -32,8 +33,6 @@ export default async function AdminPage() {
   const editor = await getCurrentEditor();
   const hasEditSession = !!(editor && editor.type === 'session');
 
-  // ステータスバッジ関数
-  // 統計データ取得
   const [{ posts: recentPosts }, { posts: publishedPosts }] = await Promise.all([
     searchVisibleContentList('', true, 'updatedAt', 'desc', 1, 5),
     searchVisibleContentList('', false, 'updatedAt', 'desc', 1, 100),
@@ -42,50 +41,39 @@ export default async function AdminPage() {
   const totalPosts = await countVisibleContents('', true);
   const publishedCount = await countVisibleContents('', false);
 
-  // 編集リンクとアカウント作成リンクの取得
   const editSessions = await findEditSessions();
   const accountCreateSessions = await findAccountCreateSessions();
-
-  // カテゴリと編集リンク詳細の取得
   const taxonomy = await getTaxonomyOptions();
   const actor = await getCurrentActor();
   const editLinks = actor ? await getEditLinks(actor) : [];
 
-  // アクティブなリンク数
   const activeEditLinks = editSessions.filter(session => session.isActive).length;
   const activeAccountLinks = accountCreateSessions.filter(session => session.isActive).length;
-
-  // 本日の日付
   const today = new Date().toLocaleDateString('ja-JP');
 
   return (
     <>
-      <div className="max-w-7xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500">
-        <div className="bg-stone-50 border border-stone-200 rounded-3xl p-8 relative overflow-hidden">
-          {/* Peeking Icon */}
-          <div className="absolute -top-16 -left-16 w-48 h-48 bg-stone-100/30 rounded-full flex items-center justify-center border-8 border-white/50 shadow-sm transition-transform duration-500 hover:scale-105 hover:translate-x-2 hover:translate-y-2 group z-0">
-            <Settings className="w-20 h-20 text-stone-300 opacity-20 ml-12 mt-12 transition-transform duration-500 group-hover:rotate-45" />
+      <div className="max-w-7xl mx-auto px-6 py-12 space-y-10 animate-in fade-in duration-700">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-stone-900 tracking-tight">System Administration</h2>
+            <p className="text-xs sm:text-sm text-stone-500 mt-0.5">システム全体の管理ダッシュボード</p>
           </div>
-
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
-            <div>
-              <h2 className="text-4xl font-black text-stone-800 tracking-tighter mb-2 pl-4">Admin Dashboard</h2>
-              <p className="text-stone-600 mb-4 pl-4">Wikiの管理タスクとシステム統計の概要</p>
-              <div className="flex gap-3 pl-4">
-                <span className="bg-stone-200 text-stone-600 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
-                  <Clock size={12} /> {today}
-                </span>
-                <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
-                  <Shield size={12} /> {userRole || 'Admin'}
-                </span>
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-stone-100 text-stone-600">
+              <Clock className="w-3 h-3 mr-1.5" />
+              {today}
+            </span>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-emerald-100 text-emerald-800">
+              <Shield className="w-3 h-3 mr-1.5" />
+              {userRole || 'Admin'}
+            </span>
           </div>
-          <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-stone-100 rounded-full opacity-50"></div>
         </div>
 
-        {/* 統計カード */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Stats Grid: Refined and Spaced */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             icon={<FileText className="w-6 h-6" />}
             label="全記事数"
@@ -116,28 +104,41 @@ export default async function AdminPage() {
           />
         </div>
 
-        <AdminFormsClient
-          editLinks={editLinks}
-          taxonomy={taxonomy}
-        />
-
-        {/* 新規記事作成 */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-stone-800 font-black text-xl px-2">
-            <FileText size={24} className="text-purple-500" /> 記事作成
+        {/* Management Sections: Split into logical groups */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          {/* Primary Management Actions */}
+          <div className="lg:col-span-2 space-y-6">
+            <h3 className="font-bold text-stone-900 flex items-center gap-2 text-sm sm:text-base px-2">
+              <Settings className="w-4 h-4 text-amber-500" />
+              管理メニュー
+            </h3>
+            <AdminFormsClient
+              editLinks={editLinks}
+              taxonomy={taxonomy}
+            />
           </div>
-          <Link href="/posts/create" className="bg-stone-900 text-white rounded-2xl p-5 hover:bg-stone-800 transition-all group flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110">
-              <Plus className="w-6 h-6" />
+
+          {/* Quick Actions / Secondary Content */}
+          <div className="space-y-6">
+            <div className="bg-stone-900 text-stone-50 p-5 rounded-2xl shadow-sm space-y-3.5">
+              <h3 className="font-bold text-white flex items-center gap-2 text-sm sm:text-base">
+                <Plus className="w-4 h-4 text-amber-400" />
+                クイックアクション
+              </h3>
+              <p className="text-[11px] text-stone-400 leading-relaxed">
+                新しいコンテンツの追加をスピーディーに行えます。
+              </p>
+              <div className="pt-1">
+                <Link 
+                  href="/posts/create" 
+                  className="flex flex-col items-center justify-center p-4 bg-stone-800 hover:bg-stone-700 active:bg-stone-950 rounded-xl text-sm font-bold gap-2 text-amber-400 border border-stone-700 transition-colors"
+                >
+                  <Plus className="w-6 h-6" />
+                  新規記事作成
+                </Link>
+              </div>
             </div>
-            <div className="flex-1">
-              <h3 className="font-bold mb-1">新規記事作成</h3>
-              <p className="text-sm opacity-80">新しい記事を追加する</p>
-            </div>
-            <div className="opacity-60 group-hover:opacity-100 transition-opacity">
-              →
-            </div>
-          </Link>
+          </div>
         </div>
       </div>
 

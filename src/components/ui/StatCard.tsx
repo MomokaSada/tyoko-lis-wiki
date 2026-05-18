@@ -4,15 +4,18 @@ interface StatCardProps {
   icon: React.ReactNode;
   label: string;
   value: string | number;
-  subtext?: string;
-  theme?: 'blue' | 'emerald' | 'purple' | 'orange';
+  subtext?: React.ReactNode;
+  theme?: 'blue' | 'emerald' | 'purple' | 'orange' | 'amber' | 'stone' | 'red';
 }
 
-const iconThemeMap: Record<string, string> = {
-  blue: 'bg-blue-100 text-blue-600',
-  emerald: 'bg-emerald-100 text-emerald-600',
-  purple: 'bg-purple-100 text-purple-600',
-  orange: 'bg-orange-100 text-orange-600',
+const themeMap: Record<string, string> = {
+  amber: 'bg-amber-50 text-amber-500',
+  emerald: 'bg-emerald-50 text-emerald-500',
+  blue: 'bg-blue-50 text-blue-500',
+  red: 'bg-red-50 text-red-500',
+  purple: 'bg-purple-50 text-purple-500',
+  orange: 'bg-orange-50 text-orange-500',
+  stone: 'bg-stone-50 text-stone-500',
 };
 
 export function StatCard({
@@ -20,18 +23,20 @@ export function StatCard({
   label,
   value,
   subtext,
-  theme = 'blue',
+  theme = 'amber',
 }: StatCardProps) {
+  const themeStyle = themeMap[theme] || themeMap.amber;
+
   return (
-    <div className="bg-white border border-stone-200 rounded-2xl p-6 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconThemeMap[theme]}`}>
-          {icon}
-        </div>
-        <span className="text-2xl font-black text-stone-800">{value}</span>
+    <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-sm flex items-center justify-between">
+      <div>
+        <span className="text-[10px] sm:text-xs font-semibold text-stone-400 uppercase">{label}</span>
+        <h3 className="text-2xl sm:text-3xl font-black text-stone-900 mt-0.5">{value}</h3>
+        {subtext && <span className="text-[9px] sm:text-[10px] text-stone-400 block mt-1">{subtext}</span>}
       </div>
-      <h3 className="font-bold text-stone-800 mb-1">{label}</h3>
-      {subtext && <p className="text-sm text-stone-500">{subtext}</p>}
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ml-2 ${themeStyle}`}>
+        {React.cloneElement(icon as React.ReactElement, { className: "w-5 h-5" })}
+      </div>
     </div>
   );
 }
