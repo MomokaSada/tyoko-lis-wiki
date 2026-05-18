@@ -45,21 +45,21 @@ export function AdminFormsClient({ editLinks, taxonomy }: AdminFormsClientProps)
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <DashboardCard
         href="/admin/edit-links"
-        icon={<LinkIcon className="w-5 h-5" />}
+        icon={<LinkIcon />}
         title="編集リンク管理"
-        description="発行・確認"
+        description="編集用の一時リンクを発行し、利用状況を管理します。"
         badgeText={editLinksCountText}
         theme="amber"
       />
 
       <DashboardCard
         href="/admin/categories"
-        icon={<FolderTree className="w-5 h-5" />}
+        icon={<FolderTree />}
         title="カテゴリ管理"
-        description="追加・更新"
+        description="記事の分類構造（親カテゴリ・子カテゴリ）を編集します。"
         badgeText={categoriesCountText}
         theme="emerald"
       />

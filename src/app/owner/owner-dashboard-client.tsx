@@ -87,52 +87,52 @@ export function OwnerDashboardClient(props: {
 
   if (!isOwner) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center gap-2 font-bold text-sm">
-        <AlertTriangle className="w-5 h-5" />
-        この機能は owner のみ利用できます。
+      <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-2xl flex items-center gap-3 font-bold text-sm animate-in slide-in-from-top-2 duration-300">
+        <AlertTriangle className="w-5 h-5 shrink-0" />
+        <span>この機能は owner のみ利用できます。アクセス権限を確認してください。</span>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <DashboardCard
         href="/owner/account-create-links"
-        icon={<KeySquare className="w-5 h-5" />}
+        icon={<KeySquare />}
         title="アカウント作成リンク"
-        description="登録セッションの発行・失効"
+        description="新しいアカウント登録用セッションの発行と失効を管理します。"
         badgeText={accountCreateLinksCountText}
         theme="blue"
       />
       <DashboardCard
         href="/owner/account-bans"
-        icon={<UserX className="w-5 h-5" />}
+        icon={<UserX />}
         title="アカウントBAN"
-        description="強制ログアウト・再ログイン抑止"
+        description="ユーザーの強制ログアウトおよび再ログインの禁止を執行します。"
         badgeText={manageableAccountsCountText}
         theme="red"
       />
       <DashboardCard
         href="/owner/ip-bans"
-        icon={<ShieldBan className="w-5 h-5" />}
+        icon={<ShieldBan />}
         title="IP BAN"
-        description="悪意あるアクセス元の遮断"
+        description="悪意のあるアクセス元IPアドレスを遮断し、システムを保護します。"
         badgeText={activeIpBansCountText}
         theme="amber"
       />
       <DashboardCard
         href="/owner/edit-link-usage"
-        icon={<Link2 className="w-5 h-5" />}
+        icon={<Link2 />}
         title="編集リンク使用状況"
-        description="デバイス別の使用記録の確認"
+        description="発行された編集リンクがどのデバイスでどのように使われたかを確認します。"
         badgeText={editUsageCountText}
         theme="emerald"
       />
       <DashboardCard
         href="/owner/thumbnail-cleanup"
-        icon={<ImageMinus className="w-5 h-5" />}
+        icon={<ImageMinus />}
         title="サムネイルクリーンアップ"
-        description="未使用サムネイルの削除"
+        description="どの記事からも参照されていない未使用のサムネイル画像を削除します。"
         theme="stone"
       />
     </div>

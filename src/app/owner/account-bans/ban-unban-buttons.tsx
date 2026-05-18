@@ -11,11 +11,15 @@ export function BanButton({ userId }: { userId: number }) {
   const [state, formAction, isPending] = useActionState(banAccountAction, initialState);
 
   return (
-    <form action={formAction}>
+    <form action={formAction} className="inline-block">
       <input type="hidden" name="userId" value={userId} />
-      {state.error && <p style={{ color: '#b45309' }}>{state.error}</p>}
-      <button type="submit" style={{ padding: '0.4rem 0.75rem' }} disabled={isPending}>
-        アカウントBAN
+      {state.error && <p className="text-[10px] text-amber-600 font-bold mb-1">{state.error}</p>}
+      <button 
+        type="submit" 
+        disabled={isPending}
+        className="px-3 py-1.5 bg-red-100 text-red-600 text-[10px] font-black rounded-lg hover:bg-red-600 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+      >
+        {isPending ? '...' : 'BAN執行'}
       </button>
     </form>
   );
@@ -25,11 +29,15 @@ export function UnbanButton({ userId }: { userId: number }) {
   const [state, formAction, isPending] = useActionState(unbanAccountAction, initialState);
 
   return (
-    <form action={formAction}>
+    <form action={formAction} className="inline-block">
       <input type="hidden" name="userId" value={userId} />
-      {state.error && <p style={{ color: '#b45309' }}>{state.error}</p>}
-      <button type="submit" style={{ padding: '0.4rem 0.75rem' }} disabled={isPending}>
-        アカウントBANを解除する
+      {state.error && <p className="text-[10px] text-amber-600 font-bold mb-1">{state.error}</p>}
+      <button 
+        type="submit" 
+        disabled={isPending}
+        className="px-3 py-1.5 bg-stone-100 text-stone-600 text-[10px] font-black rounded-lg hover:bg-stone-600 hover:text-white transition-all active:scale-95 disabled:opacity-50"
+      >
+        {isPending ? '...' : 'BAN解除'}
       </button>
     </form>
   );

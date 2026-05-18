@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 import { type Metadata } from 'next';
-import { Crown, Clock, Shield } from 'lucide-react';
+import { Crown, Clock, Shield, LayoutDashboard } from 'lucide-react';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
 import { getManageableAccounts } from '@/server/services/accountBanService';
@@ -37,35 +37,26 @@ export default async function OwnerPage() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto px-6 py-10 space-y-6 animate-in fade-in duration-500 text-stone-900">
-        {/* Header / Hero */}
-        <div className="bg-stone-50 border border-stone-200 rounded-3xl p-8 relative overflow-hidden">
-          {/* Peeking Icon */}
-          <div className="absolute -top-16 -left-16 w-48 h-48 bg-amber-50/50 rounded-full flex items-center justify-center border-8 border-white/50 shadow-sm transition-transform duration-500 hover:scale-105 hover:translate-x-2 hover:translate-y-2 group z-0">
-            <Crown className="w-20 h-20 text-amber-500 opacity-20 ml-12 mt-12 transition-transform duration-500 group-hover:rotate-12" />
+      <div className="max-w-7xl mx-auto px-6 py-12 space-y-10 animate-in fade-in duration-700 text-stone-900">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-stone-900 tracking-tight">Owner Administration</h2>
+            <p className="text-xs sm:text-sm text-stone-500 mt-0.5">システム全体の権限管理、セキュリティ制御、およびメンテナンス操作</p>
           </div>
-
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative z-10">
-            <div className="min-w-0">
-              <h2 className="text-4xl font-black text-stone-800 tracking-tighter mb-2 pl-4">Owner Dashboard</h2>
-              <p className="text-stone-600 mb-4 pl-4">システム全体に影響する操作（招待・BAN・監査・メンテ）をここに集約しています。</p>
-              <div className="flex flex-wrap gap-3 pl-4">
-                <span className="bg-stone-200 text-stone-700 text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
-                  <Clock size={12} /> {today}
-                </span>
-                <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
-                  <Crown size={12} /> owner only
-                </span>
-                <span className="bg-green-100 text-green-800 text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
-                  <Shield size={12} /> {userRole || 'なし'}
-                </span>
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-stone-100 text-stone-600">
+              <Clock className="w-3 h-3 mr-1.5" />
+              {today}
+            </span>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-amber-100 text-amber-800">
+              <Crown className="w-3 h-3 mr-1.5" />
+              Owner
+            </span>
           </div>
-          <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-stone-100 rounded-full opacity-60"></div>
         </div>
 
-        {/* Main content */}
+        {/* Main Content Grid */}
         <OwnerDashboardClient
           isOwner={isOwner}
           accountCreateLinks={accountCreateLinks}
