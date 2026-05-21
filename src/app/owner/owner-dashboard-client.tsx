@@ -8,6 +8,7 @@ import {
   UserX,
   ImageMinus,
   AlertTriangle,
+  Home,
 } from 'lucide-react';
 import { DashboardCard } from '@/components/ui/DashboardCard';
 
@@ -95,7 +96,7 @@ export function OwnerDashboardClient(props: {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
       <DashboardCard
         href="/owner/account-create-links"
         icon={<KeySquare className="w-5 h-5" />}
@@ -135,6 +136,58 @@ export function OwnerDashboardClient(props: {
         description="未使用サムネイルの削除"
         theme="stone"
       />
+
+      {/* ── System Overview Card (ダークグラデーション) ── */}
+      <div className="card-base bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 border border-stone-700 rounded-[1.75rem] p-6 overflow-hidden relative">
+        {/* 光彩 */}
+        <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-stone-700/30 rounded-full blur-2xl pointer-events-none" />
+
+        {/* コンテンツ */}
+        <div className="relative z-10 flex flex-col h-full justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 bg-amber-500/15 text-amber-400 text-xs font-bold px-3 py-1.5 rounded-full mb-5">
+              <Home className="w-3.5 h-3.5" />
+              今日のアクティビティ
+            </div>
+            <h3 className="text-2xl font-black text-white mb-3 tracking-tight">システム概要</h3>
+            <p className="text-stone-400 text-sm leading-relaxed">全ステータスとシステム状態</p>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            {/* 新規登録 */}
+            <div>
+              <div className="flex justify-between text-xs font-medium text-stone-400 mb-1.5">
+                <span>本日の新規登録</span>
+                <span className="text-white font-bold">7件</span>
+              </div>
+              <div className="h-1.5 bg-stone-700/60 rounded-full overflow-hidden">
+                <div className="progress-fill h-full bg-emerald-500 rounded-full" style={{ width: '70%' }} />
+              </div>
+            </div>
+            {/* 編集利用率 */}
+            <div>
+              <div className="flex justify-between text-xs font-medium text-stone-400 mb-1.5">
+                <span>編集利用率</span>
+                <span className="text-white font-bold">43%</span>
+              </div>
+              <div className="h-1.5 bg-stone-700/60 rounded-full overflow-hidden">
+                <div className="progress-fill h-full bg-amber-500 rounded-full" style={{ width: '43%' }} />
+              </div>
+            </div>
+            {/* 記事公開率 */}
+            <div>
+              <div className="flex justify-between text-xs font-medium text-stone-400 mb-1.5">
+                <span>記事公開率</span>
+                <span className="text-white font-bold">82%</span>
+              </div>
+              <div className="h-1.5 bg-stone-700/60 rounded-full overflow-hidden">
+                <div className="progress-fill h-full bg-blue-400 rounded-full" style={{ width: '82%' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

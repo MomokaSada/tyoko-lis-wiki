@@ -80,37 +80,34 @@ export function DashboardCard({
   return (
     <Link
       href={href}
-      className="block bg-white border border-stone-200 rounded-3xl p-5 hover:shadow-lg hover:border-stone-300 transition-all group relative overflow-hidden min-h-[148px]"
+      className="card-base block bg-white border border-stone-200 rounded-[1.75rem] p-6 group relative overflow-hidden flex flex-col"
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 shrink-0 ${themeMap[theme]}`}>
-            {icon}
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-lg font-bold text-stone-800 leading-tight group-hover:text-stone-900">{title}</h3>
-            <p className="text-xs text-stone-500 font-medium mt-1">{description}</p>
-          </div>
+      <div className="flex items-start justify-between mb-5">
+        <div className={`w-13 h-13 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 group-hover:-rotate-3 shrink-0 ${themeMap[theme]}`}>
+          {icon}
         </div>
         {badgeText !== undefined && (
-          <span className="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-bold">
+          <span className="shrink-0 inline-flex items-center px-2.5 py-1 rounded-full bg-stone-100 text-stone-500 text-[11px] font-bold border border-stone-200">
             {badgeText}
           </span>
         )}
       </div>
-      <div className="mt-4 w-full py-2.5 bg-stone-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 group-hover:bg-stone-800 transition-colors">
+      <h3 className="text-xl font-extrabold text-stone-900 mb-1.5 tracking-tight group-hover:text-stone-800 transition-colors">{title}</h3>
+      <p className="text-sm text-stone-400 font-medium leading-relaxed mb-6 flex-1">{description}</p>
+
+      <div className="w-full py-2.5 bg-stone-900 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 group-hover:bg-amber-500 transition-colors duration-300 shadow-md">
         管理画面を開く
-        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 duration-300" />
       </div>
 
       {/* ─── テキストの残骸 ─── ひょっこり覗く破片たち ─── */}
       <DebrisIcon
-        className={`absolute ${preset.pos} ${preset.size} text-stone-50 opacity-25 pointer-events-none`}
-        style={{ transform: `rotate(${preset.rotate}deg) scale(${preset.scale})` }}
+        className={`debris absolute ${preset.pos} ${preset.size} text-stone-50 opacity-25 pointer-events-none`}
+        style={{ transform: `rotate(${preset.rotate}deg) scale(${preset.scale})`, '--r': `${preset.rotate}deg` } as React.CSSProperties}
       />
       <DebrisIcon2
-        className={`absolute ${preset2.pos} ${preset2.size} text-stone-50 opacity-15 pointer-events-none`}
-        style={{ transform: `rotate(${preset2.rotate}deg) scale(${preset2.scale})` }}
+        className={`debris absolute ${preset2.pos} ${preset2.size} text-stone-50 opacity-15 pointer-events-none`}
+        style={{ transform: `rotate(${preset2.rotate}deg) scale(${preset2.scale})`, '--r': `${preset2.rotate}deg` } as React.CSSProperties}
       />
     </Link>
   );

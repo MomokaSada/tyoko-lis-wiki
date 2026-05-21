@@ -5,7 +5,7 @@ import {
   updateCategoryAction,
   type CategoryActionState,
 } from '@/server/actions/categoryActions';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 const initialState: CategoryActionState = {
   error: null,
@@ -22,39 +22,47 @@ export function CategoryUpdateForm({
   const [state, action, isPending] = useActionState(updateCategoryAction, initialState);
 
   return (
-    <form action={action} className="grid gap-3">
+    <form action={action} className="space-y-4">
       <input type="hidden" name="id" value={category.id} />
 
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-xs font-bold text-stone-500">ID</div>
-          <div className="font-mono text-xs text-stone-600">{category.id}</div>
-        </div>
-        <div className="text-right">
-          <div className="text-xs font-bold text-stone-500">現在の表示</div>
-          <div className="text-xs font-bold text-stone-800">{category.label}</div>
+      {/* 現在の情報 */}
+      <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 text-sm font-bold">
+            {category.label.charAt(0)}
+          </div>
+          <div>
+            <span className="text-sm font-bold text-stone-800">{category.label}</span>
+            <span className="text-[10px] text-stone-400 ml-2 font-mono">id: {category.id}</span>
+          </div>
         </div>
       </div>
 
-      <label className="grid gap-1.5">
-        <span className="text-xs font-bold text-stone-600">カテゴリ名</span>
+      {/* カテゴリ名 */}
+      <div className="space-y-1.5">
+        <label htmlFor={`cat-name-${category.id}`} className="field-label">
+          カテゴリ名 <span className="text-red-500">*</span>
+        </label>
         <input
+          id={`cat-name-${category.id}`}
           name="name"
           type="text"
           required
           defaultValue={category.name}
-          className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+          className="field-input"
         />
-      </label>
+      </div>
 
-      <label className="grid gap-1.5">
-        <span className="text-xs font-bold text-stone-600">親カテゴリ</span>
+      {/* 親カテゴリ */}
+      <div className="space-y-1.5">
+        <label htmlFor={`cat-parent-${category.id}`} className="field-label">親カテゴリ</label>
         <select
+          id={`cat-parent-${category.id}`}
           name="parentId"
           defaultValue={category.parentId ?? ''}
-          className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+          className="field-select"
         >
-          <option value="">親カテゴリなし</option>
+          <option value="">なし（トップレベル）</option>
           {categories
             .filter((option) => option.id !== category.id)
             .map((option) => (
@@ -63,31 +71,49 @@ export function CategoryUpdateForm({
               </option>
             ))}
         </select>
-      </label>
+      </div>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="inline-flex items-center justify-center gap-2 rounded-xl bg-stone-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-stone-800 disabled:opacity-60 disabled:cursor-not-allowed w-fit"
-      >
-        {isPending ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" /> 保存中...
-          </>
-        ) : (
-          <>
-            <Save className="w-4 h-4" /> 更新する
-          </>
-        )}
-      </button>
+      <div className="flex items-center gap-3 pt-1">
+        <button
+          type="submit"
+          disabled={isPending}
+          className="btn-primary"
+          style={{
+            padding: '0.5rem 1rem',
+            background: '#f59e0b',
+            color: 'white',
+            fontWeight: 700,
+            fontSize: '0.875rem',
+            borderRadius: '0.875rem',
+            boxShadow: '0 4px 12px -2px rgba(245, 158, 11, 0.3)',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" /> 保存中...
+            </>
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" /></svg>
+              更新する
+            </>
+          )}
+        </button>
+      </div>
 
       {state.error && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
           {state.error}
         </div>
       )}
       {state.success && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
           {state.success}
         </div>
       )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { banAccountAction, unbanAccountAction, type BanAccountActionState, } from '@/server/actions/accountBanActions';
+import { banAccountAction, unbanAccountAction, type BanAccountActionState } from '@/server/actions/accountBanActions';
 
 const initialState: BanAccountActionState = {
   error: null,
@@ -13,9 +13,15 @@ export function BanButton({ userId }: { userId: number }) {
   return (
     <form action={formAction}>
       <input type="hidden" name="userId" value={userId} />
-      {state.error && <p style={{ color: '#b45309' }}>{state.error}</p>}
-      <button type="submit" style={{ padding: '0.4rem 0.75rem' }} disabled={isPending}>
-        アカウントBAN
+      {state.error && (
+        <p className="text-xs text-amber-600 mb-1">{state.error}</p>
+      )}
+      <button
+        type="submit"
+        disabled={isPending}
+        className="btn-ghost-danger btn-sm"
+      >
+        {isPending ? '処理中...' : 'BANする'}
       </button>
     </form>
   );
@@ -27,9 +33,16 @@ export function UnbanButton({ userId }: { userId: number }) {
   return (
     <form action={formAction}>
       <input type="hidden" name="userId" value={userId} />
-      {state.error && <p style={{ color: '#b45309' }}>{state.error}</p>}
-      <button type="submit" style={{ padding: '0.4rem 0.75rem' }} disabled={isPending}>
-        アカウントBANを解除する
+      {state.error && (
+        <p className="text-xs text-amber-600 mb-1">{state.error}</p>
+      )}
+      <button
+        type="submit"
+        disabled={isPending}
+        className="btn-ghost"
+        style={{ color: '#059669', fontWeight: 700 }}
+      >
+        {isPending ? '解除中...' : '解除'}
       </button>
     </form>
   );

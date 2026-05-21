@@ -11,9 +11,16 @@ export function UnIpBanButton({ banId }: { banId: number }) {
   return (
     <form action={formAction}>
       <input type="hidden" name="banId" value={banId} />
-      {state.error && <p style={{ color: '#b45309' }}>{state.error}</p>}
-      <button type="submit" style={{ padding: '0.4rem 0.75rem' }} disabled={isPending}>
-        IPBANを解除する
+      {state.error && (
+        <p className="text-xs text-amber-600 mb-1">{state.error}</p>
+      )}
+      <button
+        type="submit"
+        disabled={isPending}
+        className="btn-ghost"
+        style={{ color: '#059669', fontWeight: 700 }}
+      >
+        {isPending ? '解除中...' : '解除'}
       </button>
     </form>
   );
