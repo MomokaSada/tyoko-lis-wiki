@@ -9,16 +9,31 @@ import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 import Link from 'next/link';
-import { KeySquare } from 'lucide-react';
+import { KeySquare, Plus } from 'lucide-react';
 
 function getStatusBadge(status: 'active' | 'expired' | 'inactive') {
   switch (status) {
     case 'active':
-      return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-100 text-green-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> 有効</span>;
+      return (
+        <span className="badge badge-emerald">
+          <span className="badge-dot" />
+          アクティブ
+        </span>
+      );
     case 'expired':
-      return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-100 text-red-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> 期限切れ</span>;
+      return (
+        <span className="badge badge-red">
+          <span className="badge-dot" />
+          期限切れ
+        </span>
+      );
     case 'inactive':
-      return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-stone-100 text-stone-500 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-stone-400"></div> 無効化済み</span>;
+      return (
+        <span className="badge badge-stone">
+          <span className="badge-dot" />
+          無効化済み
+        </span>
+      );
   }
 }
 
@@ -33,113 +48,81 @@ export default async function AccountCreateLinksPage() {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500 text-stone-900">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
-            <KeySquare className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-stone-800 tracking-tighter mb-1">アカウント作成リンク管理</h1>
-            <p className="text-stone-500 font-medium text-sm">新規ユーザーの登録セッションリンクを発行・管理します。</p>
+      <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 text-stone-900">
+        {/* ページヘッダー */}
+        <div className="animate-float-in">
+          <div className="relative bg-white border border-stone-200 rounded-[2rem] p-8 overflow-hidden shadow-sm">
+            <div className="absolute -top-12 -left-12 w-36 h-36 bg-blue-50 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
+              <KeySquare className="w-16 h-16 text-blue-400/30 ml-6 mt-6" />
+            </div>
+            <div className="absolute -right-10 -bottom-10 w-28 h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-1.5 h-7 bg-blue-500 rounded-full" />
+                <h1 className="text-3xl font-black text-stone-900 tracking-tight">アカウント作成リンク管理</h1>
+              </div>
+              <p className="text-stone-500 text-sm pl-4">新規ユーザーの登録セッションリンクを発行・管理します。</p>
+            </div>
           </div>
         </div>
 
-        <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm">
+        <div className="bg-white border border-stone-200 rounded-[1.75rem] p-8 shadow-sm">
           <AccountCreateLinkForm />
         </div>
 
-        <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm">
-          <h2 className="text-xl font-bold text-stone-800 mb-6 pb-4 border-b border-stone-100">発行済みリンク一覧</h2>
-
+        {/* 発行済みリンク一覧 */}
+        <div className="bg-white border border-stone-200 rounded-[1.75rem] overflow-hidden shadow-sm">
           {links.length === 0 ? (
-            <p className="text-stone-500">まだ発行されたリンクはありません。</p>
+            <div className="p-8">
+              <p className="text-stone-500">まだ発行されたリンクはありません。</p>
+            </div>
           ) : (
-            <div>
-              {/* Mobile View: Card List */}
-              <div className="grid grid-cols-1 gap-4 md:hidden">
-                {links.map((link) => (
-                  <div key={link.uuid} className="bg-stone-50 border border-stone-100 rounded-2xl p-5 space-y-4">
-                    <div className="flex justify-between items-start">
+            <div className="divide-y divide-stone-100">
+              {links.map((link) => (
+                <div
+                  key={link.uuid}
+                  className="px-6 py-5 hover:bg-amber-50/30 transition-colors group flex flex-col lg:flex-row lg:items-center gap-4"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
                       {getStatusBadge(link.status)}
-                      <div className="text-xs font-bold text-stone-700">
-                        {link.authorName ?? `user:${link.authorId}`}
-                      </div>
+                      <span className="text-xs text-stone-400">
+                        有効期限: {formatDateTimeJst(link.endAt).split(' ')[0]}
+                      </span>
                     </div>
-
-                    <div className="space-y-1">
-                      <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">UUID / URL</div>
-                      <div className="font-mono text-xs text-stone-600 break-all bg-white border border-stone-100 p-2 rounded-lg mb-2">{link.uuid}</div>
-                      <CopyableLink
-                        url={`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}
-                        className="text-[10px]"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 pt-2">
-                      <div className="text-xs">
-                        <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">Start</div>
-                        <div className="font-bold text-stone-700">{formatDateTimeJst(link.startAt).split(' ')[0]}</div>
-                      </div>
-                      <div className="text-xs">
-                        <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-0.5">End</div>
-                        <div className="font-bold text-stone-700">{formatDateTimeJst(link.endAt).split(' ')[0]}</div>
-                      </div>
-                    </div>
-
-                    {link.status === 'active' && (
-                      <div className="pt-3 border-t border-stone-100">
-                        <InvalidButton uuid={link.uuid} />
-                      </div>
-                    )}
+                    <p className="text-sm font-mono text-stone-600 truncate group-hover:text-amber-700 transition-colors">
+                      {`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}
+                    </p>
+                    <p className="text-xs text-stone-400 mt-1">
+                      作成: {link.authorName ?? `user:${link.authorId}`} | {formatDateTimeJst(link.startAt).split(' ')[0]}
+                    </p>
                   </div>
-                ))}
-              </div>
-
-              {/* Desktop View: Table */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="text-stone-400 border-b border-stone-100 font-bold uppercase tracking-wider text-[10px]">
-                      <th className="pb-3 px-4">Status</th>
-                      <th className="pb-3 px-4">UUID / URL</th>
-                      <th className="pb-3 px-4">Author</th>
-                      <th className="pb-3 px-4">Dates</th>
-                      <th className="pb-3 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-stone-50">
-                    {links.map((link) => (
-                      <tr key={link.uuid} className="hover:bg-stone-50 transition-colors group">
-                        <td className="py-4 px-4">{getStatusBadge(link.status)}</td>
-                        <td className="py-4 px-4">
-                          <div className="font-mono text-stone-600 mb-1">{link.uuid}</div>
-                          <CopyableLink
-                            url={`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}
-                            className="text-[10px] max-w-[200px]"
-                          />
-                        </td>
-                        <td className="py-4 px-4 text-stone-700 font-medium">
-                          {link.authorName ?? `user:${link.authorId}`}
-                        </td>
-                        <td className="py-4 px-4 text-xs font-medium text-stone-500">
-                          <div><span className="text-stone-400">開始:</span> {formatDateTimeJst(link.startAt).split(' ')[0]}</div>
-                          <div><span className="text-stone-400">終了:</span> {formatDateTimeJst(link.endAt).split(' ')[0]}</div>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          {link.status === 'active' && (
-                            <InvalidButton uuid={link.uuid} />
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  <div className="flex gap-2 shrink-0">
+                    {link.status === 'active' && (
+                      <InvalidButton uuid={link.uuid} />
+                    )}
+                    <button className="text-xs font-bold text-stone-500 hover:text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-all border border-stone-200 hover:border-red-200">
+                      失効
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
+
+          {/* 新規発行 */}
+          <div className="px-6 py-5 bg-stone-50 border-t border-stone-200 flex justify-end">
+            <Link
+              href="#new-link-form"
+              className="btn-primary inline-flex items-center gap-2 bg-stone-900 text-white font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-stone-800 transition-colors shadow-md"
+            >
+              <Plus className="w-4 h-4" />
+              新規リンク発行
+            </Link>
+          </div>
         </div>
 
-        <div className="pt-8">
+        <div className="pt-4">
           <Link href="/owner" className="text-sm font-bold text-stone-500 hover:text-stone-800 transition-colors">
             ← オーナー画面に戻る
           </Link>

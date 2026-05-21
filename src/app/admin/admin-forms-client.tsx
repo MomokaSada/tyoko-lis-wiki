@@ -45,7 +45,7 @@ export function AdminFormsClient({ editLinks, taxonomy }: AdminFormsClientProps)
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <>
       <DashboardCard
         href="/admin/edit-links"
         icon={<LinkIcon className="w-5 h-5" />}
@@ -63,6 +63,6 @@ export function AdminFormsClient({ editLinks, taxonomy }: AdminFormsClientProps)
         badgeText={categoriesCountText}
         theme="emerald"
       />
-    </div>
+    </>
   );
 }

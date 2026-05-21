@@ -9,6 +9,15 @@ import { getCurrentEditor } from '@/server/lib/currentEditor';
 import Link from 'next/link';
 import { UserX, AlertTriangle } from 'lucide-react';
 
+function getAvatarStyle(name: string) {
+  const colors = ['avatar-amber', 'avatar-emerald', 'avatar-blue', 'avatar-purple', 'avatar-stone'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = ((hash << 5) - hash) + name.charCodeAt(i);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
 export default async function AccountBansPage() {
   const actor = await getCurrentActor();
   const isOwner = actor?.role === 'owner';
@@ -21,14 +30,21 @@ export default async function AccountBansPage() {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500 text-stone-900">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center shrink-0">
-            <UserX className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-stone-800 tracking-tighter mb-1">アカウントBAN管理</h1>
-            <p className="text-stone-500 font-medium text-sm">システム内のユーザーアカウントのアクセス権限を制御します。</p>
+      <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 text-stone-900">
+        {/* ページヘッダー */}
+        <div className="animate-float-in">
+          <div className="relative bg-white border border-stone-200 rounded-[2rem] p-8 overflow-hidden shadow-sm">
+            <div className="absolute -top-12 -left-12 w-36 h-36 bg-red-50 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
+              <UserX className="w-16 h-16 text-red-400/30 ml-6 mt-6" />
+            </div>
+            <div className="absolute -right-10 -bottom-10 w-28 h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-1.5 h-7 bg-red-600 rounded-full" />
+                <h1 className="text-3xl font-black text-stone-900 tracking-tight">アカウントBAN管理</h1>
+              </div>
+              <p className="text-stone-500 text-sm pl-4">強制ログアウト・再ログイン抑止中のアカウント</p>
+            </div>
           </div>
         </div>
 
@@ -38,96 +54,97 @@ export default async function AccountBansPage() {
             この機能は owner のみ利用できます。
           </div>
         ) : (
-          <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm mt-8">
-            <h2 className="text-xl font-bold text-stone-800 mb-6 pb-4 border-b border-stone-100">アカウント一覧</h2>
+          <div className="card">
+            {/* ツールバー: 検索 + フィルター */}
+            <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="search-box">
+                <svg className="search-box-icon w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+                <input type="search" placeholder="アカウントを検索..." className="search-box-input" />
+              </div>
+              <select className="field-select" style={{ width: 'auto', padding: '0.5rem 2rem 0.5rem 0.75rem', borderRadius: '0.875rem', fontSize: '0.75rem' }}>
+                <option value="">すべて</option>
+                <option value="banned">BAN中</option>
+                <option value="active">アクティブ</option>
+              </select>
+            </div>
 
             {accounts.length === 0 ? (
-              <p className="text-stone-500">BAN対象の（または管理可能な）アカウントはありません。</p>
-            ) : (
-              <div>
-                {/* Mobile View: Card List */}
-                <div className="grid grid-cols-1 gap-4 md:hidden">
-                  {accounts.map((account) => (
-                    <div key={account.id} className="bg-stone-50 border border-stone-100 rounded-2xl p-5 space-y-4">
-                      <div className="flex justify-between items-start">
-                        <div className="flex flex-col gap-1">
-                          {account.isActive ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-100 text-green-700 font-bold text-xs w-fit"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> 有効</span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-100 text-red-700 font-bold text-xs w-fit"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> BAN済み</span>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Type</div>
-                          <div className="text-xs font-black text-stone-800 uppercase tracking-widest">{account.type}</div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">UserName</div>
-                        <div className="font-bold text-stone-800 text-lg">{account.name}</div>
-                      </div>
-
-                      <div className="pt-2">
-                        <div className="text-[10px] text-stone-400 font-bold uppercase tracking-wider mb-1">Created At</div>
-                        <div className="text-xs font-medium text-stone-500">
-                          {formatDateTimeJst(account.createdAt)}
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-stone-100 flex justify-end">
-                        {account.isActive ? (
-                          <BanButton userId={account.id} />
-                        ) : (
-                          <UnbanButton userId={account.id} />
-                        )}
-                      </div>
-                    </div>
-                  ))}
+              <div className="empty-state">
+                <div className="empty-state-icon">
+                  <UserX className="w-6 h-6" />
                 </div>
-
-                {/* Desktop View: Table */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead>
-                      <tr className="text-stone-400 border-b border-stone-100 font-bold uppercase tracking-wider text-[10px]">
-                        <th className="pb-3 px-4">Status</th>
-                        <th className="pb-3 px-4">UserName & Type</th>
-                        <th className="pb-3 px-4">Created At</th>
-                        <th className="pb-3 px-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-stone-50">
-                      {accounts.map((account) => (
-                        <tr key={account.id} className="hover:bg-stone-50 transition-colors group">
-                          <td className="py-4 px-4">
+                <p className="text-stone-500 text-sm">BAN対象の（または管理可能な）アカウントはありません。</p>
+              </div>
+            ) : (
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>アカウント</th>
+                      <th>ステータス</th>
+                      <th>登録日</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {accounts.map((account) => {
+                      const initial = account.name.charAt(0).toUpperCase() + (account.name.charAt(1) || '').toLowerCase();
+                      const avatarColor = getAvatarStyle(account.name);
+                      return (
+                        <tr key={account.id}>
+                          <td>
+                            <div className="flex items-center gap-3">
+                              <div className={`avatar ${avatarColor}`}>{initial}</div>
+                              <span className="font-bold text-stone-800">{account.name}</span>
+                            </div>
+                          </td>
+                          <td>
                             {account.isActive ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-100 text-green-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> 有効</span>
+                              <span className="badge badge-stone">
+                                <span className="badge-dot" />
+                                アクティブ
+                              </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-100 text-red-700 font-bold text-xs"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> BAN済み</span>
+                              <span className="badge badge-red">
+                                <span className="badge-dot" />
+                                BAN中
+                              </span>
                             )}
                           </td>
-                          <td className="py-4 px-4">
-                            <div className="font-bold text-stone-800 mb-1">{account.name}</div>
-                            <div className="text-[10px] text-stone-400 uppercase tracking-widest">{account.type}</div>
+                          <td className="text-sm text-stone-500">
+                            {formatDateTimeJst(account.createdAt).split(' ')[0]}
                           </td>
-                          <td className="py-4 px-4 text-xs font-medium text-stone-500">
-                            {formatDateTimeJst(account.createdAt)}
-                          </td>
-                          <td className="py-4 px-4 text-right">
-                            {account.isActive ? (
-                              <BanButton userId={account.id} />
-                            ) : (
-                              <UnbanButton userId={account.id} />
-                            )}
+                          <td>
+                            <div className="flex gap-1">
+                              <button className="btn-ghost btn-sm">詳細</button>
+                              {account.isActive ? (
+                                <BanButton userId={account.id} />
+                              ) : (
+                                <UnbanButton userId={account.id} />
+                              )}
+                            </div>
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
+
+            {/* フッター: ページネーション */}
+            <div className="px-6 py-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <span className="text-sm text-stone-500">全 <strong className="text-stone-700">{accounts.length}</strong> 件</span>
+              <div className="pagination">
+                <button className="page-btn" disabled>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
+                </button>
+                <button className="page-btn active">1</button>
+                <button className="page-btn">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
