@@ -101,7 +101,7 @@ async function validateSession(
 // ---------- エクスポート ----------
 
 /**
- * 記事作成・編集ページ用ガード
+ * 項目作成・編集ページ用ガード
  */
 export async function requireEditSession(sessionToken: string | undefined | null) {
   return validateSession(sessionToken, 'edit');

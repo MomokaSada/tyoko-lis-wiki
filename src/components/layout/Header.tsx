@@ -48,7 +48,7 @@ export const Header = ({ userRole }: HeaderProps) => {
             メインページ
           </Link>
           <Link href="/posts" className="px-5 py-2 text-sm font-black rounded-xl transition-all text-stone-500 hover:text-stone-800 focus:bg-white focus:text-stone-900 focus:shadow-sm">
-            記事一覧
+            項目一覧
           </Link>
 
           {(isAdmin || showLogin) && (
@@ -94,7 +94,7 @@ export const Header = ({ userRole }: HeaderProps) => {
                 href="/posts/create"
                 className="px-6 py-2 text-sm font-black rounded-xl transition-all text-amber-700 hover:bg-white flex items-center gap-2 shadow-sm bg-amber-50/30"
               >
-                <FilePlus size={16} /> 記事を作成
+                <FilePlus size={16} /> 項目を作成
               </Link>
             </>
           )}
@@ -163,7 +163,7 @@ export const Header = ({ userRole }: HeaderProps) => {
               onClick={closeMobileMenu}
               className="block rounded-2xl px-4 py-3 text-sm font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 transition"
             >
-              記事一覧
+              項目一覧
             </Link>
             {(isAdmin || showLogin) && (
               <div className="space-y-2 border-t border-stone-200 pt-3">
@@ -204,7 +204,7 @@ export const Header = ({ userRole }: HeaderProps) => {
                 onClick={closeMobileMenu}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black text-amber-700 bg-amber-50 hover:bg-amber-100 transition"
               >
-                <FilePlus size={16} /> 記事を作成
+                <FilePlus size={16} /> 項目を作成
               </Link>
             )}
           </div>

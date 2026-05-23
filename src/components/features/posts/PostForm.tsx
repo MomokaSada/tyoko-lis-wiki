@@ -14,6 +14,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ImageCropper } from '@/components/ui/ImageCropper';
 import { DeletePostForm } from '@/components/features/posts/DeletePostForm';
 import { slugify } from '@/lib/slug-utils';
+import { getCategoryPath } from '@/lib/clientCategoryUtils';
 
 const BlockEditor = dynamic(() => import('@/components/editor/BlockEditor'), { ssr: false, loading: () => <p>エディタを読み込み中...</p> });
 
@@ -42,7 +43,6 @@ const initialState: ContentActionState = {
 type CategoryOption = {
   id: number;
   name: string;
-  label?: string;
   parentId: number | null;
 };
 
@@ -213,7 +213,7 @@ export function PostForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full text-3xl font-black text-stone-900 placeholder:text-stone-300 border-none bg-transparent focus:ring-0 px-0 focus:outline-none"
-            placeholder="記事のタイトルを入力..."
+            placeholder="項目のタイトルを入力..."
           />
           {state.fieldErrors?.title && (
             <p className="text-[10px] font-bold text-red-500 ml-1">{state.fieldErrors.title}</p>
@@ -368,7 +368,7 @@ export function PostForm({
               availableItems={categoriesWithDepth}
               initialSelectedItems={isEdit ? content.categoryIds.map(id => {
                 const cat = categoriesWithDepth.find(c => c.id === id);
-                return cat ? { id: cat.id, name: cat.label ?? cat.name } : null;
+                return cat ? { id: cat.id, name: cat.name } : null;
               }).filter((item): item is { id: number, name: string } => !!item) : []}
               nameForExisting="categoryIds"
               nameForNew="newCategoryName"
@@ -404,9 +404,7 @@ export function PostForm({
                   </button>
                   {categoriesWithDepth.map((cat) => {
                     const depth = cat.depth ?? 0;
-                    const parentPath = cat.label && cat.name
-                      ? cat.label.split(' > ').slice(0, -1).join(' > ')
-                      : '';
+                    const parentPath = getCategoryPath(cat.id, availableCategories).slice(0, -1).join(' > ');
                     const isSelected = selectedCategoryParentId === cat.id;
                     return (
                       <button
@@ -454,7 +452,7 @@ export function PostForm({
               <label className="relative inline-flex items-center cursor-pointer">
                 <input name="isPublished" type="checkbox" defaultChecked={isEdit ? content.isPublished : true} className="sr-only peer" />
                 <div className="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
-                <span className="ml-3 text-sm font-extrabold text-stone-800 peer-checked:text-amber-700">記事を公開状態にする</span>
+                <span className="ml-3 text-sm font-extrabold text-stone-800 peer-checked:text-amber-700">項目を公開状態にする</span>
               </label>
             ) : isEdit ? (
               <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md ${content?.isPublished
@@ -498,7 +496,7 @@ export function PostForm({
             className="bg-stone-900 text-white font-bold px-6 py-2.5 rounded-xl hover:bg-stone-800 transition-colors shadow-lg shadow-stone-900/10 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 flex items-center gap-2 text-sm"
           >
             <Save className="w-4 h-4" />
-            {isUploadingThumbnail ? '画像アップロード中...' : isPending ? '保存中...' : (isEdit ? '記事を更新する' : '記事を作成する')}
+            {isUploadingThumbnail ? '画像アップロード中...' : isPending ? '保存中...' : (isEdit ? '項目を更新する' : '項目を作成する')}
           </button>
         </div>
       </div>

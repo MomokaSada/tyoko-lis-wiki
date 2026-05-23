@@ -13,7 +13,7 @@ import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 import { Modal } from '@/components/ui/Modal';
 import { ImageCropper } from '@/components/ui/ImageCropper';
 import { DeletePostForm } from '@/components/features/posts/DeletePostForm';
-  import { slugify } from '@/lib/slug-utils';
+import { slugify } from '@/lib/slug-utils';
 
 const BlockEditor = dynamic(() => import('@/components/editor/BlockEditor'), { ssr: false, loading: () => <p>エディタを読み込み中...</p> });
 
@@ -213,7 +213,7 @@ export function PostForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full text-3xl font-black text-stone-900 placeholder:text-stone-300 border-none bg-transparent focus:ring-0 px-0 focus:outline-none"
-            placeholder="記事のタイトルを入力..."
+            placeholder="項目のタイトルを入力..."
           />
           {state.fieldErrors?.title && (
             <p className="text-[10px] font-bold text-red-500 ml-1">{state.fieldErrors.title}</p>
@@ -389,16 +389,14 @@ export function PostForm({
                   <button
                     type="button"
                     onClick={() => setSelectedCategoryParentId(null)}
-                    className={`w-full text-left px-3 py-2 text-xs font-medium rounded-md transition-colors ${
-                      selectedCategoryParentId === null
+                    className={`w-full text-left px-3 py-2 text-xs font-medium rounded-md transition-colors ${selectedCategoryParentId === null
                         ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
                         : 'text-stone-500 hover:bg-stone-50'
-                    }`}
+                      }`}
                   >
                     <span className="flex items-center gap-2">
-                      <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                        selectedCategoryParentId === null ? 'border-amber-500' : 'border-stone-300'
-                      }`}>
+                      <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${selectedCategoryParentId === null ? 'border-amber-500' : 'border-stone-300'
+                        }`}>
                         {selectedCategoryParentId === null && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
                       </span>
                       親なし（トップレベル）
@@ -415,11 +413,10 @@ export function PostForm({
                         key={cat.id}
                         type="button"
                         onClick={() => setSelectedCategoryParentId(cat.id)}
-                        className={`w-full text-left px-3 py-2 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${
-                          isSelected
+                        className={`w-full text-left px-3 py-2 text-xs font-medium rounded-md transition-colors flex items-center gap-2 ${isSelected
                             ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
                             : 'text-stone-600 hover:bg-stone-50'
-                        }`}
+                          }`}
                         style={{ paddingLeft: `${10 + depth * 24}px` }}
                       >
                         <span className="flex items-center shrink-0 text-stone-300 select-none" style={{ width: depth * 12 + 10 }}>
@@ -432,9 +429,8 @@ export function PostForm({
                             </>
                           )}
                         </span>
-                        <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                          isSelected ? 'border-amber-500' : 'border-stone-300'
-                        }`}>
+                        <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? 'border-amber-500' : 'border-stone-300'
+                          }`}>
                           {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
                         </span>
                         <span className="font-medium text-stone-800">{cat.name}</span>
@@ -458,17 +454,15 @@ export function PostForm({
               <label className="relative inline-flex items-center cursor-pointer">
                 <input name="isPublished" type="checkbox" defaultChecked={isEdit ? content.isPublished : true} className="sr-only peer" />
                 <div className="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
-                <span className="ml-3 text-sm font-extrabold text-stone-800 peer-checked:text-amber-700">記事を公開状態にする</span>
+                <span className="ml-3 text-sm font-extrabold text-stone-800 peer-checked:text-amber-700">項目を公開状態にする</span>
               </label>
             ) : isEdit ? (
-              <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md ${
-                content?.isPublished
+              <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md ${content?.isPublished
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   : 'bg-stone-100 text-stone-500 border border-stone-200'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${
-                  content?.isPublished ? 'bg-emerald-500' : 'bg-stone-400'
-                }`} />
+                }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${content?.isPublished ? 'bg-emerald-500' : 'bg-stone-400'
+                  }`} />
                 {content?.isPublished ? '公開中' : '下書き'}
                 <span className="text-[10px] opacity-70">（変更不可）</span>
               </span>
@@ -507,7 +501,7 @@ export function PostForm({
             className="bg-stone-900 text-white font-bold px-6 py-2.5 rounded-xl hover:bg-stone-800 transition-colors shadow-lg shadow-stone-900/10 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 flex items-center gap-2 text-sm"
           >
             <Save className="w-4 h-4" />
-            {isUploadingThumbnail ? '画像アップロード中...' : isPending ? '保存中...' : (isEdit ? '記事を更新する' : '記事を作成する')}
+            {isUploadingThumbnail ? '画像アップロード中...' : isPending ? '保存中...' : (isEdit ? '項目を更新する' : '項目を作成する')}
           </button>
         </div>
       </div>

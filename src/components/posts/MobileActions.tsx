@@ -150,7 +150,7 @@ export function MobileActions({
                     <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
                       <List size={20} className="text-stone-500" />
                     </div>
-                    記事一覧
+                    項目一覧
                   </Link>
 
                   {(isAdmin || hasEditSession) && (
@@ -168,7 +168,7 @@ export function MobileActions({
                         </>
                       )}
                       <Link href="/posts/create" onClick={closeAll} className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-50 hover:bg-amber-100 rounded-xl text-[13px] font-black text-amber-700 transition">
-                        <FilePlus size={16} /> 記事を作成
+                        <FilePlus size={16} /> 項目を作成
                       </Link>
                     </div>
                   )}
@@ -183,12 +183,12 @@ export function MobileActions({
                   )}
                 </div>
 
-                {/* 記事詳細ページ専用のナビゲーション */}
+                {/* 項目詳細ページ専用のナビゲーション */}
                 {postTitle && (
                   <div className="space-y-4 pt-6 border-t border-stone-100">
                     <div className="flex items-center gap-3 px-1">
                       <Compass size={16} className="text-stone-400" />
-                      <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">記事ナビゲーション</span>
+                      <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">項目ナビゲーション</span>
                     </div>
                     <div className="grid gap-3">
                       {toc && toc.length > 0 && (
@@ -201,7 +201,7 @@ export function MobileActions({
                           </div>
                           <div className="flex-1">
                             <div className="text-sm">目次</div>
-                            <div className="text-[10px] text-stone-400 font-normal">記事の構成を確認</div>
+                            <div className="text-[10px] text-stone-400 font-normal">項目の構成を確認</div>
                           </div>
                         </button>
                       )}
@@ -216,7 +216,7 @@ export function MobileActions({
                           </div>
                           <div className="flex-1">
                             <div className="text-sm">プロフィール</div>
-                            <div className="text-[10px] text-stone-400 font-normal">記事情報</div>
+                            <div className="text-[10px] text-stone-400 font-normal">項目情報</div>
                           </div>
                         </button>
                       )}

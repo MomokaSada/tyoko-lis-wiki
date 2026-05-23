@@ -175,10 +175,10 @@ export function OwnerDashboardClient(props: {
                 <div className="progress-fill h-full bg-amber-500 rounded-full" style={{ width: '43%' }} />
               </div>
             </div>
-            {/* 記事公開率 */}
+            {/* 項目公開率 */}
             <div>
               <div className="flex justify-between text-xs font-medium text-stone-400 mb-1.5">
-                <span>記事公開率</span>
+                <span>項目公開率</span>
                 <span className="text-white font-bold">82%</span>
               </div>
               <div className="h-1.5 bg-stone-700/60 rounded-full overflow-hidden">

@@ -1,6 +1,7 @@
 import {
   createCategory,
   createTag,
+  deleteCategory as deleteCategoryFromRepo,
   findCategoryByName,
   findTagsByNames,
   listCategories,
@@ -167,7 +168,7 @@ export function detectTaxonomyChanges(
 }
 
 /**
- * 記事に紐付く全てのタグとカテゴリの情報を取得します
+ * 項目に紐付く全てのタグとカテゴリの情報を取得します
  */
 export async function getFullContentTaxonomy(contentId: number) {
   const [tagIds, categoryIds] = await Promise.all([
@@ -278,4 +279,17 @@ export async function updateCategoryAsAdmin(
   }
 
   return { success: true as const, data: updated };
+}
+
+export async function deleteCategoryAsAdmin(
+  actor: Actor,
+  id: number,
+) {
+  if (actor.role !== 'owner' && actor.role !== 'admin') {
+    return { success: false as const, error: 'カテゴリ管理権限がありません' };
+  }
+
+  await deleteCategoryFromRepo(id);
+
+  return { success: true as const };
 }

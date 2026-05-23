@@ -120,7 +120,7 @@ export default async function AdminPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard
             icon={<FileText className="w-6 h-6" />}
-            label="全記事数"
+            label="全項目数"
             value={totalPosts}
             subtext={`公開: ${publishedCount} | 下書き: ${totalPosts - publishedCount}`}
             theme="blue"
@@ -146,7 +146,7 @@ export default async function AdminPage() {
             icon={<Eye className="w-6 h-6" />}
             label="総閲覧数"
             value={publishedPosts.reduce((sum, post) => sum + (post.viewCount || 0), 0).toLocaleString()}
-            subtext="公開記事のみ"
+            subtext="公開項目のみ"
             theme="orange"
             trend={{ value: '+12.4%', positive: true }}
           />
@@ -161,7 +161,7 @@ export default async function AdminPage() {
             taxonomy={taxonomy}
           />
 
-          {/* 新規記事作成 (CTA) - amber gradient */}
+          {/* 新規項目作成 (CTA) - amber gradient */}
           <Link
             href="/posts/create"
             className="card-base group relative bg-gradient-to-br from-amber-500 via-amber-400 to-amber-500 border border-amber-400/30 rounded-[1.75rem] p-6 overflow-hidden md:col-span-2 xl:col-span-1 shadow-lg shadow-amber-500/20"
@@ -176,13 +176,13 @@ export default async function AdminPage() {
                   <Plus className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black text-white tracking-tight leading-tight">新規記事作成</h3>
-                  <p className="text-amber-100 text-sm font-medium">新しい記事を追加する</p>
+                  <h3 className="text-2xl font-black text-white tracking-tight leading-tight">新規項目作成</h3>
+                  <p className="text-amber-100 text-sm font-medium">新しい項目を追加する</p>
                 </div>
               </div>
 
               <div className="mt-6 w-full py-3 bg-white text-amber-600 font-extrabold text-base rounded-xl flex items-center justify-center gap-2 group-hover:bg-amber-50 transition-colors shadow-md">
-                記事を書く
+                項目を書く
                 <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
               </div>
             </div>

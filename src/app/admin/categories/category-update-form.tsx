@@ -1,11 +1,12 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useMemo, useEffect } from 'react';
 import {
   updateCategoryAction,
   type CategoryActionState,
 } from '@/server/actions/categoryActions';
 import { Loader2 } from 'lucide-react';
+import { getCategoryLabel } from '@/lib/clientCategoryUtils';
 
 const initialState: CategoryActionState = {
   error: null,
@@ -15,11 +16,28 @@ const initialState: CategoryActionState = {
 export function CategoryUpdateForm({
   category,
   categories,
+  onSuccess,
 }: {
-  category: { id: number; name: string; parentId: number | null; label: string };
-  categories: Array<{ id: number; label: string }>;
+  category: { id: number; name: string; parentId: number | null };
+  categories: Array<{ id: number; name: string; parentId: number | null }>;
+  onSuccess?: () => void;
 }) {
   const [state, action, isPending] = useActionState(updateCategoryAction, initialState);
+
+  useEffect(() => {
+    if (state.success && onSuccess) {
+      onSuccess();
+    }
+  }, [state.success, onSuccess]);
+
+  // フロント側で親パス付きラベルを生成
+  const categoryLabels = useMemo(
+    () =>
+      Object.fromEntries(
+        categories.map((c) => [c.id, getCategoryLabel(c.id, categories)]),
+      ),
+    [categories],
+  );
 
   return (
     <form action={action} className="space-y-4">
@@ -29,10 +47,10 @@ export function CategoryUpdateForm({
       <div className="flex items-center justify-between pb-2 border-b border-stone-100">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 text-sm font-bold">
-            {category.label.charAt(0)}
+            {category.name.charAt(0)}
           </div>
           <div>
-            <span className="text-sm font-bold text-stone-800">{category.label}</span>
+            <span className="text-sm font-bold text-stone-800">{category.name}</span>
             <span className="text-[10px] text-stone-400 ml-2 font-mono">id: {category.id}</span>
           </div>
         </div>
@@ -67,7 +85,7 @@ export function CategoryUpdateForm({
             .filter((option) => option.id !== category.id)
             .map((option) => (
               <option key={option.id} value={option.id}>
-                {option.label}
+                {categoryLabels[option.id] ?? option.name}
               </option>
             ))}
         </select>

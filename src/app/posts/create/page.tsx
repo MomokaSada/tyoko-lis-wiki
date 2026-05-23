@@ -29,7 +29,7 @@ export default async function CreatePostPage({
 }) {
   const sp = await searchParams;
   const sessionToken = typeof sp.session === 'string' ? sp.session : null;
-  
+
   // Guard 実行: NG ならリダイレクトされる
   const { token, valid, user } = await requireEditSession(sessionToken);
 
@@ -44,28 +44,27 @@ export default async function CreatePostPage({
   // シリアライズエラーや BigInt、および不正な要素によるクラッシュを回避するため、極めて防御的にマッピングを行う
   const serializedTags = Array.isArray(taxonomy?.tags)
     ? taxonomy.tags
-        .filter((t: unknown): t is Record<string, unknown> => !!t && typeof t === 'object')
-        .map((t) => ({
-          id: toSafeId(t.id),
-          name: typeof t.name === 'string' ? t.name : '',
-        }))
+      .filter((t: unknown): t is Record<string, unknown> => !!t && typeof t === 'object')
+      .map((t) => ({
+        id: toSafeId(t.id),
+        name: typeof t.name === 'string' ? t.name : '',
+      }))
     : [];
 
   const serializedCategories = Array.isArray(taxonomy?.categories)
     ? taxonomy.categories
-        .filter((c: unknown): c is Record<string, unknown> => !!c && typeof c === 'object')
-        .map((c) => {
-          const parentIdRaw = c.parentId;
-          const parentId =
-            parentIdRaw === null || parentIdRaw === undefined ? null : toSafeId(parentIdRaw);
+      .filter((c: unknown): c is Record<string, unknown> => !!c && typeof c === 'object')
+      .map((c) => {
+        const parentIdRaw = c.parentId;
+        const parentId =
+          parentIdRaw === null || parentIdRaw === undefined ? null : toSafeId(parentIdRaw);
 
-          return {
-            id: toSafeId(c.id),
-            name: typeof c.name === 'string' ? c.name : '',
-            label: typeof c.label === 'string' ? c.label : typeof c.name === 'string' ? c.name : '',
-            parentId,
-          };
-        })
+        return {
+          id: toSafeId(c.id),
+          name: typeof c.name === 'string' ? c.name : '',
+          parentId,
+        };
+      })
     : [];
 
   return (
@@ -75,7 +74,7 @@ export default async function CreatePostPage({
           ← ホームに戻る
         </Link>
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-black text-stone-900 tracking-tighter leading-none">新規記事作成</h1>
+          <h1 className="text-3xl font-black text-stone-900 tracking-tighter leading-none">新規項目作成</h1>
         </div>
       </div>
 

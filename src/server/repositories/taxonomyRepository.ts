@@ -119,6 +119,19 @@ export async function listContentTagIds(contentId: number) {
   return rows.map((row) => row.tagId);
 }
 
+export async function deleteCategory(id: number) {
+  // 子カテゴリを削除対象の親から切り離す（トップレベルに昇格）
+  await db
+    .update(categories)
+    .set({ parentId: null })
+    .where(eq(categories.parentId, id));
+
+  // カテゴリ自体を削除（junction テーブルは FK cascade で削除される）
+  await db
+    .delete(categories)
+    .where(eq(categories.id, id));
+}
+
 export async function listContentCategoryIds(contentId: number) {
   const rows = await db
     .select({

@@ -20,5 +20,6 @@ export type AuditAction =
     // カテゴリ管理
     | 'create_category'
     | 'update_category'
+    | 'delete_category'
     // サムネイル
     | 'cleanup_thumbnails';
