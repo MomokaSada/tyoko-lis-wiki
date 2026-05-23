@@ -10,7 +10,7 @@ const { contents, categories, tags, contentCategories, contentTags } = await imp
 const { eq } = await import('drizzle-orm');
 
 async function seed() {
-  console.log('🌱 記事シーディングを開始します...');
+  console.log('🌱 項目シーディングを開始します...');
 
   // 1. カテゴリー "seed" の作成（存在しない場合）
   let categoryId: number;
@@ -52,12 +52,12 @@ async function seed() {
     console.log(`  ✅ タグ "seed" を作成しました (id: ${tagId})`);
   }
 
-  // 3. テスト記事の作成 (5件)
-  console.log('📝 記事を作成中...');
+  // 3. テスト項目の作成 (5件)
+  console.log('📝 項目を作成中...');
   for (let i = 1; i <= 5; i++) {
     const slug = `seed-article-${Date.now()}-${i}`;
-    const title = `シード記事 ${i}`;
-    const content = `これはシードスクリプトによって自動生成されたテスト記事 ${i} です。\n本文の内容は自由とのことですので、何らかのダミーテキストを挿入しています。`;
+    const title = `シード項目 ${i}`;
+    const content = `これはシードスクリプトによって自動生成されたテスト項目 ${i} です。\n本文の内容は自由とのことですので、何らかのダミーテキストを挿入しています。`;
 
     const [newContent] = await db
       .insert(contents)
@@ -80,7 +80,7 @@ async function seed() {
       tagId,
     });
 
-    console.log(`  ✅ 記事作成完了: ${title} (slug: ${slug})`);
+    console.log(`  ✅ 項目作成完了: ${title} (slug: ${slug})`);
   }
 
   console.log('🎉 シーディングが完了しました！');

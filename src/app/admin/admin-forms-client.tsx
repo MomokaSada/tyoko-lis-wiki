@@ -24,7 +24,6 @@ type CategoryOption = {
   id: number;
   name: string;
   parentId: number | null;
-  label: string;
 };
 
 type TaxonomyOptions = {

@@ -31,7 +31,7 @@ export function DeletePostForm({ contentId, compact = false }: DeletePostFormPro
           type="button"
           onClick={() => setIsModalOpen(true)}
           className="p-2 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-90 flex items-center gap-2 group"
-          title="記事を削除"
+          title="項目を削除"
         >
           <Trash2 className="w-5 h-5 transition-transform group-hover:scale-110" />
           <span className="sr-only">削除</span>
@@ -43,7 +43,7 @@ export function DeletePostForm({ contentId, compact = false }: DeletePostFormPro
           className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl hover:bg-red-100 transition-colors font-bold text-sm"
         >
           <Trash2 className="w-4 h-4" />
-          記事を削除する
+          項目を削除する
         </button>
       )}
 
@@ -51,7 +51,7 @@ export function DeletePostForm({ contentId, compact = false }: DeletePostFormPro
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="記事の削除"
+        title="項目の削除"
         maxWidth="max-w-md"
       >
         <div className="space-y-6">
@@ -60,7 +60,7 @@ export function DeletePostForm({ contentId, compact = false }: DeletePostFormPro
             <div className="space-y-1">
               <p className="font-black text-sm uppercase tracking-wider">警告</p>
               <p className="text-sm font-medium leading-relaxed">
-                この記事を完全に削除します。この操作は取り消せません。本当によろしいですか？
+                この項目を完全に削除します。この操作は取り消せません。本当によろしいですか？
               </p>
             </div>
           </div>
@@ -80,10 +80,10 @@ export function DeletePostForm({ contentId, compact = false }: DeletePostFormPro
                     削除中...
                   </>
                 ) : (
-                  'はい、この記事を削除します'
+                  'はい、この項目を削除します'
                 )}
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}

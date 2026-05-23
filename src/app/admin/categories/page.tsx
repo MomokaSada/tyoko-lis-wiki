@@ -218,7 +218,7 @@ export default async function CategoriesAdminPage() {
                   <thead>
                     <tr>
                       <th style={{ width: '50%' }}>カテゴリ名</th>
-                      <th className="text-center">記事数</th>
+                      <th className="text-center">項目数</th>
                       <th className="text-center">操作</th>
                     </tr>
                   </thead>

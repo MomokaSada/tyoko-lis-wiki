@@ -16,32 +16,31 @@ export default async function ModifyPostPage({
   const { valid, user, token } = await requireEditSession(sessionToken);
   const content = slug ? await getEditableContentDetail(slug) : null;
   const taxonomy = await getTaxonomyOptions();
-  
+
   // シリアライズエラーや BigInt、および不正な要素によるクラッシュを回避するため、極めて防御的にマッピングを行う
-  const serializedTags = Array.isArray(taxonomy?.tags) 
+  const serializedTags = Array.isArray(taxonomy?.tags)
     ? taxonomy.tags.filter((t: any) => t && typeof t === 'object').map((t: any) => ({
-        id: t.id,
-        name: t.name || ''
-      }))
+      id: t.id,
+      name: t.name || ''
+    }))
     : [];
-  
+
   const serializedCategories = Array.isArray(taxonomy?.categories)
     ? taxonomy.categories.filter((c: any) => c && typeof c === 'object').map((c: any) => ({
-        id: c.id,
-        name: c.name || '',
-        label: c.label || c.name || '',
-        parentId: c.parentId ?? null
-      }))
+      id: c.id,
+      name: c.name || '',
+      parentId: c.parentId ?? null
+    }))
     : [];
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500">
       <div className="border-b border-stone-200 pb-8">
         <Link href={`/posts/${content?.slug ?? ''}`} className="inline-flex items-center text-xs font-bold text-stone-400 hover:text-stone-800 transition-colors mb-4 uppercase tracking-widest">
-          ← {content?.title ?? '記事一覧'}に戻る
+          ← {content?.title ?? '項目一覧'}に戻る
         </Link>
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-black text-stone-900 tracking-tighter leading-none">記事編集</h1>
+          <h1 className="text-3xl font-black text-stone-900 tracking-tighter leading-none">項目編集</h1>
         </div>
       </div>
 

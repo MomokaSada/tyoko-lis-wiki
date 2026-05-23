@@ -71,9 +71,9 @@ export default async function EditLinksPage() {
             <div className="relative z-10">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-1.5 h-7 bg-amber-500 rounded-full" />
-                <h1 className="text-3xl font-black text-stone-900 tracking-tight">記事編集リンク管理</h1>
+                <h1 className="text-3xl font-black text-stone-900 tracking-tight">項目編集リンク管理</h1>
               </div>
-              <p className="text-stone-500 text-sm pl-4">記事やWikiの編集用の一時的なセッションリンクを発行します。</p>
+              <p className="text-stone-500 text-sm pl-4">項目やWikiの編集用の一時的なセッションリンクを発行します。</p>
             </div>
           </div>
         </div>

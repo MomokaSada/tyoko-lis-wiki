@@ -36,6 +36,10 @@ export const RATE_LIMIT_RULES = {
         windowMs: 60 * 60 * 1000,
         maxAttempts: 30,
     },
+    deleteCategory: {
+        windowMs: 60 * 60 * 1000,
+        maxAttempts: 20,
+    },
     createIpBan: {
         windowMs: 60 * 60 * 1000,
         maxAttempts: 20,

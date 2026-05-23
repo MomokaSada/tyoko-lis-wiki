@@ -30,18 +30,18 @@ export function DeleteNotification() {
   if (!mounted) return null;
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={handleClose} 
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
       title="削除完了"
     >
       <div className="flex flex-col items-center justify-center py-6 text-center">
         <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6 animate-bounce">
           <CheckCircle2 className="w-10 h-10" />
         </div>
-        <h4 className="text-xl font-black text-stone-900 mb-2">記事を削除しました</h4>
+        <h4 className="text-xl font-black text-stone-900 mb-2">項目を削除しました</h4>
         <p className="text-sm text-stone-500 font-medium mb-8">
-          対象の記事は完全に削除されました。
+          対象の項目は完全に削除されました。
         </p>
         <button
           onClick={handleClose}
