@@ -465,9 +465,9 @@ export function PostForm({
                 <span className="text-[10px] opacity-70">（変更不可）</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 bg-stone-100 text-stone-500 border border-stone-200 rounded-md">
-                <span className="w-1.5 h-1.5 bg-stone-400 rounded-full" />
-                下書き
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                公開
                 <span className="text-[10px] opacity-70">（変更不可）</span>
               </span>
             )}

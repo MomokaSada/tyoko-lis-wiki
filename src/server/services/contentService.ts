@@ -70,7 +70,7 @@ export async function createContent(
     newCategoryParentId: input.newCategoryParentId,
   });
 
-  const effectiveIsPublished = editor.type === 'actor' ? input.isPublished : false;
+  const effectiveIsPublished = editor.type === 'actor' ? input.isPublished : true;
 
   const created = await createContentWithInitialRevision({
     slug: input.slug,

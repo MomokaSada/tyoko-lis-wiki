@@ -5,51 +5,98 @@ import { MobileActions } from '@/components/posts/MobileActions';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
+import { parseListQuery } from '@/types/listQuery';
+import { DataTable } from '@/components/ui/DataTable';
+import type { Column } from '@/components/ui/DataTable';
 import Link from 'next/link';
-import { Link2, AlertTriangle } from 'lucide-react';
+import { Link2, AlertTriangle, Eye } from 'lucide-react';
 
-function getSessionStatusBadge(record: {
+type UsageRecord = {
+  recordId: number | string;
+  sessionId: string;
   sessionIsActive: boolean;
+  sessionAuthorId: number;
+  sessionAuthorName: string | null;
   sessionEndAt: Date;
+  ip: string;
   editsUsed: number;
   maxEdits: number;
-}) {
+  revisionCount: number;
+};
+
+function getStatusBadge(record: UsageRecord) {
   if (!record.sessionIsActive) {
-    return (
-      <span className="badge badge-stone">
-        <span className="badge-dot" />
-        無効化済み
-      </span>
-    );
+    return <span className="badge badge-stone"><span className="badge-dot" />無効化済み</span>;
   }
   if (record.editsUsed >= record.maxEdits) {
-    return (
-      <span className="badge badge-amber">
-        <span className="badge-dot" />
-        上限到達
-      </span>
-    );
+    return <span className="badge badge-amber"><span className="badge-dot" />上限到達</span>;
   }
   if (record.sessionEndAt <= new Date()) {
-    return (
-      <span className="badge badge-red">
-        <span className="badge-dot" />
-        期限切れ
-      </span>
-    );
+    return <span className="badge badge-red"><span className="badge-dot" />期限切れ</span>;
   }
-  return (
-    <span className="badge badge-emerald">
-      <span className="badge-dot" />
-      有効
-    </span>
-  );
+  return <span className="badge badge-emerald"><span className="badge-dot" />有効</span>;
 }
 
-export default async function EditLinkUsagePage() {
+export default async function EditLinkUsagePage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const searchParams = await props.searchParams;
   const actor = await getCurrentActor();
-  const records = actor ? await getDeviceSessionUsageRecords(actor) : [];
+  const query = parseListQuery(searchParams, ['updatedAt', 'editsUsed'], 'updatedAt');
+  const recordsResult = actor ? await getDeviceSessionUsageRecords(actor, query) : { items: [], totalCount: 0 };
+  const records = recordsResult.items as UsageRecord[];
+  const totalCount = recordsResult.totalCount;
   const isOwner = actor?.role === 'owner';
+
+  const columns: Column<UsageRecord>[] = [
+    {
+      key: 'status',
+      label: 'ステータス',
+      render: (_, record) => getStatusBadge(record),
+    },
+    {
+      key: 'sessionId',
+      label: 'セッションID / 作成者',
+      render: (_, record) => (
+        <div className="min-w-0">
+          <p className="text-sm font-mono text-stone-600 truncate max-w-[12rem]">{record.sessionId}</p>
+          <p className="text-xs text-stone-400">
+            {record.sessionAuthorName ?? `user:${record.sessionAuthorId}`} | IP: {record.ip}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: 'editsUsed',
+      label: '使用回数',
+      sortable: true,
+      render: (_, record) => (
+        <span className="text-sm font-bold text-stone-800 tabular-nums">
+          {record.editsUsed} / {record.maxEdits}
+          <span className="text-xs font-medium text-stone-500 ml-1">回</span>
+        </span>
+      ),
+    },
+    {
+      key: 'revisionCount',
+      label: 'Rev',
+      render: (v) => <span className="text-xs text-stone-500">{(v as number) ?? 0}</span>,
+    },
+    {
+      key: 'recordId',
+      label: '',
+      render: (_, record) => (
+        <Link
+          href={`/owner/edit-link-usage/detail?id=${record.recordId}`}
+          className="btn-ghost btn-sm"
+        >
+          <Eye className="w-3.5 h-3.5" />
+          <span className="ml-1">詳細</span>
+        </Link>
+      ),
+      cellClassName: 'text-right',
+    },
+  ];
 
   const headersList = await headers();
   const userRole = headersList.get(HEADER_USER_ROLE);
@@ -82,39 +129,16 @@ export default async function EditLinkUsagePage() {
             この機能は owner のみ利用できます。
           </div>
         ) : (
-          <div className="bg-white border border-stone-200 rounded-[1.75rem] overflow-hidden shadow-sm">
-            {records.length === 0 ? (
-              <div className="p-8">
-                <p className="text-stone-500">編集リンクの使用記録はまだありません。</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-stone-100">
-                {records.map((record) => (
-                  <div
-                    key={record.recordId}
-                    className="px-6 py-4 hover:bg-amber-50/30 transition-colors flex flex-col lg:flex-row lg:items-center gap-3"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      {getSessionStatusBadge(record)}
-                      <div className="min-w-0">
-                        <p className="text-sm font-mono text-stone-600 truncate">{record.sessionId}</p>
-                        <p className="text-xs text-stone-400">
-                          {record.sessionAuthorName ?? `user:${record.sessionAuthorId}`} | IP: {record.ip}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-sm font-bold text-stone-800 shrink-0 tabular-nums">
-                      {record.editsUsed} / {record.maxEdits}
-                      <span className="text-xs font-medium text-stone-500 ml-1">回</span>
-                    </div>
-                    <div className="text-xs text-stone-500 shrink-0 text-right">
-                      <span className="text-stone-400">Rev:</span> {record.revisionCount}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <DataTable
+            items={records}
+            query={query}
+            totalCount={totalCount}
+            columns={columns}
+            basePath="/owner/edit-link-usage"
+            defaultSortBy="updatedAt"
+            emptyMessage="編集リンクの使用記録はまだありません。"
+            searchPlaceholder="セッションID を検索..."
+          />
         )}
 
         <div className="pt-8">

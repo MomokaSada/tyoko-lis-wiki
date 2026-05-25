@@ -15,6 +15,7 @@ export type AuditAction =
     | 'deactivate_ip_ban'
     // リンク管理
     | 'create_edit_link'
+    | 'deactivate_edit_link'
     | 'create_account_link'
     | 'deactivate_account_link'
     // カテゴリ管理

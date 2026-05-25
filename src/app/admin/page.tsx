@@ -49,11 +49,14 @@ export default async function AdminPage() {
   // カテゴリと編集リンク詳細の取得
   const taxonomy = await getTaxonomyOptions();
   const actor = await getCurrentActor();
-  const editLinks = actor ? await getEditLinks(actor) : [];
+  const editLinksResult = actor ? await getEditLinks(actor) : { items: [], totalCount: 0 };
 
   // アクティブなリンク数
-  const activeEditLinks = editSessions.filter(session => session.isActive).length;
+  const activeEditLinks = editSessions.items.filter(session => session.isActive).length;
   const activeAccountLinks = accountCreateSessions.filter(session => session.isActive).length;
+
+  const editSessionsCount = editSessions.totalCount;
+  const accountCreateSessionsCount = accountCreateSessions.length;
 
   // 本日の日付
   const today = new Date().toLocaleDateString('ja-JP');
@@ -130,9 +133,9 @@ export default async function AdminPage() {
             icon={<LinkIcon className="w-6 h-6" />}
             label="アクティブ編集リンク"
             value={activeEditLinks}
-            subtext={`合計 ${editSessions.length} 件中`}
+            subtext={`合計 ${editSessionsCount} 件中`}
             theme="emerald"
-            progress={editSessions.length > 0 ? Math.round((activeEditLinks / editSessions.length) * 100) : 0}
+            progress={editSessionsCount > 0 ? Math.round((activeEditLinks / editSessionsCount) * 100) : 0}
           />
           <StatCard
             icon={<Users className="w-6 h-6" />}
@@ -157,7 +160,7 @@ export default async function AdminPage() {
       <section className="max-w-7xl mx-auto px-6 pb-16">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           <AdminFormsClient
-            editLinks={editLinks}
+            editLinks={editLinksResult.items}
             taxonomy={taxonomy}
           />
 

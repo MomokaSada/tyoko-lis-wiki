@@ -162,6 +162,6 @@ export async function deleteCategoryAction(
 
   return {
     error: null,
-    success: `カテゴリを削除しました`,
+    success: 'カテゴリを削除しました',
   };
 }

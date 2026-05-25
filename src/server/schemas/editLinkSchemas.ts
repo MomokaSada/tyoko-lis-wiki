@@ -14,3 +14,9 @@ export const createEditLinkSchema = z.object({
 });
 
 export type CreateEditLinkInput = z.infer<typeof createEditLinkSchema>;
+
+export const deactivateEditLinkSchema = z.object({
+  uuid: z.string().uuid('リンク識別子が不正です'),
+});
+
+export type DeactivateEditLinkInput = z.infer<typeof deactivateEditLinkSchema>;

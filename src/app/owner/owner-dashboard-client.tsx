@@ -46,7 +46,7 @@ type DeviceSessionUsageRecord = {
   sessionIsActive: boolean;
   sessionStartAt: Date;
   sessionEndAt: Date;
-  sessionAuthorId: number;
+  sessionAuthorId: number | null;
   sessionAuthorName: string | null;
   editsUsed: number;
   maxEdits: number;

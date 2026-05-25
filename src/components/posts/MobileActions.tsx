@@ -8,6 +8,7 @@ import {
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useScrollLock } from '@/lib/useScrollLock';
+import { useWithSession } from '@/lib/useWithSession';
 import { ArticleProfile, ArticleProfileProps } from './ArticleProfile';
 import TableOfContents from './TableOfContents';
 
@@ -47,6 +48,8 @@ export function MobileActions({
   const isLoginParam = searchParams.get('login') === 'true';
   const showLogin = !userRole && isLoginParam;
 
+  const withSession = useWithSession();
+
   // 背景クリックで閉じる処理
   useScrollLock(isOpen || activeTab !== 'nav');
 
@@ -76,8 +79,7 @@ export function MobileActions({
         top: offsetPosition,
         behavior: 'smooth'
       });
-      setActiveTab('none');
-      setIsOpen(false);
+      closeAll();
     }
   };
 
@@ -140,13 +142,13 @@ export function MobileActions({
             {activeTab === 'nav' && (
               <div className="flex flex-col gap-6">
                 <div className="grid gap-3">
-                  <Link href="/" onClick={closeAll} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition">
+                  <Link href={withSession('/')} onClick={closeAll} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition">
                     <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
                       <Home size={20} className="text-stone-500" />
                     </div>
                     メインページ
                   </Link>
-                  <Link href="/posts" onClick={closeAll} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition">
+                  <Link href={withSession('/posts')} onClick={closeAll} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition">
                     <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
                       <List size={20} className="text-stone-500" />
                     </div>
@@ -157,24 +159,24 @@ export function MobileActions({
                     <div className="grid grid-cols-1 gap-2 pt-1">
                       {isAdmin && (
                         <>
-                          <Link href="/admin" onClick={closeAll} className="flex items-center justify-center gap-2 px-4 py-3 bg-stone-100 hover:bg-stone-200 rounded-xl text-[13px] font-bold text-stone-600 transition">
+                          <Link href={withSession('/admin')} onClick={closeAll} className="flex items-center justify-center gap-2 px-4 py-3 bg-stone-100 hover:bg-stone-200 rounded-xl text-[13px] font-bold text-stone-600 transition">
                             <Settings size={16} /> 管理画面
                           </Link>
                           {isOwner && (
-                            <Link href="/owner" onClick={closeAll} className="flex items-center justify-center gap-2 px-4 py-3 bg-stone-100 hover:bg-stone-200 rounded-xl text-[13px] font-bold text-stone-600 transition">
+                            <Link href={withSession('/owner')} onClick={closeAll} className="flex items-center justify-center gap-2 px-4 py-3 bg-stone-100 hover:bg-stone-200 rounded-xl text-[13px] font-bold text-stone-600 transition">
                               <Shield size={16} /> オーナー画面
                             </Link>
                           )}
                         </>
                       )}
-                      <Link href="/posts/create" onClick={closeAll} className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-50 hover:bg-amber-100 rounded-xl text-[13px] font-black text-amber-700 transition">
-                        <FilePlus size={16} /> 項目を作成
+                      <Link href={withSession('/posts/create')} onClick={closeAll} className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-50 hover:bg-amber-100 rounded-xl text-[13px] font-black text-amber-700 transition">
+                        <FilePlus size={16} /> 記事を作成
                       </Link>
                     </div>
                   )}
 
                   {showLogin && (
-                    <Link href="/auth/login" onClick={closeAll} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition">
+                    <Link href={withSession('/auth/login')} onClick={closeAll} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition">
                       <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
                         <User size={20} className="text-stone-500" />
                       </div>

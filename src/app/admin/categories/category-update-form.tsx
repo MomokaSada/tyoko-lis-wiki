@@ -1,12 +1,12 @@
 'use client';
 
-import { useActionState, useMemo, useEffect } from 'react';
+import { useState, useActionState, useEffect } from 'react';
 import {
   updateCategoryAction,
   type CategoryActionState,
 } from '@/server/actions/categoryActions';
 import { Loader2 } from 'lucide-react';
-import { getCategoryLabel } from '@/lib/clientCategoryUtils';
+import { CategorySearchPicker } from '@/components/ui/CategorySearchPicker';
 
 const initialState: CategoryActionState = {
   error: null,
@@ -23,21 +23,13 @@ export function CategoryUpdateForm({
   onSuccess?: () => void;
 }) {
   const [state, action, isPending] = useActionState(updateCategoryAction, initialState);
+  const [parentId, setParentId] = useState<number | null>(category.parentId);
 
   useEffect(() => {
     if (state.success && onSuccess) {
       onSuccess();
     }
   }, [state.success, onSuccess]);
-
-  // フロント側で親パス付きラベルを生成
-  const categoryLabels = useMemo(
-    () =>
-      Object.fromEntries(
-        categories.map((c) => [c.id, getCategoryLabel(c.id, categories)]),
-      ),
-    [categories],
-  );
 
   return (
     <form action={action} className="space-y-4">
@@ -73,22 +65,14 @@ export function CategoryUpdateForm({
 
       {/* 親カテゴリ */}
       <div className="space-y-1.5">
-        <label htmlFor={`cat-parent-${category.id}`} className="field-label">親カテゴリ</label>
-        <select
-          id={`cat-parent-${category.id}`}
+        <label className="field-label">親カテゴリ</label>
+        <CategorySearchPicker
+          categories={categories}
+          value={parentId}
+          onChange={setParentId}
+          excludeId={category.id}
           name="parentId"
-          defaultValue={category.parentId ?? ''}
-          className="field-select"
-        >
-          <option value="">なし（トップレベル）</option>
-          {categories
-            .filter((option) => option.id !== category.id)
-            .map((option) => (
-              <option key={option.id} value={option.id}>
-                {categoryLabels[option.id] ?? option.name}
-              </option>
-            ))}
-        </select>
+        />
       </div>
 
       <div className="flex items-center gap-3 pt-1">
