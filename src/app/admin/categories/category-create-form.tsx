@@ -16,7 +16,7 @@ const initialState: CategoryActionState = {
 export function CategoryCreateForm({
   categories,
 }: {
-  categories: Array<{ id: number; name: string; label: string; parentId: number | null }>;
+  categories: Array<{ id: number; name: string; parentId: number | null }>;
 }) {
   const [state, action, isPending] = useActionState(createCategoryAction, initialState);
   const [parentId, setParentId] = useState<number | null>(null);

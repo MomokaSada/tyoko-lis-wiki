@@ -7,6 +7,7 @@ import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { parseListQuery } from '@/types/listQuery';
+import { Pagination } from '@/components/ui/Pagination';
 import Link from 'next/link';
 
 type CategoryItem = {
@@ -44,7 +45,20 @@ export default async function CategoriesAdminPage(props: {
   const query = parseListQuery(searchParams, ['name'], 'name', 'asc');
   const taxonomy = await getTaxonomyOptionsPaginated(query);
 
+  const totalPages = Math.max(1, Math.ceil(taxonomy.totalCount / query.limit));
+  const currentPage = query.page;
+  const currentSort = query.sortBy ?? 'name';
+  const currentOrder = query.sortOrder ?? 'asc';
   const currentQ = query.searchQuery ?? '';
+
+  function pageUrl(page: number): string {
+    const params = new URLSearchParams();
+    if (currentQ) params.set('q', currentQ);
+    if (currentSort !== 'name') params.set('sort', currentSort);
+    if (currentOrder !== 'asc') params.set('order', currentOrder);
+    params.set('page', String(page));
+    return `?${params.toString()}`;
+  }
 
   const headersList = await headers();
   const userRole = headersList.get(HEADER_USER_ROLE);
@@ -160,14 +174,15 @@ export default async function CategoriesAdminPage(props: {
               }))}
             />
 
-            {/* フッター: 総件数のみ表示（ツリー構造は全件表示のためページネーションなし） */}
-            <div className="px-6 py-4 border-t border-stone-100">
+            {/* フッター: 総件数 + ページネーション */}
+            <div className="px-6 py-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <span className="text-sm text-stone-500">全 <strong className="text-stone-700">{taxonomy.allCategories.length}</strong> 件</span>
               {currentQ && (
                 <span className="text-sm text-stone-400 ml-4">
                   （検索中: <strong>{currentQ}</strong> / 該当 <strong className="text-stone-700">{taxonomy.totalCount}</strong> 件）
                 </span>
               )}
+              {totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} pageUrl={pageUrl} />}
             </div>
           </div>
         </div>
