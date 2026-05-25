@@ -33,6 +33,8 @@ export default async function CreatePostPage({
   // Guard 実行: NG ならリダイレクトされる
   const { token, valid, user } = await requireEditSession(sessionToken);
 
+  const homeHref = sessionToken ? `/?session=${encodeURIComponent(sessionToken)}` : '/';
+
   let taxonomy;
   try {
     taxonomy = await getTaxonomyOptions();
@@ -70,7 +72,7 @@ export default async function CreatePostPage({
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500">
       <div className="border-b border-stone-200 pb-8">
-        <Link href="/" className="inline-flex items-center text-xs font-bold text-stone-400 hover:text-stone-800 transition-colors mb-4 uppercase tracking-widest">
+        <Link href={homeHref} className="inline-flex items-center text-xs font-bold text-stone-400 hover:text-stone-800 transition-colors mb-4 uppercase tracking-widest">
           ← ホームに戻る
         </Link>
         <div className="flex flex-col gap-2">

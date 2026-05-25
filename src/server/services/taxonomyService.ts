@@ -3,8 +3,10 @@ import {
   createTag,
   deleteCategory as deleteCategoryFromRepo,
   findCategoryByName,
+  findCategoryIdsBySearchQuery,
   findTagsByNames,
   listCategories,
+  listCategoriesPaginated,
   listContentCategoryIds,
   listContentTagIds,
   listTags,
@@ -91,10 +93,27 @@ export async function getTaxonomyOptions() {
 
   return {
     tags: tagRows,
-    categories: categoryRows.map((category) => ({
-      ...category,
-      label: buildCategoryLabel(category.id, categoryRows),
-    })),
+    categories: categoryRows,
+  };
+}
+
+export async function getTaxonomyOptionsPaginated(
+  query?: import('@/types/listQuery').ListQuery<'name'>,
+) {
+  // ページネーション表示対象と、親ラベル解決用の全カテゴリを並行取得
+  const [tagRows, categoryResult, allCategories, matchedCategoryIds] = await Promise.all([
+    listTags(),
+    listCategoriesPaginated(query),
+    listCategories(), // 親階層解決用に全件取得
+    query?.searchQuery ? findCategoryIdsBySearchQuery(query.searchQuery) : Promise.resolve(null),
+  ]);
+
+  return {
+    tags: tagRows,
+    categories: categoryResult.items,
+    allCategories, // フォーム・ツリー用に全件を渡す（ラベルはフロントで整形）
+    matchedCategoryIds, // 検索に一致した全カテゴリID（ページネーションなし）。検索時のツリー絞り込みに使用
+    totalCount: categoryResult.totalCount,
   };
 }
 

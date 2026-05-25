@@ -100,10 +100,13 @@ export async function uploadThumbnailFile(file: FormDataEntryValue | null) {
   }
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-  
+
   try {
     const url = new URL(data.publicUrl);
-    return url.pathname;
+    // url.pathname はデコードされた状態で返る（例: %20 → スペース）ので、
+    // 不正な文字が含まれないようパスを再エンコードする
+    const encoded = url.pathname.split('/').map(seg => encodeURIComponent(seg)).join('/');
+    return encoded;
   } catch {
     return data.publicUrl;
   }

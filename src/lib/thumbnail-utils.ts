@@ -27,7 +27,14 @@ export function getPublicThumbnailUrl(path: string | null | undefined): string |
     // NEXT_PUBLIC_SUPABASE_URL はクライアント側に露出される環境変数です
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, '');
     if (!supabaseUrl) return path;
-    return `${supabaseUrl}${path}`;
+    // new URL() で結合することでパス内の特殊文字（日本語ファイル名やスペース等）が
+    // 自動的にURLエンコードされ、かつ既にエンコード済みの文字は二重エンコードされない
+    try {
+      return new URL(path, supabaseUrl).href;
+    } catch {
+      // フォールバック: 単純結合
+      return `${supabaseUrl}${path}`;
+    }
   }
 
   return null;

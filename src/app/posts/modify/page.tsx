@@ -15,6 +15,12 @@ export default async function ModifyPostPage({
   // Guard 実行: NG ならリダイレクトされる
   const { valid, user, token } = await requireEditSession(sessionToken);
   const content = slug ? await getEditableContentDetail(slug) : null;
+
+  const backHref = content
+    ? sessionToken
+      ? `/posts/${encodeURIComponent(content.slug)}?session=${encodeURIComponent(sessionToken)}`
+      : `/posts/${encodeURIComponent(content.slug)}`
+    : '/posts';
   const taxonomy = await getTaxonomyOptions();
 
   // シリアライズエラーや BigInt、および不正な要素によるクラッシュを回避するため、極めて防御的にマッピングを行う
@@ -36,8 +42,8 @@ export default async function ModifyPostPage({
   return (
     <div className="max-w-7xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500">
       <div className="border-b border-stone-200 pb-8">
-        <Link href={`/posts/${content?.slug ?? ''}`} className="inline-flex items-center text-xs font-bold text-stone-400 hover:text-stone-800 transition-colors mb-4 uppercase tracking-widest">
-          ← {content?.title ?? '項目一覧'}に戻る
+        <Link href={backHref} className="inline-flex items-center text-xs font-bold text-stone-400 hover:text-stone-800 transition-colors mb-4 uppercase tracking-widest">
+          ← {content?.title ?? '記事一覧'}に戻る
         </Link>
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-black text-stone-900 tracking-tighter leading-none">項目編集</h1>

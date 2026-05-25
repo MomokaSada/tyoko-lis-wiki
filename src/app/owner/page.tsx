@@ -25,7 +25,7 @@ export default async function OwnerPage() {
   const actor = await getCurrentActor();
   const isOwner = actor?.role === 'owner';
 
-  const [accountCreateLinks, manageableAccounts, activeIpBans, deviceSessionUsageRecords] =
+  const [accountCreateLinksResult, manageableAccountsResult, activeIpBansResult, deviceSessionUsageRecordsResult] =
     actor
       ? await Promise.all([
         getAccountCreateLinks(actor),
@@ -33,7 +33,15 @@ export default async function OwnerPage() {
         getActiveIpBans(actor),
         getDeviceSessionUsageRecords(actor),
       ])
-      : [[], [], [], []];
+      : [{ items: [], totalCount: 0 }, { items: [], totalCount: 0 }, { items: [], totalCount: 0 }, { items: [], totalCount: 0 }];
+
+  const accountCreateLinks = accountCreateLinksResult.items;
+  const manageableAccounts = manageableAccountsResult.items;
+  const activeIpBans = activeIpBansResult.items as {
+    id: number; ip: string; browser: string; reason: string;
+    blockedBy: number; blockedByName: string | null; createdAt: Date;
+  }[];
+  const deviceSessionUsageRecords = deviceSessionUsageRecordsResult.items;
 
   return (
     <>

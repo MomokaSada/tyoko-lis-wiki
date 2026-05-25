@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Search, FilePlus, Settings, Shield, Menu } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
+import { useWithSession } from '@/lib/useWithSession';
 
 interface HeaderProps {
   userRole?: string | null;
@@ -22,10 +23,12 @@ export const Header = ({ userRole }: HeaderProps) => {
   const isOwner = userRole === 'owner';
   const showLogin = !userRole && isLoginParam;
 
+  const withSession = useWithSession();
+
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/posts?q=${encodeURIComponent(searchQuery)}`);
+      router.push(withSession(`/posts?q=${encodeURIComponent(searchQuery)}`));
       setSearchQuery('');
       setMobileOpen(false);
     }
@@ -36,7 +39,7 @@ export const Header = ({ userRole }: HeaderProps) => {
   return (
     <header className="border-b border-stone-100 sticky top-0 z-50 bg-white/90 backdrop-blur-md">
       <div className="max-w-[72rem] mx-auto px-4 sm:px-6 h-16 md:h-20 flex items-center justify-between gap-4 relative">
-        <Link href="/" className="flex items-center gap-3 cursor-pointer group shrink-0">
+        <Link href={withSession('/')} className="flex items-center gap-3 cursor-pointer group shrink-0">
           <div className="w-9 h-9 md:w-10 md:h-10 bg-stone-900 rounded-xl flex items-center justify-center group-hover:rotate-6 transition-transform">
             <TyokoreIcon className="w-6 h-6 md:w-7 md:h-7" />
           </div>
@@ -44,10 +47,10 @@ export const Header = ({ userRole }: HeaderProps) => {
         </Link>
 
         <nav className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-stone-100 p-1.5 rounded-2xl gap-1 border border-stone-200/50 items-center whitespace-nowrap">
-          <Link href="/" className="px-5 py-2 text-sm font-black rounded-xl transition-all text-stone-500 hover:text-stone-800 focus:bg-white focus:text-stone-900 focus:shadow-sm">
+          <Link href={withSession('/')} className="px-5 py-2 text-sm font-black rounded-xl transition-all text-stone-500 hover:text-stone-800 focus:bg-white focus:text-stone-900 focus:shadow-sm">
             メインページ
           </Link>
-          <Link href="/posts" className="px-5 py-2 text-sm font-black rounded-xl transition-all text-stone-500 hover:text-stone-800 focus:bg-white focus:text-stone-900 focus:shadow-sm">
+          <Link href={withSession('/posts')} className="px-5 py-2 text-sm font-black rounded-xl transition-all text-stone-500 hover:text-stone-800 focus:bg-white focus:text-stone-900 focus:shadow-sm">
             項目一覧
           </Link>
 
@@ -58,7 +61,7 @@ export const Header = ({ userRole }: HeaderProps) => {
                 {isAdmin && (
                   <>
                     <Link
-                      href="/admin"
+                      href={withSession('/admin')}
                       className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-white rounded-xl transition-all"
                     >
                       <Settings size={14} />
@@ -66,7 +69,7 @@ export const Header = ({ userRole }: HeaderProps) => {
                     </Link>
                     {isOwner && (
                       <Link
-                        href="/owner"
+                        href={withSession('/owner')}
                         className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-white rounded-xl transition-all"
                       >
                         <Shield size={14} />
@@ -77,7 +80,7 @@ export const Header = ({ userRole }: HeaderProps) => {
                 )}
                 {showLogin && (
                   <Link
-                    href="/auth/login"
+                    href={withSession('/auth/login')}
                     className="px-4 py-2 text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-white rounded-xl transition-all"
                   >
                     ログイン
@@ -91,7 +94,7 @@ export const Header = ({ userRole }: HeaderProps) => {
             <>
               <div className="w-[1px] h-4 bg-stone-300 my-auto mx-1"></div>
               <Link
-                href="/posts/create"
+                href={withSession('/posts/create')}
                 className="px-6 py-2 text-sm font-black rounded-xl transition-all text-amber-700 hover:bg-white flex items-center gap-2 shadow-sm bg-amber-50/30"
               >
                 <FilePlus size={16} /> 項目を作成
@@ -120,7 +123,7 @@ export const Header = ({ userRole }: HeaderProps) => {
 
           {/* タブレット/モバイル用の検索ボタン (lg未満で表示) */}
           <Link
-            href="/posts"
+            href={withSession('/posts')}
             className="flex lg:hidden items-center justify-center rounded-2xl border border-stone-200 bg-white px-3 py-2 text-stone-700 shadow-sm transition hover:bg-stone-50"
           >
             <Search size={20} />
@@ -152,14 +155,14 @@ export const Header = ({ userRole }: HeaderProps) => {
 
           <div className="grid gap-2">
             <Link
-              href="/"
+              href={withSession('/')}
               onClick={closeMobileMenu}
               className="block rounded-2xl px-4 py-3 text-sm font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 transition"
             >
               メインページ
             </Link>
             <Link
-              href="/posts"
+              href={withSession('/posts')}
               onClick={closeMobileMenu}
               className="block rounded-2xl px-4 py-3 text-sm font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 transition"
             >
@@ -170,7 +173,7 @@ export const Header = ({ userRole }: HeaderProps) => {
                 {isAdmin && (
                   <>
                     <Link
-                      href="/admin"
+                      href={withSession('/admin')}
                       onClick={closeMobileMenu}
                       className="block rounded-2xl px-4 py-3 text-sm font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 transition"
                     >
@@ -178,7 +181,7 @@ export const Header = ({ userRole }: HeaderProps) => {
                     </Link>
                     {isOwner && (
                       <Link
-                        href="/owner"
+                        href={withSession('/owner')}
                         onClick={closeMobileMenu}
                         className="block rounded-2xl px-4 py-3 text-sm font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 transition"
                       >
@@ -189,7 +192,7 @@ export const Header = ({ userRole }: HeaderProps) => {
                 )}
                 {showLogin && (
                   <Link
-                    href="/auth/login"
+                    href={withSession('/auth/login')}
                     onClick={closeMobileMenu}
                     className="block rounded-2xl px-4 py-3 text-sm font-bold text-stone-700 bg-stone-100 hover:bg-stone-200 transition"
                   >
@@ -200,7 +203,7 @@ export const Header = ({ userRole }: HeaderProps) => {
             )}
             {(isAdmin || hasEditSession) && (
               <Link
-                href="/posts/create"
+                href={withSession('/posts/create')}
                 onClick={closeMobileMenu}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black text-amber-700 bg-amber-50 hover:bg-amber-100 transition"
               >

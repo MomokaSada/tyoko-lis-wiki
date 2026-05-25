@@ -1,11 +1,12 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useState, useActionState } from 'react';
 import {
   createCategoryAction,
   type CategoryActionState,
 } from '@/server/actions/categoryActions';
 import { Loader2 } from 'lucide-react';
+import { CategorySearchPicker } from '@/components/ui/CategorySearchPicker';
 
 const initialState: CategoryActionState = {
   error: null,
@@ -15,9 +16,10 @@ const initialState: CategoryActionState = {
 export function CategoryCreateForm({
   categories,
 }: {
-  categories: Array<{ id: number; label: string }>;
+  categories: Array<{ id: number; name: string; label: string; parentId: number | null }>;
 }) {
   const [state, action, isPending] = useActionState(createCategoryAction, initialState);
+  const [parentId, setParentId] = useState<number | null>(null);
 
   return (
     <form action={action} className="space-y-6">
@@ -38,15 +40,13 @@ export function CategoryCreateForm({
 
       {/* 親カテゴリ */}
       <div className="space-y-1.5">
-        <label htmlFor="cat-parent" className="field-label">親カテゴリ</label>
-        <select id="cat-parent" name="parentId" defaultValue="" className="field-select">
-          <option value="">なし（トップレベル）</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.label}
-            </option>
-          ))}
-        </select>
+        <label className="field-label">親カテゴリ</label>
+        <CategorySearchPicker
+          categories={categories}
+          value={parentId}
+          onChange={setParentId}
+          name="parentId"
+        />
         <p className="field-hint" style={{ fontSize: '0.6875rem', color: '#a8a29e', marginTop: '0.375rem' }}>
           親カテゴリを選択すると、このカテゴリは子カテゴリとして登録されます
         </p>

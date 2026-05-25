@@ -1,10 +1,17 @@
 import { EditLinkForm } from './edit-link-form';
+import { DeactivateEditLinkButton } from './deactivate-button';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getEditLinks } from '@/server/services/editLinkService';
+import type { StatusFilter } from '@/server/repositories/editLinkRepository';
 import { MobileActions } from '@/components/posts/MobileActions';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
+import { parseListQuery } from '@/types/listQuery';
+import { SearchInput } from './search-input';
+import { CopyLinkButton } from './copy-button';
+import { StatusFilterSelect } from './status-filter';
+import { Pagination } from '@/components/ui/Pagination';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
@@ -41,17 +48,74 @@ function getStatusBadge(status: 'active' | 'expired' | 'inactive' | 'limit-reach
   }
 }
 
-function getUsageProgress(editsUsed: number, maxEdits: number) {
+/** 使用率に応じた色を返す（0%→緑, 50%→琥珀, 75%→オレンジ, 100%→赤） */
+function getUsageColor(editsUsed: number, maxEdits: number): { ratio: number; color: string } {
   const ratio = Math.min(1, maxEdits > 0 ? editsUsed / maxEdits : 0);
-  let barClass = 'progress-emerald';
-  if (ratio >= 1) barClass = 'progress-amber';
-  else if (ratio >= 0.8) barClass = 'progress-amber';
-  return { ratio, barClass };
+  // 3 色のグラデーションキーフレーム間で線形補間
+  const stops: [number, number, number, number][] = [
+    [0.00, 0x10, 0xb9, 0x81], // 緑
+    [0.50, 0xf5, 0x9e, 0x0b], // 琥珀
+    [1.00, 0xef, 0x44, 0x44], // 赤
+  ];
+  const hex = (n: number) => Math.round(n).toString(16).padStart(2, '0');
+
+  let color = '#10b981';
+  for (let i = 0; i < stops.length - 1; i++) {
+    const [t0, r0, g0, b0] = stops[i];
+    const [t1, r1, g1, b1] = stops[i + 1];
+    if (ratio >= t0 && ratio <= t1) {
+      const p = (ratio - t0) / (t1 - t0);
+      color = `#${hex(r0 + (r1 - r0) * p)}${hex(g0 + (g1 - g0) * p)}${hex(b0 + (b1 - b0) * p)}`;
+      break;
+    }
+  }
+  return { ratio, color };
 }
 
-export default async function EditLinksPage() {
+export default async function EditLinksPage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const searchParams = await props.searchParams;
   const actor = await getCurrentActor();
-  const links = actor ? await getEditLinks(actor) : [];
+
+  const statusFilter: StatusFilter | undefined =
+    typeof searchParams.status === 'string' &&
+    ['active', 'expired', 'inactive', 'limit-reached'].includes(searchParams.status)
+      ? (searchParams.status as StatusFilter)
+      : undefined;
+
+  const query = parseListQuery(searchParams, ['createdAt', 'endAt', 'editsUsed'], 'createdAt');
+  const linksResult = actor ? await getEditLinks(actor, query, statusFilter) : { items: [], totalCount: 0 };
+  const links = linksResult.items;
+  const totalCount = linksResult.totalCount;
+  const totalPages = Math.max(1, Math.ceil(totalCount / query.limit));
+
+  const currentSort = query.sortBy ?? 'createdAt';
+  const currentOrder = query.sortOrder ?? 'desc';
+  const currentQ = query.searchQuery ?? '';
+  const currentPage = query.page;
+  const currentStatus = statusFilter ?? 'all';
+
+  function sortUrl(key: string): string {
+    const order = currentSort === key && currentOrder === 'asc' ? 'desc' : 'asc';
+    const params = new URLSearchParams();
+    if (currentQ) params.set('q', currentQ);
+    if (currentStatus !== 'all') params.set('status', currentStatus);
+    params.set('sort', key);
+    params.set('order', order);
+    params.set('page', '1');
+    return `?${params.toString()}`;
+  }
+
+  function pageUrl(page: number): string {
+    const params = new URLSearchParams();
+    if (currentQ) params.set('q', currentQ);
+    if (currentStatus !== 'all') params.set('status', currentStatus);
+    if (currentSort !== 'createdAt') params.set('sort', currentSort);
+    if (currentOrder !== 'desc') params.set('order', currentOrder);
+    params.set('page', String(page));
+    return `?${params.toString()}`;
+  }
 
   const headersList = await headers();
   const userRole = headersList.get(HEADER_USER_ROLE);
@@ -93,17 +157,16 @@ export default async function EditLinksPage() {
         <div className="card">
           {/* ツールバー: 検索 + フィルター + 新規発行 */}
           <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="search-box">
-                <svg className="search-box-icon w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-                <input type="search" placeholder="リンクを検索..." className="search-box-input" />
-              </div>
-              <select className="field-select" style={{ width: 'auto', padding: '0.5rem 2rem 0.5rem 0.75rem', borderRadius: '0.875rem', fontSize: '0.75rem' }}>
-                <option value="">すべて</option>
-                <option value="active">アクティブ</option>
-                <option value="expired">期限切れ</option>
-                <option value="limit">利用制限到達</option>
-              </select>
+            <div className="flex items-center gap-3">
+              <SearchInput defaultValue={currentQ} sort={currentSort} order={currentOrder} status={currentStatus} />
+
+              {/* ステータスフィルター */}
+              <StatusFilterSelect
+                currentStatus={currentStatus}
+                currentQ={currentQ}
+                currentSort={currentSort}
+                currentOrder={currentOrder}
+              />
             </div>
             <Link
               href="#new-link-form"
@@ -139,7 +202,7 @@ export default async function EditLinksPage() {
           ) : (
             <div className="divide-y divide-stone-100">
               {links.map((link) => {
-                const { ratio, barClass } = getUsageProgress(link.editsUsed, link.maxEdits);
+                const { ratio, color } = getUsageColor(link.editsUsed, link.maxEdits);
                 return (
                   <div
                     key={link.uuid}
@@ -154,10 +217,8 @@ export default async function EditLinksPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <code className="text-sm font-mono text-stone-600 truncate max-w-md">
-                            {`${process.env.NEXT_PUBLIC_APP_URL}/posts/create?session=${link.uuid}`}
-                          </code>
-                          <button className="btn-ghost btn-sm shrink-0">コピー</button>
+                          <span className="text-sm text-stone-600 font-mono">{link.uuid}</span>
+                          <CopyLinkButton uuid={link.uuid} />
                         </div>
                         <p className="text-xs text-stone-400 mt-0.5">
                           作成者: {link.authorName ?? `user:${link.authorId}`}
@@ -168,16 +229,16 @@ export default async function EditLinksPage() {
                           <p className="text-xs text-stone-500 mb-1">使用率</p>
                           <div className="flex items-center gap-2">
                             <div className="progress-bar" style={{ width: '80px' }}>
-                              <div className={`progress-fill ${barClass}`} style={{ width: `${ratio * 100}%` }} />
+                              <div className="progress-fill" style={{ width: `${ratio * 100}%`, background: color }} />
                             </div>
-                            <span className={`text-xs font-bold ${ratio >= 1 ? 'text-amber-600' : 'text-stone-600'}`}>
+                            <span className="text-xs font-bold" style={{ color }}>
                               {link.editsUsed}/{link.maxEdits}
                             </span>
                           </div>
                         </div>
                         <div className="flex gap-1">
                           {link.status === 'active' && (
-                            <button className="btn-ghost btn-sm">失効</button>
+                            <DeactivateEditLinkButton uuid={link.uuid} />
                           )}
                         </div>
                       </div>
@@ -190,16 +251,8 @@ export default async function EditLinksPage() {
 
           {/* フッター: ページネーション */}
           <div className="px-6 py-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span className="text-sm text-stone-500">全 <strong className="text-stone-700">{links.length}</strong> 件</span>
-            <div className="pagination">
-              <button className="page-btn" disabled>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
-              </button>
-              <button className="page-btn active">1</button>
-              <button className="page-btn">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>
-              </button>
-            </div>
+            <span className="text-sm text-stone-500">全 <strong className="text-stone-700">{totalCount}</strong> 件</span>
+              {totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} pageUrl={pageUrl} />}
           </div>
         </div>
 
