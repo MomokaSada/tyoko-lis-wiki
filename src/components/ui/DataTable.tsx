@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { DataTableSearch } from './DataTableSearch';
 import { Pagination } from '@/components/ui/Pagination';
 import type { ListQuery, SortOrder } from '@/types/listQuery';
 
@@ -49,25 +50,9 @@ type DataTableProps<T extends Record<string, unknown>> = {
 
 /**
  * 一覧画面用の DataTable コンポーネント。
- * 検索・ソート・テーブル表示・空状態・件数表示・ページネーションを1つにまとめる。
- *
- * Server Component として動作し、クライアントサイドJSを必要としない。
- *
- * ```tsx
- * <DataTable
- *   items={items}
- *   query={query}
- *   totalCount={totalCount}
- *   columns={[
- *     { key: 'name', label: '名前', sortable: true },
- *     { key: 'createdAt', label: '作成日', render: (v) => formatDate(v as Date) },
- *     { key: 'actions', label: '', render: (_, row) => <ActionButton row={row} /> },
- *   ]}
- *   basePath="/admin/edit-links"
- *   defaultSortBy="createdAt"
- *   emptyMessage="まだデータがありません"
- * />
- * ```
+ * Server Component として動作する。
+ * 検索部分のみ DataTableSearch (Client Component) に委譲。
+ * ソート・ページネーションは <Link scroll={false}> でスクロール位置を維持。
  */
 export async function DataTable<T extends Record<string, unknown>>({
   items,
@@ -117,24 +102,14 @@ export async function DataTable<T extends Record<string, unknown>>({
         <div className="flex items-center gap-3">
           {toolbar}
           {!hideSearch && (
-            <form method="GET" action={basePath} className="contents">
-              <input type="hidden" name={p('sort')} value={currentSort} />
-              <input type="hidden" name={p('order')} value={currentOrder} />
-              <input type="hidden" name={p('page')} value="1" />
-              <div className="search-box">
-                <svg className="search-box-icon w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.35-4.35" />
-                </svg>
-                <input
-                  type="search"
-                  name={p('q')}
-                  defaultValue={currentQ}
-                  placeholder={searchPlaceholder}
-                  className="search-box-input"
-                />
-              </div>
-            </form>
+            <DataTableSearch
+              defaultValue={currentQ}
+              placeholder={searchPlaceholder}
+              paramPrefix={paramPrefix}
+              sort={currentSort}
+              order={currentOrder}
+              basePath={basePath}
+            />
           )}
         </div>
       </div>
@@ -159,6 +134,7 @@ export async function DataTable<T extends Record<string, unknown>>({
                     {col.sortable ? (
                       <Link
                         href={sortUrl(col.key)}
+                        scroll={false}
                         className="inline-flex items-center gap-1 hover:text-stone-900 transition-colors group"
                       >
                         <span>{col.label}</span>

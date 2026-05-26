@@ -18,6 +18,7 @@ type UsageRecord = {
   sessionAuthorId: number;
   sessionAuthorName: string | null;
   sessionEndAt: Date;
+  lastRecordedAt: Date;
   ip: string;
   editsUsed: number;
   maxEdits: number;
@@ -65,6 +66,12 @@ export default async function EditLinkUsagePage(props: {
           </p>
         </div>
       ),
+    },
+    {
+      key: 'lastRecordedAt',
+      label: '最終アクセス',
+      sortable: true,
+      render: (v) => <span className="text-sm text-stone-500">{formatDateTimeJst(v as Date).split(' ')[0]}</span>,
     },
     {
       key: 'editsUsed',

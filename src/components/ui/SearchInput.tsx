@@ -1,11 +1,13 @@
 'use client';
 
-import { useRef, useCallback, type ReactNode } from 'react';
+import { useRef, useCallback, type ReactNode, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 
 const UUID_PATTERN = /[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}/i;
 
 /**
  * UUID検索入力。ペースト時・送信時にURLからUUIDを自動抽出する。
+ * router.push によるクライアントサイド遷移でページリロードを防ぐ。
  *
  * - sort / order / page の hidden input は内包している
  * - 追加の hidden input が必要な場合は children で渡す
@@ -23,6 +25,7 @@ export function SearchInput({
   basePath: string;
   children?: ReactNode;
 }) {
+  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -46,24 +49,42 @@ export function SearchInput({
     }
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     const input = inputRef.current;
     if (input) {
       extractUuid(input.value);
     }
+    const fd = new FormData(e.currentTarget);
+    const q = (fd.get('q') as string) ?? '';
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (sort) params.set('sort', sort);
+    if (order) params.set('order', order);
+    params.set('page', '1');
+    // children の hidden input も FormData に入っているので引き継ぐ
+    const form = e.currentTarget;
+    for (const el of form.elements) {
+      if (el instanceof HTMLInputElement && el.type === 'hidden' && el.name && el.name !== 'q' && el.name !== 'sort' && el.name !== 'order' && el.name !== 'page') {
+        if (el.value) params.set(el.name, el.value);
+      }
+    }
+    router.push(`${basePath}?${params.toString()}`, { scroll: false });
   }
 
   return (
-    <form ref={formRef} method="GET" action={basePath} onSubmit={handleSubmit} className="contents">
+    <form ref={formRef} onSubmit={handleSubmit} className="contents">
       <input type="hidden" name="sort" value={sort} />
       <input type="hidden" name="order" value={order} />
       <input type="hidden" name="page" value="1" />
       {children}
       <div className="search-box">
-        <svg className="search-box-icon w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.35-4.35" />
-        </svg>
+        <button type="submit" className="search-box-icon w-4 h-4" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit' }}>
+          <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+        </button>
         <input
           ref={inputRef}
           type="search"

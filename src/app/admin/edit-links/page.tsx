@@ -10,6 +10,8 @@ import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { parseListQuery } from '@/types/listQuery';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { CopyLinkButton } from '@/components/ui/CopyLinkButton';
+import { SortControls } from '@/components/ui/SortControls';
+import type { SortOption } from '@/components/ui/SortControls';
 import { StatusFilterSelect } from './status-filter';
 import { Pagination } from '@/components/ui/Pagination';
 import Link from 'next/link';
@@ -96,16 +98,11 @@ export default async function EditLinksPage(props: {
   const currentPage = query.page;
   const currentStatus = statusFilter ?? 'all';
 
-  function sortUrl(key: string): string {
-    const order = currentSort === key && currentOrder === 'asc' ? 'desc' : 'asc';
-    const params = new URLSearchParams();
-    if (currentQ) params.set('q', currentQ);
-    if (currentStatus !== 'all') params.set('status', currentStatus);
-    params.set('sort', key);
-    params.set('order', order);
-    params.set('page', '1');
-    return `?${params.toString()}`;
-  }
+  const sortOptions: SortOption[] = [
+    { key: 'createdAt', label: '作成日' },
+    { key: 'endAt', label: '期限' },
+    { key: 'editsUsed', label: '使用回数' },
+  ];
 
   function pageUrl(page: number): string {
     const params = new URLSearchParams();
@@ -168,6 +165,17 @@ export default async function EditLinksPage(props: {
                 currentQ={currentQ}
                 currentSort={currentSort}
                 currentOrder={currentOrder}
+              />
+              <span className="hidden sm:block w-px h-5 bg-stone-200" />
+              <SortControls
+                basePath="/admin/edit-links"
+                options={sortOptions}
+                currentSort={currentSort}
+                currentOrder={currentOrder}
+                extraParams={{
+                  ...(currentQ ? { q: currentQ } : {}),
+                  ...(currentStatus !== 'all' ? { status: currentStatus } : {}),
+                }}
               />
             </div>
             <Link

@@ -33,7 +33,7 @@ export function StatusFilterSelect({
       if (currentSort !== 'createdAt') params.set('sort', currentSort);
       if (currentOrder !== 'desc') params.set('order', currentOrder);
       params.set('page', '1');
-      router.push(`${pathname}?${params.toString()}`);
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [pathname, currentQ, currentSort, currentOrder],
   );
