@@ -50,14 +50,12 @@ export default async function EditLinkUsagePage(props: {
   const isOwner = actor?.role === 'owner';
 
   const columns: Column<UsageRecord>[] = [
-    {
-      key: 'status',
-      label: 'ステータス',
-      render: (_, record) => getStatusBadge(record),
-    },
+    // 1. メイン情報（左寄せ）
     {
       key: 'sessionId',
       label: 'セッションID / 作成者',
+      headerAlign: 'left',
+      cellAlign: 'left',
       render: (_, record) => (
         <div className="min-w-0">
           <p className="text-sm font-mono text-stone-600 truncate max-w-[12rem]">{record.sessionId}</p>
@@ -67,16 +65,13 @@ export default async function EditLinkUsagePage(props: {
         </div>
       ),
     },
-    {
-      key: 'lastRecordedAt',
-      label: '最終アクセス',
-      sortable: true,
-      render: (v) => <span className="text-sm text-stone-500">{formatDateTimeJst(v as Date).split(' ')[0]}</span>,
-    },
+    // 3. 横幅が予測できる要素（中央寄せ）
     {
       key: 'editsUsed',
       label: '使用回数',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       render: (_, record) => (
         <span className="text-sm font-bold text-stone-800 tabular-nums">
           {record.editsUsed} / {record.maxEdits}
@@ -87,11 +82,33 @@ export default async function EditLinkUsagePage(props: {
     {
       key: 'revisionCount',
       label: 'Rev',
+      headerAlign: 'center',
+      cellAlign: 'center',
       render: (v) => <span className="text-xs text-stone-500">{(v as number) ?? 0}</span>,
     },
+    // 3. 日時（中央寄せ、sortable）
+    {
+      key: 'lastRecordedAt',
+      label: '最終アクセス',
+      sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
+      render: (v) => <span className="text-sm text-stone-500">{formatDateTimeJst(v as Date).split(' ')[0]}</span>,
+    },
+    // 4. ステータス（中央寄せ）
+    {
+      key: 'status',
+      label: 'ステータス',
+      headerAlign: 'center',
+      cellAlign: 'center',
+      render: (_, record) => getStatusBadge(record),
+    },
+    // 5. 詳細 / アクション（中央寄せ）
     {
       key: 'recordId',
       label: '',
+      headerAlign: 'center',
+      cellAlign: 'center',
       render: (_, record) => (
         <Link
           href={`/owner/edit-link-usage/detail?id=${record.recordId}`}
@@ -101,7 +118,6 @@ export default async function EditLinkUsagePage(props: {
           <span className="ml-1">詳細</span>
         </Link>
       ),
-      cellClassName: 'text-right',
     },
   ];
 

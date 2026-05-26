@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, sql, ilike, or } from 'drizzle-orm';
 import { db } from '@/db';
 import { blockDevices, devices, users } from '@/db/schema';
 import type { ListQuery, ListResult } from '@/types/listQuery';
@@ -144,6 +144,11 @@ export async function listActiveIpBansPaginated(
   const limit = query?.limit ?? 20;
   const offset = (page - 1) * limit;
 
+  const baseWhere = [eq(blockDevices.isActive, true)];
+  if (query?.searchQuery) {
+    baseWhere.push(ilike(devices.ip, `%${query.searchQuery}%`));
+  }
+
   const rows = await db
     .select({
       id: blockDevices.id,
@@ -157,7 +162,7 @@ export async function listActiveIpBansPaginated(
     .from(blockDevices)
     .innerJoin(devices, eq(blockDevices.deviceId, devices.id))
     .leftJoin(users, eq(blockDevices.blockedBy, users.id))
-    .where(eq(blockDevices.isActive, true))
+    .where(and(...baseWhere))
     .orderBy(desc(blockDevices.createdAt))
     .limit(limit)
     .offset(offset);
@@ -166,7 +171,7 @@ export async function listActiveIpBansPaginated(
     .select({ count: sql<number>`count(*)` })
     .from(blockDevices)
     .innerJoin(devices, eq(blockDevices.deviceId, devices.id))
-    .where(eq(blockDevices.isActive, true));
+    .where(and(...baseWhere));
 
   return {
     items: rows,
@@ -231,6 +236,13 @@ export async function listIpDeviceRecordsPaginated(
   const limit = query?.limit ?? 20;
   const offset = (page - 1) * limit;
 
+  const baseWhere = query?.searchQuery
+    ? or(
+        ilike(devices.ip, `%${query.searchQuery}%`),
+        ilike(devices.browser, `%${query.searchQuery}%`)
+      )
+    : undefined;
+
   const rows = await db
     .select({
       deviceId: devices.id,
@@ -251,13 +263,15 @@ export async function listIpDeviceRecordsPaginated(
       and(eq(blockDevices.deviceId, devices.id), eq(blockDevices.isActive, true)),
     )
     .leftJoin(users, eq(blockDevices.blockedBy, users.id))
+    .where(baseWhere)
     .orderBy(desc(devices.updatedAt), desc(devices.createdAt))
     .limit(limit)
     .offset(offset);
 
   const [countResult] = await db
     .select({ count: sql<number>`count(*)` })
-    .from(devices);
+    .from(devices)
+    .where(baseWhere);
 
   return {
     items: rows,

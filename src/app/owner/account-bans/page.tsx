@@ -40,10 +40,13 @@ export default async function AccountBansPage(props: {
   const totalCount = accountsResult.totalCount;
 
   const columns: Column<ManageableAccount>[] = [
+    // 1. メイン情報（左寄せ）
     {
       key: 'name',
       label: 'アカウント',
       sortable: true,
+      headerAlign: 'left',
+      cellAlign: 'left',
       render: (_, account) => {
         const initial = account.name.charAt(0).toUpperCase() + (account.name.charAt(1) || '').toLowerCase();
         const avatarColor = getAvatarStyle(account.name);
@@ -55,10 +58,23 @@ export default async function AccountBansPage(props: {
         );
       },
     },
+    // 3. 横幅が予測できる要素（中央寄せ）
+    {
+      key: 'createdAt',
+      label: '登録日',
+      sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
+      cellClassName: 'text-sm text-stone-500',
+      render: (v) => formatDateTimeJst(v as Date).split(' ')[0],
+    },
+    // 4. ステータス（中央寄せ）
     {
       key: 'isActive',
       label: 'ステータス',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       render: (_, account) =>
         account.isActive ? (
           <span className="badge badge-stone"><span className="badge-dot" />アクティブ</span>
@@ -66,18 +82,14 @@ export default async function AccountBansPage(props: {
           <span className="badge badge-red"><span className="badge-dot" />BAN中</span>
         ),
     },
-    {
-      key: 'createdAt',
-      label: '登録日',
-      sortable: true,
-      cellClassName: 'text-sm text-stone-500',
-      render: (v) => formatDateTimeJst(v as Date).split(' ')[0],
-    },
+    // 6. アクション（中央寄せ）
     {
       key: 'id',
       label: '操作',
+      headerAlign: 'center',
+      cellAlign: 'center',
       render: (_, account) => (
-        <div className="flex gap-1">
+        <div className="flex items-center justify-center gap-1">
           {account.isActive ? <BanButton userId={account.id} /> : <UnbanButton userId={account.id} />}
         </div>
       ),
