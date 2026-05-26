@@ -6,6 +6,8 @@ import { DataTable } from '@/components/ui/DataTable';
 import type { Column } from '@/components/ui/DataTable';
 import { IpBanForm } from './ip-ban-form';
 import { UnIpBanButton } from './un-ip-ban-button';
+import { DetailModal } from './reason-detail';
+import { IpBansTabs } from './ip-bans-tabs';
 import { CopyableCell } from '@/components/ui/CopyableCell';
 import Link from 'next/link';
 import { ShieldBan, AlertTriangle } from 'lucide-react';
@@ -78,80 +80,105 @@ export default async function IpBansPage(props: {
   const isOwner = actor?.role === 'owner';
 
   const banColumns: Column<BanRow>[] = [
-    {
-      key: 'status',
-      label: 'ステータス',
-      render: () => (
-        <span className="badge badge-red"><span className="badge-dot" style={{ background: '#ef4444' }} />BAN中</span>
-      ),
-    },
+    // 1. メイン情報 / IPアドレス（左寄せ）
     {
       key: 'ip',
       label: 'IPアドレス',
+      headerAlign: 'left',
+      cellAlign: 'left',
       render: (_, ban) => (
-        <CopyableCell text={ban.ip} mono className="font-bold text-stone-800 text-sm" />
+        <CopyableCell text={ban.ip} mono />
       ),
     },
-    {
-      key: 'reason',
-      label: '理由',
-      cellClassName: 'text-sm text-stone-600 max-w-xs truncate',
-    },
+    // 3. 日時・発行者（中央寄せ）
     {
       key: 'createdAt',
       label: '発行者',
       sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
       render: (_, ban) => (
         <span className="text-sm text-stone-500">{ban.blockedByName ?? `user:${ban.blockedBy}`}</span>
       ),
     },
+    // 4. ステータス（中央寄せ）
+    {
+      key: 'status',
+      label: 'ステータス',
+      headerAlign: 'center',
+      cellAlign: 'center',
+      render: () => (
+        <span className="badge badge-red"><span className="badge-dot" style={{ background: '#ef4444' }} />BAN中</span>
+      ),
+    },
+    // 6. アクション（中央寄せ）
     {
       key: 'id',
       label: '操作',
-      headerClassName: 'text-center',
-      cellClassName: 'text-center',
+      headerAlign: 'center',
+      cellAlign: 'center',
       render: (_, ban) => <UnIpBanButton banId={ban.id} />,
+    },
+    // 7. 詳細（中央寄せ）— 理由は詳細ボタンでモーダル表示
+    {
+      key: 'reason',
+      label: '理由',
+      headerAlign: 'center',
+      cellAlign: 'center',
+      render: (_, ban) => <DetailModal title="BAN理由" content={ban.reason} />,
     },
   ];
 
   const recordColumns: Column<RecordRow>[] = [
+    // 1. メイン情報 / IPアドレス（左寄せ）
+    {
+      key: 'ip',
+      label: 'IPアドレス',
+      headerAlign: 'left',
+      cellAlign: 'left',
+      render: (_, record) => (
+        <CopyableCell text={record.ip} mono />
+      ),
+    },
+    // 2. ブラウザ情報（中央寄せ）— 詳細ボタンでモーダル表示
+    {
+      key: 'browser',
+      label: 'ブラウザ',
+      headerAlign: 'center',
+      cellAlign: 'center',
+      render: (_, record) => <DetailModal title="ブラウザ情報" content={record.browser} />,
+    },
+    // 3. 日時（中央寄せ）
+    {
+      key: 'firstSeenAt',
+      label: '初回アクセス',
+      headerAlign: 'center',
+      cellAlign: 'center',
+      cellClassName: 'text-sm text-stone-500',
+      render: (v) => formatDateTimeJst(v as Date).split(' ')[0],
+    },
+    // 3. 日時（中央寄せ）— sortable
+    {
+      key: 'lastSeenAt',
+      label: '最終アクセス',
+      sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
+      cellClassName: 'text-sm text-stone-500',
+      render: (v) => formatDateTimeJst(v as Date).split(' ')[0],
+    },
+    // 4. ステータス（中央寄せ）
     {
       key: 'isBanned',
       label: 'ステータス',
+      headerAlign: 'center',
+      cellAlign: 'center',
       render: (_, record) =>
         record.isBanned ? (
           <span className="badge badge-red"><span className="badge-dot" />BAN中</span>
         ) : (
           <span className="badge badge-stone"><span className="badge-dot" />未BAN</span>
         ),
-    },
-    {
-      key: 'ip',
-      label: 'IPアドレス',
-      render: (_, record) => (
-        <CopyableCell text={record.ip} mono className="font-bold text-stone-800 text-sm" />
-      ),
-    },
-    {
-      key: 'browser',
-      label: 'ブラウザ',
-      cellClassName: 'max-w-xs truncate',
-      render: (_, record) => (
-        <CopyableCell text={record.browser} className="text-xs text-stone-500" />
-      ),
-    },
-    {
-      key: 'firstSeenAt',
-      label: '初回アクセス',
-      cellClassName: 'text-sm text-stone-500',
-      render: (v) => formatDateTimeJst(v as Date).split(' ')[0],
-    },
-    {
-      key: 'lastSeenAt',
-      label: '最終アクセス',
-      sortable: true,
-      cellClassName: 'text-sm text-stone-500',
-      render: (v) => formatDateTimeJst(v as Date).split(' ')[0],
     },
   ];
 
@@ -192,30 +219,35 @@ export default async function IpBansPage(props: {
             </div>
           </div>
 
-          {/* IP BAN一覧 */}
-          <DataTable
-            items={bans}
-            query={banQuery}
-            totalCount={bansTotalCount}
-            columns={banColumns}
-            basePath="/owner/ip-bans"
-            defaultSortBy="createdAt"
-            emptyMessage="有効なIP BANはまだありません。"
-            paramPrefix="b"
-            hideSearch
-          />
-
-          {/* アクセス記録一覧 */}
-          <DataTable
-            items={records}
-            query={recordQuery}
-            totalCount={recordsTotalCount}
-            columns={recordColumns}
-            basePath="/owner/ip-bans"
-            defaultSortBy="lastSeenAt"
-            emptyMessage="記録された IP はまだありません。"
-            searchPlaceholder="IPアドレスを検索..."
-            paramPrefix="r"
+          {/* タブでテーブルを切り替え */}
+          <IpBansTabs
+            defaultTab={Object.keys(searchParams).some(k => k.startsWith('r')) && !Object.keys(searchParams).some(k => k.startsWith('b')) ? 'records' : 'bans'}
+            bansTable={
+              <DataTable
+                items={bans}
+                query={banQuery}
+                totalCount={bansTotalCount}
+                columns={banColumns}
+                basePath="/owner/ip-bans"
+                defaultSortBy="createdAt"
+                emptyMessage="有効なIP BANはまだありません。"
+                searchPlaceholder="IPアドレスを検索..."
+                paramPrefix="b"
+              />
+            }
+            recordsTable={
+              <DataTable
+                items={records}
+                query={recordQuery}
+                totalCount={recordsTotalCount}
+                columns={recordColumns}
+                basePath="/owner/ip-bans"
+                defaultSortBy="lastSeenAt"
+                emptyMessage="記録された IP はまだありません。"
+                searchPlaceholder="IPアドレスを検索..."
+                paramPrefix="r"
+              />
+            }
           />
         </>
       )}

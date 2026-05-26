@@ -16,6 +16,10 @@ export type Column<T> = {
   headerClassName?: string;
   /** データセルに追加するクラス */
   cellClassName?: string;
+  /** ヘッダーのテキスト揃え（指定しない場合は CSS の初期値に従う） */
+  headerAlign?: 'left' | 'center' | 'right';
+  /** セルのテキスト揃え（指定しない場合は CSS の初期値に従う） */
+  cellAlign?: 'left' | 'center' | 'right';
 };
 
 type DataTableProps<T extends Record<string, unknown>> = {
@@ -130,15 +134,16 @@ export async function DataTable<T extends Record<string, unknown>>({
             <thead>
               <tr>
                 {columns.map((col) => (
-                  <th key={col.key} className={col.headerClassName ?? ''}>
+                  <th key={col.key} className={col.headerClassName ?? ''} style={col.headerAlign ? { textAlign: col.headerAlign } : undefined}>
                     {col.sortable ? (
                       <Link
                         href={sortUrl(col.key)}
                         scroll={false}
                         className="inline-flex items-center gap-1 hover:text-stone-900 transition-colors group"
+                        style={col.headerAlign ? { justifyContent: col.headerAlign === 'center' ? 'center' : 'flex-start' } : undefined}
                       >
                         <span>{col.label}</span>
-                        <span className={`inline-flex flex-col leading-none ${currentSort === col.key ? 'text-stone-700' : 'text-stone-300 group-hover:text-stone-400 transition-colors'}`}>
+                        <span className={`inline-flex flex-col leading-none ${currentSort === col.key ? 'text-stone-700' : 'text-stone-500 group-hover:text-stone-600 transition-colors'}`}>
                           {currentSort === col.key && currentOrder === 'asc' ? (
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                               <polyline points="18 15 12 9 6 15" />
@@ -168,7 +173,7 @@ export async function DataTable<T extends Record<string, unknown>>({
                   {columns.map((col) => {
                     const value = (row as Record<string, unknown>)[col.key];
                     return (
-                      <td key={col.key} className={col.cellClassName ?? ''}>
+                      <td key={col.key} className={col.cellClassName ?? ''} style={col.cellAlign ? { textAlign: col.cellAlign } : undefined}>
                         {col.render ? col.render(value, row) : String(value ?? '')}
                       </td>
                     );
