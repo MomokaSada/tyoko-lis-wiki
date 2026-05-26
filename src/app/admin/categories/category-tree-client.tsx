@@ -482,8 +482,8 @@ export function CategoryTreeClient({
           <thead>
             <tr>
               <th style={{ width: '55%' }}>カテゴリ名</th>
-              <th className="text-center" style={{ width: '20%' }}>親子関係</th>
-              <th className="text-center" style={{ width: '25%' }}>操作</th>
+              <th style={{ width: '20%', textAlign: 'center' }}>親子関係</th>
+              <th style={{ width: '25%', textAlign: 'center' }}>操作</th>
             </tr>
           </thead>
           <tbody>

@@ -45,7 +45,6 @@ export default async function CategoriesAdminPage(props: {
   const query = parseListQuery(searchParams, ['name'], 'name', 'asc');
   const taxonomy = await getTaxonomyOptionsPaginated(query);
 
-  const totalPages = Math.max(1, Math.ceil(taxonomy.totalCount / query.limit));
   const currentPage = query.page;
   const currentSort = query.sortBy ?? 'name';
   const currentOrder = query.sortOrder ?? 'asc';
@@ -65,33 +64,46 @@ export default async function CategoriesAdminPage(props: {
   const editor = await getCurrentEditor();
   const hasEditSession = !!(editor && editor.type === 'session');
 
-  // ツリーを構築するためのフラットリストを決定
-  // 検索時は「一致したカテゴリ + その祖先」のみを含める
-  let visibleCategoryIds: Set<number> | null = null;
-  if (currentQ && taxonomy.matchedCategoryIds) {
-    visibleCategoryIds = new Set(taxonomy.matchedCategoryIds);
-    // 一致カテゴリの祖先を収集（階層を保つため）
+  // ツリー構築 + ページネーション制御
+  // 未検索時: ルートカテゴリ単位でページネーション（各ルート＋全子孫を表示）
+  // 検索時: ページネーション済みの該当カテゴリ + 祖先を表示
+  let tree: CategoryItem[];
+  let displayTotalPages: number;
+  let displayTotalCount: number;
+
+  if (currentQ) {
+    // 検索時: ページネーション済み categoryResult.items + 祖先でツリー構築
+    const paginatedIds = new Set(taxonomy.categories.map((c) => c.id));
     const allMap = new Map(taxonomy.allCategories.map((c) => [c.id, c]));
-    for (const id of taxonomy.matchedCategoryIds) {
-      let current = allMap.get(id);
+    const treeIds = new Set(paginatedIds);
+
+    for (const cat of taxonomy.categories) {
+      let current = allMap.get(cat.id);
       while (current?.parentId) {
-        visibleCategoryIds.add(current.parentId);
+        treeIds.add(current.parentId);
         current = allMap.get(current.parentId);
       }
     }
+
+    const flat = taxonomy.allCategories
+      .filter((cat) => treeIds.has(cat.id))
+      .map((cat) => ({ id: cat.id, name: cat.name, parentId: cat.parentId ?? null, children: [] as CategoryItem[] }));
+    tree = buildTree(flat);
+    displayTotalPages = Math.max(1, Math.ceil(taxonomy.totalCount / query.limit));
+    displayTotalCount = taxonomy.totalCount;
+  } else {
+    // 未検索時: 全件からツリーを構築し、ルートカテゴリ単位でページネーション
+    const allFlat = taxonomy.allCategories.map((cat) => ({
+      id: cat.id, name: cat.name, parentId: cat.parentId ?? null, children: [] as CategoryItem[],
+    }));
+    const fullTree = buildTree(allFlat);
+
+    const rootLimit = query.limit;
+    const rootStart = (currentPage - 1) * rootLimit;
+    tree = fullTree.slice(rootStart, rootStart + rootLimit);
+    displayTotalPages = Math.max(1, Math.ceil(fullTree.length / rootLimit));
+    displayTotalCount = taxonomy.allCategories.length;
   }
-
-  const sourceCategories = visibleCategoryIds
-    ? taxonomy.allCategories.filter((cat) => visibleCategoryIds!.has(cat.id))
-    : taxonomy.allCategories;
-
-  const flatCategories: CategoryItem[] = sourceCategories.map((cat) => ({
-    id: cat.id,
-    name: cat.name,
-    parentId: cat.parentId ?? null,
-    children: [],
-  }));
-  const tree = buildTree(flatCategories);
 
   return (
     <>
@@ -176,13 +188,14 @@ export default async function CategoriesAdminPage(props: {
 
             {/* フッター: 総件数 + ページネーション */}
             <div className="px-6 py-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <span className="text-sm text-stone-500">全 <strong className="text-stone-700">{taxonomy.allCategories.length}</strong> 件</span>
-              {currentQ && (
-                <span className="text-sm text-stone-400 ml-4">
-                  （検索中: <strong>{currentQ}</strong> / 該当 <strong className="text-stone-700">{taxonomy.totalCount}</strong> 件）
-                </span>
-              )}
-              {totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} pageUrl={pageUrl} />}
+              <span className="text-sm text-stone-500">
+                {currentQ ? (
+                  <>検索中: <strong>{currentQ}</strong> / 該当 <strong className="text-stone-700">{displayTotalCount}</strong> 件</>
+                ) : (
+                  <>全 <strong className="text-stone-700">{displayTotalCount}</strong> 件</>
+                )}
+              </span>
+              {displayTotalPages > 1 && <Pagination currentPage={currentPage} totalPages={displayTotalPages} pageUrl={pageUrl} />}
             </div>
           </div>
         </div>

@@ -1,17 +1,19 @@
 import { AccountCreateLinkForm } from './account-create-link-form';
 import { getCurrentActor } from '@/server/lib/currentActor';
-import { formatDateTimeJst } from '@/lib/format/formatDateTime';
 import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
+import type { AccountStatusFilter } from '@/server/repositories/accountCreateLinkRepository';
 import { MobileActions } from '@/components/posts/MobileActions';
 import { InvalidButton } from './invalid-button';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { parseListQuery } from '@/types/listQuery';
+import { SearchInput } from '@/components/ui/SearchInput';
+import { CopyLinkButton } from '@/components/ui/CopyLinkButton';
 import { Pagination } from '@/components/ui/Pagination';
-import { CopyableCell } from '@/components/ui/CopyableCell';
+import { StatusFilterSelect } from './status-filter';
 import Link from 'next/link';
-import { KeySquare, Plus, ArrowUpDown } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 function getStatusBadge(status: 'active' | 'expired' | 'inactive') {
   switch (status) {
@@ -44,8 +46,15 @@ export default async function AccountCreateLinksPage(props: {
 }) {
   const searchParams = await props.searchParams;
   const actor = await getCurrentActor();
+
+  const statusFilter: AccountStatusFilter | undefined =
+    typeof searchParams.status === 'string' &&
+    ['active', 'expired', 'inactive'].includes(searchParams.status)
+      ? (searchParams.status as AccountStatusFilter)
+      : undefined;
+
   const query = parseListQuery(searchParams, ['createdAt', 'endAt'], 'createdAt');
-  const linksResult = actor ? await getAccountCreateLinks(actor, query) : { items: [], totalCount: 0 };
+  const linksResult = actor ? await getAccountCreateLinks(actor, query, statusFilter) : { items: [], totalCount: 0 };
   const links = linksResult.items;
   const totalCount = linksResult.totalCount;
   const totalPages = Math.max(1, Math.ceil(totalCount / query.limit));
@@ -53,11 +62,13 @@ export default async function AccountCreateLinksPage(props: {
   const currentOrder = query.sortOrder ?? 'desc';
   const currentQ = query.searchQuery ?? '';
   const currentPage = query.page;
+  const currentStatus = statusFilter ?? 'all';
 
   function sortUrl(key: string): string {
     const order = currentSort === key && currentOrder === 'asc' ? 'desc' : 'asc';
     const params = new URLSearchParams();
     if (currentQ) params.set('q', currentQ);
+    if (currentStatus !== 'all') params.set('status', currentStatus);
     params.set('sort', key);
     params.set('order', order);
     params.set('page', '1');
@@ -67,6 +78,7 @@ export default async function AccountCreateLinksPage(props: {
   function pageUrl(page: number): string {
     const params = new URLSearchParams();
     if (currentQ) params.set('q', currentQ);
+    if (currentStatus !== 'all') params.set('status', currentStatus);
     if (currentSort !== 'createdAt') params.set('sort', currentSort);
     if (currentOrder !== 'desc') params.set('order', currentOrder);
     params.set('page', String(page));
@@ -85,7 +97,7 @@ export default async function AccountCreateLinksPage(props: {
         <div className="animate-float-in">
           <div className="relative bg-white border border-stone-200 rounded-[2rem] p-8 overflow-hidden shadow-sm">
             <div className="absolute -top-12 -left-12 w-36 h-36 bg-blue-50 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
-              <KeySquare className="w-16 h-16 text-blue-400/30 ml-6 mt-6" />
+              <svg className="w-16 h-16 text-blue-400/30 ml-6 mt-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
             </div>
             <div className="absolute -right-10 -bottom-10 w-28 h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
             <div className="relative z-10">
@@ -98,63 +110,94 @@ export default async function AccountCreateLinksPage(props: {
           </div>
         </div>
 
-        <div className="bg-white border border-stone-200 rounded-[1.75rem] p-8 shadow-sm">
-          <AccountCreateLinkForm />
+        {/* 新規発行フォーム */}
+        <div className="card">
+          <div className="card-body">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-1.5 h-7 bg-blue-500 rounded-full" />
+              <h2 className="text-xl font-black text-stone-800 tracking-tight">新しいリンクを発行</h2>
+            </div>
+            <AccountCreateLinkForm />
+          </div>
         </div>
 
         {/* 発行済みリンク一覧 */}
-        <div className="bg-white border border-stone-200 rounded-[1.75rem] overflow-hidden shadow-sm">
-          {/* ツールバー: 検索 */}
+        <div className="card">
+          {/* ツールバー: 検索 + フィルター */}
           <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <form method="GET" action="/owner/account-create-links" className="contents">
-              <input type="hidden" name="sort" value={currentSort} />
-              <input type="hidden" name="order" value={currentOrder} />
-              <input type="hidden" name="page" value="1" />
-              <div className="search-box">
-                <svg className="search-box-icon w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-                <input type="search" name="q" defaultValue={currentQ} placeholder="UUID を検索..." className="search-box-input" />
-              </div>
-            </form>
+            <div className="flex items-center gap-3">
+              <SearchInput
+                defaultValue={currentQ}
+                sort={currentSort}
+                order={currentOrder}
+                basePath="/owner/account-create-links"
+              />
+              <StatusFilterSelect
+                currentStatus={currentStatus}
+                currentQ={currentQ}
+                currentSort={currentSort}
+                currentOrder={currentOrder}
+              />
+            </div>
             <Link
               href="#new-link-form"
-              className="btn-primary inline-flex items-center gap-2 bg-stone-900 text-white font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-stone-800 transition-colors shadow-md"
+              className="btn-primary btn-sm"
+              style={{
+                background: '#3b82f6',
+                color: 'white',
+                fontWeight: 700,
+                borderRadius: '0.625rem',
+                padding: '0.375rem 0.75rem',
+                fontSize: '0.75rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.375rem',
+                border: 'none',
+                cursor: 'pointer',
+                textDecoration: 'none',
+              }}
             >
               <Plus className="w-4 h-4" />
-              新規リンク発行
+              新規発行
             </Link>
           </div>
 
+          {/* リンク一覧 */}
           {links.length === 0 ? (
-            <div className="p-8">
-              <p className="text-stone-500">まだ発行されたリンクはありません。</p>
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+              </div>
+              <p className="text-stone-500 text-sm">まだ発行されたリンクはありません。</p>
             </div>
           ) : (
             <div className="divide-y divide-stone-100">
               {links.map((link) => (
                 <div
                   key={link.uuid}
-                  className="px-6 py-5 hover:bg-amber-50/30 transition-colors group flex flex-col lg:flex-row lg:items-center gap-4"
+                  className="px-6 py-4 hover:bg-blue-50/30 transition-colors"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      {getStatusBadge(link.status)}
-                      <span className="text-xs text-stone-400">
-                        有効期限: {formatDateTimeJst(link.endAt).split(' ')[0]}
-                      </span>
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        {getStatusBadge(link.status)}
+                        <span className="text-xs text-stone-400">
+                          {link.startAt.toLocaleDateString('ja-JP')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-stone-600 font-mono">{link.uuid}</span>
+                        <CopyLinkButton uuid={link.uuid} path="/auth/register?session=" />
+                      </div>
+                      <p className="text-xs text-stone-400 mt-0.5">
+                        作成者: {link.authorName ?? `user:${link.authorId}`} | 有効期限: {link.endAt.toLocaleDateString('ja-JP')}
+                      </p>
                     </div>
-                    <CopyableCell
-                      text={`${process.env.NEXT_PUBLIC_APP_URL}/auth/register?session=${link.uuid}`}
-                      mono
-                      className="text-sm text-stone-600 truncate"
-                    />
-                    <p className="text-xs text-stone-400 mt-1">
-                      作成: {link.authorName ?? `user:${link.authorId}`} | {formatDateTimeJst(link.startAt).split(' ')[0]}
-                    </p>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    {link.status === 'active' && (
-                      <InvalidButton uuid={link.uuid} />
-                    )}
+                    <div className="flex gap-1 shrink-0">
+                      {link.status === 'active' && (
+                        <InvalidButton uuid={link.uuid} />
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
