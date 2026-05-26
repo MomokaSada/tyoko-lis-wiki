@@ -159,18 +159,25 @@ export async function DataTable<T extends Record<string, unknown>>({
                     {col.sortable ? (
                       <Link
                         href={sortUrl(col.key)}
-                        className="inline-flex items-center gap-1 hover:text-stone-900 transition-colors"
+                        className="inline-flex items-center gap-1 hover:text-stone-900 transition-colors group"
                       >
-                        {col.label}
-                        {currentSort === col.key && (
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            {currentOrder === 'asc' ? (
+                        <span>{col.label}</span>
+                        <span className={`inline-flex flex-col leading-none ${currentSort === col.key ? 'text-stone-700' : 'text-stone-300 group-hover:text-stone-400 transition-colors'}`}>
+                          {currentSort === col.key && currentOrder === 'asc' ? (
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                               <polyline points="18 15 12 9 6 15" />
-                            ) : (
+                            </svg>
+                          ) : currentSort === col.key && currentOrder === 'desc' ? (
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                               <polyline points="6 9 12 15 18 9" />
-                            )}
-                          </svg>
-                        )}
+                            </svg>
+                          ) : (
+                            <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <polyline points="8 7 12 3 16 7" />
+                              <polyline points="8 17 12 21 16 17" />
+                            </svg>
+                          )}
+                        </span>
                       </Link>
                     ) : (
                       col.label

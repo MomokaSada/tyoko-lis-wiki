@@ -1,5 +1,4 @@
 import { BanButton, UnbanButton } from './ban-unban-buttons';
-import { BanByNameForm } from './ban-by-name-form';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { formatDateTimeJst } from '@/lib/format/formatDateTime';
 import { getManageableAccounts } from '@/server/services/accountBanService';
@@ -35,7 +34,7 @@ export default async function AccountBansPage(props: {
   const searchParams = await props.searchParams;
   const actor = await getCurrentActor();
   const isOwner = actor?.role === 'owner';
-  const query = parseListQuery(searchParams, ['name', 'createdAt'], 'name', 'asc');
+  const query = parseListQuery(searchParams, ['name', 'createdAt', 'isActive'], 'name', 'asc');
   const accountsResult = actor ? await getManageableAccounts(actor, query) : { items: [], totalCount: 0 };
   const accounts = accountsResult.items as ManageableAccount[];
   const totalCount = accountsResult.totalCount;
@@ -59,6 +58,7 @@ export default async function AccountBansPage(props: {
     {
       key: 'isActive',
       label: 'ステータス',
+      sortable: true,
       render: (_, account) =>
         account.isActive ? (
           <span className="badge badge-stone"><span className="badge-dot" />アクティブ</span>
@@ -115,19 +115,7 @@ export default async function AccountBansPage(props: {
             この機能は owner のみ利用できます。
           </div>
         ) : (
-          <>
-            {/* BANフォーム（名前指定 + 理由） */}
-            <div className="card">
-              <div className="card-body">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-1.5 h-7 bg-red-600 rounded-full" />
-                  <h2 className="text-xl font-black text-stone-800 tracking-tight">名前指定でBAN</h2>
-                </div>
-                <BanByNameForm />
-              </div>
-            </div>
-
-            <DataTable
+          <DataTable
               items={accounts}
               query={query}
               totalCount={totalCount}
@@ -138,7 +126,6 @@ export default async function AccountBansPage(props: {
               emptyMessage="BAN対象の（または管理可能な）アカウントはありません。"
               searchPlaceholder="アカウントを検索..."
             />
-          </>
         )}
 
         <div className="pt-8">
