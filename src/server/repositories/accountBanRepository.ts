@@ -27,7 +27,7 @@ export type ManageableAccountRow = {
 };
 
 export async function listManageableAccountsPaginated(
-  query?: ListQuery<'name' | 'createdAt'>,
+  query?: ListQuery<'name' | 'createdAt' | 'isActive'>,
 ): Promise<ListResult<ManageableAccountRow>> {
   const page = query?.page ?? 1;
   const limit = query?.limit ?? 20;
@@ -42,7 +42,11 @@ export async function listManageableAccountsPaginated(
 
   const where = and(...conditions);
 
-  const sortBy = query?.sortBy === 'createdAt' ? users.createdAt : users.name;
+  let sortColumn;
+  if (query?.sortBy === 'createdAt') sortColumn = users.createdAt;
+  else if (query?.sortBy === 'isActive') sortColumn = users.isActive;
+  else sortColumn = users.name;
+  const sortBy = sortColumn;
   const orderDir = query?.sortOrder === 'desc' ? desc : asc;
 
   const rows = await db
