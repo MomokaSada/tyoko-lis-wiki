@@ -2,6 +2,7 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getTaxonomyOptionsPaginated } from '@/server/services/taxonomyService';
 import { CategoryCreateForm } from './category-create-form';
 import { CategoryTreeClient } from './category-tree-client';
+import { CategorySearchForm } from './search-form';
 import { MobileActions } from '@/components/posts/MobileActions';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
@@ -159,13 +160,7 @@ export default async function CategoriesAdminPage(props: {
           <div className="card">
             {/* ツールバー */}
             <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <form method="GET" action="/admin/categories" className="contents">
-                <input type="hidden" name="page" value="1" />
-                <div className="search-box">
-                  <svg className="search-box-icon w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-                  <input type="search" name="q" defaultValue={currentQ} placeholder="カテゴリを検索..." className="search-box-input" />
-                </div>
-              </form>
+              <CategorySearchForm defaultValue={currentQ} />
               <Link
                 href="#create-form"
                 className="btn-primary btn-sm"
