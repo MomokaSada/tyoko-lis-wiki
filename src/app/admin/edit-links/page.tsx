@@ -8,8 +8,8 @@ import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { parseListQuery } from '@/types/listQuery';
-import { SearchInput } from './search-input';
-import { CopyLinkButton } from './copy-button';
+import { SearchInput } from '@/components/ui/SearchInput';
+import { CopyLinkButton } from '@/components/ui/CopyLinkButton';
 import { StatusFilterSelect } from './status-filter';
 import { Pagination } from '@/components/ui/Pagination';
 import Link from 'next/link';
@@ -158,7 +158,9 @@ export default async function EditLinksPage(props: {
           {/* ツールバー: 検索 + フィルター + 新規発行 */}
           <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <SearchInput defaultValue={currentQ} sort={currentSort} order={currentOrder} status={currentStatus} />
+              <SearchInput defaultValue={currentQ} sort={currentSort} order={currentOrder} basePath="/admin/edit-links">
+                {currentStatus !== 'all' && <input type="hidden" name="status" value={currentStatus} />}
+              </SearchInput>
 
               {/* ステータスフィルター */}
               <StatusFilterSelect
@@ -218,7 +220,7 @@ export default async function EditLinksPage(props: {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-stone-600 font-mono">{link.uuid}</span>
-                          <CopyLinkButton uuid={link.uuid} />
+                          <CopyLinkButton uuid={link.uuid} path="/posts/create?session=" />
                         </div>
                         <p className="text-xs text-stone-400 mt-0.5">
                           作成者: {link.authorName ?? `user:${link.authorId}`}

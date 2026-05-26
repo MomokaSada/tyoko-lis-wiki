@@ -5,7 +5,7 @@ import {
     findAccountCreateSessionsPaginated,
     insertAccountCreateSession,
 } from '@/server/repositories/accountCreateLinkRepository';
-import type { AccountCreateSessionRow } from '@/server/repositories/accountCreateLinkRepository';
+import type { AccountCreateSessionRow, AccountStatusFilter } from '@/server/repositories/accountCreateLinkRepository';
 import type {
     CreateAccountCreateLinkInput,
     DeactivateAccountCreateLinkInput,
@@ -101,6 +101,7 @@ function enrichRow(
 export async function getAccountCreateLinks(
   actor: Actor,
   query?: ListQuery<'createdAt' | 'endAt'>,
+  statusFilter?: AccountStatusFilter,
 ): Promise<ListResult<AccountCreateLinkListItem>> {
     if (actor.role !== 'owner') {
         return { items: [], totalCount: 0 };
@@ -109,7 +110,7 @@ export async function getAccountCreateLinks(
     const now = new Date();
 
     if (query) {
-      const { items: rows, totalCount } = await findAccountCreateSessionsPaginated(query);
+      const { items: rows, totalCount } = await findAccountCreateSessionsPaginated(query, statusFilter);
       return { items: rows.map((row: AccountCreateSessionRow) => enrichRow(row, now)), totalCount };
     }
 

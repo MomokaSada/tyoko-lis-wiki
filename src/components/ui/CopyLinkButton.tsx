@@ -3,22 +3,20 @@
 import { useState, useCallback } from 'react';
 import { Copy, Check } from 'lucide-react';
 
-export function CopyLinkButton({ uuid }: { uuid: string }) {
+export function CopyLinkButton({ uuid, path }: { uuid: string; path: string }) {
   const [copied, setCopied] = useState(false);
-
-  const url = `/posts/create?session=${uuid}`;
 
   const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(
-        `${window.location.origin}${url}`,
+        `${window.location.origin}${path}${uuid}`,
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
       // ignore
     }
-  }, [url]);
+  }, [uuid, path]);
 
   return (
     <button

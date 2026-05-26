@@ -1,4 +1,4 @@
-import { asc, desc, eq, ilike, and, sql } from 'drizzle-orm';
+import { asc, desc, eq, and, sql, gt, lte } from 'drizzle-orm';
 import { escapeLikePattern } from './modules/escapeLike';
 import { db } from '@/db';
 import { accountCreateSessions, users } from '@/db/schema';
@@ -49,8 +49,11 @@ export type AccountCreateSessionRow = {
   createdAt: Date;
 };
 
+export type AccountStatusFilter = 'active' | 'expired' | 'inactive';
+
 export async function findAccountCreateSessionsPaginated(
   query?: ListQuery<'createdAt' | 'endAt'>,
+  statusFilter?: AccountStatusFilter,
 ): Promise<ListResult<AccountCreateSessionRow>> {
   const page = query?.page ?? 1;
   const limit = query?.limit ?? 20;
@@ -61,8 +64,28 @@ export async function findAccountCreateSessionsPaginated(
   if (query?.searchQuery) {
     const escaped = escapeLikePattern(query.searchQuery);
     conditions.push(
-      ilike(accountCreateSessions.uuid, `%${escaped}%`),
+      sql`${accountCreateSessions.uuid}::text ilike ${`%${escaped}%`}`,
     );
+  }
+
+  if (statusFilter) {
+    switch (statusFilter) {
+      case 'active':
+        conditions.push(
+          eq(accountCreateSessions.isActive, true),
+          gt(accountCreateSessions.endAt, sql`now()`),
+        );
+        break;
+      case 'expired':
+        conditions.push(
+          eq(accountCreateSessions.isActive, true),
+          lte(accountCreateSessions.endAt, sql`now()`),
+        );
+        break;
+      case 'inactive':
+        conditions.push(eq(accountCreateSessions.isActive, false));
+        break;
+    }
   }
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
