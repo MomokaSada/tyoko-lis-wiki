@@ -129,7 +129,7 @@ export async function DataTable<T extends Record<string, unknown>>({
           <p className="text-stone-500 text-sm">{emptyMessage}</p>
         </div>
       ) : (
-        <div className="table-container">
+        <div className="table-container table-card-mode">
           <table className="table">
             <thead>
               <tr>
@@ -173,7 +173,7 @@ export async function DataTable<T extends Record<string, unknown>>({
                   {columns.map((col) => {
                     const value = (row as Record<string, unknown>)[col.key];
                     return (
-                      <td key={col.key} className={col.cellClassName ?? ''} style={col.cellAlign ? { textAlign: col.cellAlign } : undefined}>
+                      <td key={col.key} className={col.cellClassName ?? ''} data-label={col.label} style={col.cellAlign ? { textAlign: col.cellAlign } : undefined}>
                         {col.render ? col.render(value, row) : String(value ?? '')}
                       </td>
                     );

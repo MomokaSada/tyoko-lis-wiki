@@ -84,22 +84,22 @@ export default async function EditLinkUsageDetailPage(props: Props) {
           {editLogs.length === 0 ? (
             <p className="text-sm text-stone-400 py-8 text-center">このセッションによる操作は記録されていません。</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="table min-w-[700px]">
+            <div className="table-container table-card-mode">
+              <table className="table">
                 <thead>
                   <tr>
-                    <th style={{ textAlign: 'left' }}>操作対象コンテンツ</th>
-                    <th style={{ textAlign: 'center' }}>デバイス情報</th>
-                    <th className="whitespace-nowrap" style={{ textAlign: 'center' }}>操作日時</th>
-                    <th style={{ textAlign: 'center' }}>リビジョン</th>
-                    <th style={{ textAlign: 'center' }}>種別</th>
-                    <th style={{ textAlign: 'center' }}>差分</th>
+                    <th style={{ textAlign: 'left' }} data-label="操作対象コンテンツ">操作対象コンテンツ</th>
+                    <th style={{ textAlign: 'center' }} data-label="デバイス情報">デバイス情報</th>
+                    <th className="whitespace-nowrap" style={{ textAlign: 'center' }} data-label="操作日時">操作日時</th>
+                    <th style={{ textAlign: 'center' }} data-label="リビジョン">リビジョン</th>
+                    <th style={{ textAlign: 'center' }} data-label="種別">種別</th>
+                    <th style={{ textAlign: 'center' }} data-label="差分">差分</th>
                   </tr>
                 </thead>
                 <tbody>
                   {editLogs.map((log) => (
                     <tr key={log.id}>
-                      <td className="text-left">
+                      <td className="text-left" data-label="操作対象コンテンツ">
                         <Link
                           href={`/posts/${log.slug}`}
                           className="text-sm font-bold text-emerald-700 hover:text-emerald-800 hover:underline transition-colors"
@@ -107,21 +107,21 @@ export default async function EditLinkUsageDetailPage(props: Props) {
                           {log.title ?? log.slug}
                         </Link>
                       </td>
-                      <td className="text-center">
+                      <td className="text-center" data-label="デバイス情報">
                         <DeviceInfoModal ip={record.ip} browser={record.browser} />
                       </td>
-                      <td className="text-center whitespace-nowrap text-sm text-stone-500">
+                      <td className="text-center whitespace-nowrap text-sm text-stone-500" data-label="操作日時">
                         {formatDateTimeJst(log.createdAt)}
                       </td>
-                      <td className="text-center text-sm text-stone-600 tabular-nums">
+                      <td className="text-center text-sm text-stone-600 tabular-nums" data-label="リビジョン">
                         v{log.revisionNumber}
                       </td>
-                      <td className="text-center">
+                      <td className="text-center" data-label="種別">
                         <span className={`badge ${log.type === 'snapshot' ? 'badge-emerald' : 'badge-stone'}`}>
                           {log.type === 'snapshot' ? 'スナップショット' : log.type}
                         </span>
                       </td>
-                      <td className="text-center">
+                      <td className="text-center" data-card-action>
                         <DiffModal contentId={log.contentId} revisionNumber={log.revisionNumber} />
                       </td>
                     </tr>
