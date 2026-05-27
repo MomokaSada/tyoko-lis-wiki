@@ -4,6 +4,8 @@ import {
   createDeviceRecord,
   findDeviceSessionRecord,
   findDeviceByIpAndBrowser,
+  getDeviceSessionUsageRecord,
+  getDeviceSessionEditLogs,
   listDeviceSessionUsageRecords,
   listDeviceSessionUsageRecordsPaginated,
   touchDeviceSessionRecord,
@@ -65,4 +67,20 @@ export async function getDeviceSessionUsageRecords(
 
   const items = await listDeviceSessionUsageRecords();
   return { items, totalCount: items.length };
+}
+
+export async function getDeviceSessionUsageDetail(
+  actor: Actor,
+  recordId: number,
+) {
+  if (actor.role !== 'owner') {
+    return null;
+  }
+
+  const record = await getDeviceSessionUsageRecord(recordId);
+  if (!record) return null;
+
+  const editLogs = await getDeviceSessionEditLogs(recordId);
+
+  return { record, editLogs };
 }
