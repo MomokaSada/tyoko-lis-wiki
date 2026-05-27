@@ -1,20 +1,21 @@
 import { headers } from 'next/headers';
 import { type Metadata } from 'next';
 import Link from 'next/link';
+import { and, sql, gte, lt } from 'drizzle-orm';
 import {
   Settings,
   Link as LinkIcon,
   FileText,
-  Users,
+  Calendar,
   Clock,
   Eye,
   Shield,
   Plus,
-  RefreshCw,
 } from 'lucide-react';
+import { db } from '@/db';
+import { contents, contentViewStats } from '@/db/schema';
 import { searchVisibleContentList, countVisibleContents, getTaxonomyOptions } from '@/server/services/contentService';
 import { findEditSessions } from '@/server/repositories/editLinkRepository';
-import { findAccountCreateSessions } from '@/server/repositories/accountCreateLinkRepository';
 import { getEditLinks } from '@/server/services/editLinkService';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { AdminFormsClient } from './admin-forms-client';
@@ -42,9 +43,8 @@ export default async function AdminPage() {
   const totalPosts = await countVisibleContents('', true);
   const publishedCount = await countVisibleContents('', false);
 
-  // 編集リンクとアカウント作成リンクの取得
+  // 編集リンクの取得
   const editSessions = await findEditSessions();
-  const accountCreateSessions = await findAccountCreateSessions();
 
   // カテゴリと編集リンク詳細の取得
   const taxonomy = await getTaxonomyOptions();
@@ -53,10 +53,65 @@ export default async function AdminPage() {
 
   // アクティブなリンク数
   const activeEditLinks = editSessions.items.filter(session => session.isActive).length;
-  const activeAccountLinks = accountCreateSessions.filter(session => session.isActive).length;
-
   const editSessionsCount = editSessions.totalCount;
-  const accountCreateSessionsCount = accountCreateSessions.length;
+
+  // ── 今月の投稿数 ──
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const lastMonthStart = new Date(monthStart);
+  lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
+
+  const [thisMonthPosts, lastMonthPosts] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(contents)
+      .where(gte(contents.createdAt, monthStart)),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(contents)
+      .where(and(gte(contents.createdAt, lastMonthStart), lt(contents.createdAt, monthStart))),
+  ]);
+
+  const thisMonthCount = Number(thisMonthPosts[0]?.count ?? 0);
+  const lastMonthCount = Number(lastMonthPosts[0]?.count ?? 0);
+
+  // ── ビュー統計（実トレンド + 週間チャート） ──
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const sixtyDaysAgo = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+
+  const [last30Rows, prev30Rows, last7Rows] = await Promise.all([
+    // 直近30日
+    db
+      .select({ total: sql<number>`coalesce(sum(${contentViewStats.viewCount}),0)` })
+      .from(contentViewStats)
+      .where(gte(contentViewStats.date, thirtyDaysAgo)),
+    // 30〜60日前
+    db
+      .select({ total: sql<number>`coalesce(sum(${contentViewStats.viewCount}),0)` })
+      .from(contentViewStats)
+      .where(and(gte(contentViewStats.date, sixtyDaysAgo), lt(contentViewStats.date, thirtyDaysAgo))),
+    // 直近7日（日別）
+    db
+      .select({ date: contentViewStats.date, total: sql<number>`coalesce(sum(${contentViewStats.viewCount}),0)` })
+      .from(contentViewStats)
+      .where(gte(contentViewStats.date, new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10)))
+      .groupBy(contentViewStats.date)
+      .orderBy(contentViewStats.date),
+  ]);
+
+  const last30Total = last30Rows[0]?.total ?? 0;
+  const prev30Total = prev30Rows[0]?.total ?? 0;
+  const viewTrend = prev30Total > 0 ? ((last30Total - prev30Total) / prev30Total) * 100 : 0;
+
+  // 7日間の日別ビューを配列に（データがない日は0）
+  const last7Chart: number[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+    const row = last7Rows.find((r) => r.date === d);
+    last7Chart.push(row?.total ?? 0);
+  }
 
   // 本日の日付
   const today = new Date().toLocaleDateString('ja-JP');
@@ -100,19 +155,6 @@ export default async function AdminPage() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3 shrink-0">
-                <Link
-                  href="/posts/create"
-                  className="btn-primary inline-flex items-center gap-2 bg-amber-500 text-white font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-amber-600 transition-colors shadow-md shadow-amber-500/25"
-                >
-                  <Plus className="w-4 h-4" />
-                  新規作成
-                </Link>
-                <button className="inline-flex items-center gap-2 bg-white text-stone-700 font-bold text-sm px-5 py-2.5 rounded-xl border border-stone-200 hover:bg-stone-50 hover:border-stone-300 transition-all">
-                  <RefreshCw className="w-4 h-4" />
-                  更新
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -127,7 +169,7 @@ export default async function AdminPage() {
             value={totalPosts}
             subtext={`公開: ${publishedCount} | 下書き: ${totalPosts - publishedCount}`}
             theme="blue"
-            miniChart
+            miniChart={last7Chart}
           />
           <StatCard
             icon={<LinkIcon className="w-6 h-6" />}
@@ -138,12 +180,12 @@ export default async function AdminPage() {
             progress={editSessionsCount > 0 ? Math.round((activeEditLinks / editSessionsCount) * 100) : 0}
           />
           <StatCard
-            icon={<Users className="w-6 h-6" />}
-            label="アクティブ招待リンク"
-            value={activeAccountLinks}
-            subtext={`合計 ${accountCreateSessions.length} 件中`}
+            icon={<Calendar className="w-6 h-6" />}
+            label="今月の投稿"
+            value={thisMonthCount}
+            subtext={lastMonthCount > 0 ? `先月: ${lastMonthCount}件` : ''}
             theme="purple"
-            progress={accountCreateSessions.length > 0 ? Math.round((activeAccountLinks / accountCreateSessions.length) * 100) : 0}
+            progress={lastMonthCount > 0 ? Math.min(100, Math.round((thisMonthCount / lastMonthCount) * 100)) : 100}
           />
           <StatCard
             icon={<Eye className="w-6 h-6" />}
@@ -151,7 +193,7 @@ export default async function AdminPage() {
             value={publishedPosts.reduce((sum, post) => sum + (post.viewCount || 0), 0).toLocaleString()}
             subtext="公開項目のみ"
             theme="orange"
-            trend={{ value: '+12.4%', positive: true }}
+            trendValue={viewTrend}
           />
         </div>
       </section>

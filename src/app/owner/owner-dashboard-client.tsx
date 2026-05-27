@@ -63,6 +63,10 @@ export function OwnerDashboardClient(props: {
   manageableAccounts: ManageableAccount[];
   activeIpBans: ActiveIpBan[];
   deviceSessionUsageRecords: DeviceSessionUsageRecord[];
+  todayUsers: number;
+  totalUsers: number;
+  editUtilization: number;
+  publishRate: number;
 }) {
   const {
     isOwner,
@@ -70,6 +74,10 @@ export function OwnerDashboardClient(props: {
     manageableAccounts,
     activeIpBans,
     deviceSessionUsageRecords,
+    todayUsers,
+    totalUsers,
+    editUtilization,
+    publishRate,
   } = props;
 
   const accountCreateLinksCountText = useMemo(
@@ -155,34 +163,43 @@ export function OwnerDashboardClient(props: {
           </div>
 
           <div className="mt-6 space-y-3">
-            {/* 新規登録 */}
+            {/* 本日の新規登録 */}
             <div>
               <div className="flex justify-between text-xs font-medium text-stone-400 mb-1.5">
                 <span>本日の新規登録</span>
-                <span className="text-white font-bold">7件</span>
+                <span className="text-white font-bold">{todayUsers}件</span>
               </div>
               <div className="h-1.5 bg-stone-700/60 rounded-full overflow-hidden">
-                <div className="progress-fill h-full bg-emerald-500 rounded-full" style={{ width: '70%' }} />
+                <div
+                  className="progress-fill h-full bg-emerald-500 rounded-full"
+                  style={{ width: `${totalUsers > 0 ? Math.round((todayUsers / totalUsers) * 100) : 0}%` }}
+                />
               </div>
             </div>
             {/* 編集利用率 */}
             <div>
               <div className="flex justify-between text-xs font-medium text-stone-400 mb-1.5">
                 <span>編集利用率</span>
-                <span className="text-white font-bold">43%</span>
+                <span className="text-white font-bold">{editUtilization}%</span>
               </div>
               <div className="h-1.5 bg-stone-700/60 rounded-full overflow-hidden">
-                <div className="progress-fill h-full bg-amber-500 rounded-full" style={{ width: '43%' }} />
+                <div
+                  className="progress-fill h-full bg-amber-500 rounded-full"
+                  style={{ width: `${editUtilization}%` }}
+                />
               </div>
             </div>
             {/* 項目公開率 */}
             <div>
               <div className="flex justify-between text-xs font-medium text-stone-400 mb-1.5">
                 <span>項目公開率</span>
-                <span className="text-white font-bold">82%</span>
+                <span className="text-white font-bold">{publishRate}%</span>
               </div>
               <div className="h-1.5 bg-stone-700/60 rounded-full overflow-hidden">
-                <div className="progress-fill h-full bg-blue-400 rounded-full" style={{ width: '82%' }} />
+                <div
+                  className="progress-fill h-full bg-blue-400 rounded-full"
+                  style={{ width: `${publishRate}%` }}
+                />
               </div>
             </div>
           </div>
