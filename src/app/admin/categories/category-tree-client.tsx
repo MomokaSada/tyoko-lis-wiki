@@ -358,7 +358,7 @@ function CategoryRow({
 
   return (
     <tr className={isParent ? 'tree-row' : 'tree-row child-row'}>
-      <td>
+      <td data-label="カテゴリ名">
         <div className="tree-parent-name">
           {slots}
           <div className={`avatar ${avatarColor}`} style={depth > 0 ? { width: '1.75rem', height: '1.75rem', fontSize: '0.625rem' } : {}}>
@@ -368,7 +368,7 @@ function CategoryRow({
           {hasChildren && <span className="child-count-badge">{node.children.length}子</span>}
         </div>
       </td>
-      <td className="text-center">
+      <td className="text-center" data-label="親子関係">
         <button
           className="btn-ghost btn-sm"
           onClick={() => onShowInfo(node)}
@@ -378,7 +378,7 @@ function CategoryRow({
           <span className="ml-1">関連</span>
         </button>
       </td>
-      <td className="text-center">
+      <td className="text-center" data-card-action>
         <div className="flex items-center justify-center gap-1">
           <button
             className="btn-ghost btn-sm"
@@ -477,13 +477,13 @@ export function CategoryTreeClient({
   return (
     <>
       {/* ツリー本体 */}
-      <div className="table-container">
+      <div className="table-container table-card-mode">
         <table className="table" style={{ tableLayout: 'fixed' }}>
           <thead>
             <tr>
-              <th style={{ width: '55%' }}>カテゴリ名</th>
-              <th style={{ width: '20%', textAlign: 'center' }}>親子関係</th>
-              <th style={{ width: '25%', textAlign: 'center' }}>操作</th>
+              <th style={{ width: '55%' }} data-label="カテゴリ名">カテゴリ名</th>
+              <th style={{ width: '20%', textAlign: 'center' }} data-label="親子関係">親子関係</th>
+              <th style={{ width: '25%', textAlign: 'center' }} data-label="操作">操作</th>
             </tr>
           </thead>
           <tbody>

@@ -658,6 +658,90 @@ h6 {
 .table > tbody > tr:hover > td { background: #fffbeb; }
 .table > tbody > tr:last-child > td { border-bottom: none; }
 
+/* ── Responsive Table: Card Mode ── */
+/* 640px 未満でテーブル行をカード状に変換する */
+@media (max-width: 639px) {
+  /* 外枠の .card を透明にして内側カードだけが浮くように */
+  .card:has(.table-card-mode) {
+    border: none !important;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .card:has(.table-card-mode) > div {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    border-color: transparent !important;
+  }
+  .table-card-mode table,
+  .table-card-mode thead,
+  .table-card-mode tbody,
+  .table-card-mode tr {
+    display: block;
+  }
+  .table-card-mode thead {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .table-card-mode tr {
+    display: block;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    background: #fff;
+    border: 1px solid #e7e5e4;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: background 0.15s ease;
+  }
+  .table-card-mode tbody tr:hover,
+  .table-card-mode tbody tr:active {
+    background: #fffbeb;
+  }
+  .table-card-mode tbody tr:hover > td,
+  .table-card-mode tbody tr:active > td {
+    background: transparent;
+  }
+  .table-card-mode td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: none;
+    font-size: 0.8125rem;
+  }
+  .table-card-mode td::before {
+    content: attr(data-label);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #78716c;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .table-card-mode td:first-child {
+    padding-top: 0;
+  }
+  .table-card-mode tr:last-child td:last-child {
+    padding-bottom: 0;
+  }
+  /* アクション列: セパレータ付きで最下部に独立 */
+  .table-card-mode td[data-card-action] {
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f0efed;
+    margin-top: 0.25rem;
+  }
+  .table-card-mode td[data-card-action]::before {
+    display: none;
+  }
+}
+
 /* ── Badge ── */
 .badge {
   display: inline-flex;
