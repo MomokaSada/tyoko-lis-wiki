@@ -101,7 +101,7 @@ export default async function EditLinkUsageDetailPage(props: Props) {
                     <tr key={log.id}>
                       <td className="text-left">
                         <Link
-                          href={`/posts/modify?slug=${log.slug}`}
+                          href={`/posts/${log.slug}`}
                           className="text-sm font-bold text-emerald-700 hover:text-emerald-800 hover:underline transition-colors"
                         >
                           {log.title ?? log.slug}
