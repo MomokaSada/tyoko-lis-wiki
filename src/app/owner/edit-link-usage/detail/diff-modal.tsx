@@ -2,8 +2,10 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import Image from 'next/image';
 import { GitCompare, X, Loader2, Tag, FolderTree, Plus, Minus } from 'lucide-react';
 import { getRevisionDiff } from '@/server/actions/revisionActions';
+import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 import type { DiffPart, TagCategoryDiff } from '@/server/actions/revisionActions';
 
 type DiffLine = {
@@ -112,11 +114,16 @@ export function DiffModal({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [oldFailed, setOldFailed] = useState(false);
+  const [newFailed, setNewFailed] = useState(false);
   const [diff, setDiff] = useState<{
     oldTitle: string | null;
     newTitle: string | null;
     titleDiff: DiffPart[];
     bodyDiff: DiffPart[];
+    oldThumbnail: string | null;
+    newThumbnail: string | null;
+    thumbnailChanged: boolean;
     tagDiff: TagCategoryDiff;
     categoryDiff: TagCategoryDiff;
   } | null>(null);
@@ -125,6 +132,8 @@ export function DiffModal({
     setOpen(false);
     setDiff(null);
     setError(null);
+    setOldFailed(false);
+    setNewFailed(false);
   }, []);
 
   useEffect(() => {
@@ -138,6 +147,8 @@ export function DiffModal({
     setOpen(true);
     setLoading(true);
     setError(null);
+    setOldFailed(false);
+    setNewFailed(false);
     try {
       const result = await getRevisionDiff(contentId, revisionNumber);
       if (!result) {
@@ -238,6 +249,59 @@ export function DiffModal({
 
               {diff && (
                 <>
+                  {/* サムネイル変更 */}
+                  {diff.thumbnailChanged && (
+                    <section className="space-y-2">
+                      <h4 className="text-xs font-bold text-stone-400">サムネイル変更</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <p className="text-xs text-stone-400 font-bold">変更前</p>
+                          <div className="aspect-[1200/630] rounded-lg border border-stone-200 overflow-hidden bg-stone-50 relative">
+                            {getPublicThumbnailUrl(diff.oldThumbnail) && !oldFailed ? (
+                              <Image
+                                src={getPublicThumbnailUrl(diff.oldThumbnail)!}
+                                alt="旧サムネイル"
+                                fill
+                                className="object-cover"
+                                unoptimized
+                                onError={() => setOldFailed(true)}
+                              />
+                            ) : (
+                              <Image
+                                src="/images/no-image.png"
+                                alt="画像なし"
+                                fill
+                                className="object-cover"
+                              />
+                            )}
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <p className="text-xs text-stone-400 font-bold">変更後</p>
+                          <div className="aspect-[1200/630] rounded-lg border border-stone-200 overflow-hidden bg-stone-50 relative">
+                            {getPublicThumbnailUrl(diff.newThumbnail) && !newFailed ? (
+                              <Image
+                                src={getPublicThumbnailUrl(diff.newThumbnail)!}
+                                alt="新サムネイル"
+                                fill
+                                className="object-cover"
+                                unoptimized
+                                onError={() => setNewFailed(true)}
+                              />
+                            ) : (
+                              <Image
+                                src="/images/no-image.png"
+                                alt="画像なし"
+                                fill
+                                className="object-cover"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+                  )}
+
                   {/* タグ・カテゴリ変更 */}
                   {(diff.tagDiff.added.length > 0 || diff.tagDiff.removed.length > 0 ||
                     diff.categoryDiff.added.length > 0 || diff.categoryDiff.removed.length > 0) && (
