@@ -108,35 +108,35 @@ export default async function CategoriesAdminPage(props: {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto px-6 py-12 space-y-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8">
         {/* ページヘッダー */}
         <div className="animate-float-in">
-          <div className="relative bg-white border border-stone-200 rounded-[2rem] p-8 overflow-hidden shadow-sm">
-            <div className="absolute -top-12 -left-12 w-36 h-36 bg-emerald-50 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
-              <svg className="w-16 h-16 text-emerald-400/30 ml-6 mt-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+          <div className="relative bg-white border border-stone-200 rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 overflow-hidden shadow-sm">
+            <div className="absolute -top-12 sm:-top-12 -left-12 sm:-left-12 w-28 sm:w-36 h-28 sm:h-36 bg-emerald-50 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
+              <svg className="w-14 sm:w-16 h-14 sm:h-16 text-emerald-400/30 ml-5 sm:ml-6 mt-5 sm:mt-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
             </div>
-            <div className="absolute -right-10 -bottom-10 w-28 h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
+            <div className="absolute -right-8 sm:-right-10 -bottom-8 sm:-bottom-10 w-24 sm:w-28 h-24 sm:h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
             <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-1.5 h-7 bg-emerald-500 rounded-full" />
-                <h1 className="text-3xl font-black text-stone-900 tracking-tight">カテゴリ管理</h1>
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <div className="w-1 sm:w-1.5 h-6 sm:h-7 bg-emerald-500 rounded-full shrink-0" />
+                <h1 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">カテゴリ管理</h1>
               </div>
-              <p className="text-stone-500 text-sm pl-4">Wikiのカテゴリの体系的追加・更新</p>
+              <p className="text-stone-500 text-sm pl-3 sm:pl-4">Wikiのカテゴリの体系的追加・更新</p>
             </div>
           </div>
         </div>
 
         {/* セクション1: カテゴリ作成 */}
         <div className="animate-float-in relative z-20">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-1.5 h-7 bg-emerald-500 rounded-full" />
-            <h2 className="text-2xl font-black text-stone-900 tracking-tight">カテゴリ作成</h2>
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+            <div className="w-1 sm:w-1.5 h-6 sm:h-7 bg-emerald-500 rounded-full shrink-0" />
+            <h2 className="text-lg sm:text-2xl font-black text-stone-900 tracking-tight">カテゴリ作成</h2>
           </div>
-          <p className="text-stone-500 text-sm mb-6 pl-4">親カテゴリを指定すると階層構造になります。編集は一覧から行えます。</p>
+          <p className="text-stone-500 text-sm mb-4 sm:mb-6 pl-3 sm:pl-4">親カテゴリを指定すると階層構造になります。編集は一覧から行えます。</p>
 
           <div className="card" style={{ overflow: 'visible' }}>
             <div className="card-body">
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <CategoryCreateForm
                   categories={taxonomy.allCategories.map((category) => ({
                     id: category.id,
@@ -151,15 +151,15 @@ export default async function CategoriesAdminPage(props: {
 
         {/* セクション2: カテゴリ一覧（ツリー構造） */}
         <div className="animate-float-in">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-1.5 h-7 bg-emerald-500 rounded-full" />
-            <h2 className="text-2xl font-black text-stone-900 tracking-tight">カテゴリ一覧（ツリー構造）</h2>
+          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+            <div className="w-1 sm:w-1.5 h-6 sm:h-7 bg-emerald-500 rounded-full shrink-0" />
+            <h2 className="text-lg sm:text-2xl font-black text-stone-900 tracking-tight">カテゴリ一覧（ツリー構造）</h2>
           </div>
-          <p className="text-stone-500 text-sm mb-6 pl-4">各行の「関連」ボタンで親子関係を確認、「編集」ボタンでモーダルから編集できます。</p>
+          <p className="text-stone-500 text-sm mb-4 sm:mb-6 pl-3 sm:pl-4">各行の「関連」ボタンで親子関係を確認、「編集」ボタンでモーダルから編集できます。</p>
 
           <div className="card">
             {/* ツールバー */}
-            <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <CategorySearchForm defaultValue={currentQ} />
               <Link
                 href="#create-form"
@@ -182,7 +182,7 @@ export default async function CategoriesAdminPage(props: {
             />
 
             {/* フッター: 総件数 + ページネーション */}
-            <div className="px-6 py-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
               <span className="text-sm text-stone-500">
                 {currentQ ? (
                   <>検索中: <strong>{currentQ}</strong> / 該当 <strong className="text-stone-700">{displayTotalCount}</strong> 件</>

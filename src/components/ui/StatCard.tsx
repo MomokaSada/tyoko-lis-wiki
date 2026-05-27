@@ -73,14 +73,14 @@ export function StatCard({
   const chartMax = chartData ? Math.max(...chartData, 1) : 0;
 
   return (
-    <div className="card-base bg-white border border-stone-200 rounded-[1.5rem] p-6">
-      <div className="flex items-start justify-between mb-5">
-        <div className={`w-13 h-13 rounded-2xl flex items-center justify-center stat-icon ${iconBgMap[theme]}`}>
+    <div className="card-base bg-white border border-stone-200 rounded-xl sm:rounded-[1.5rem] p-4 sm:p-6">
+      <div className="flex items-start justify-between mb-3 sm:mb-5">
+        <div className={`w-11 sm:w-13 h-11 sm:h-13 rounded-xl sm:rounded-2xl flex items-center justify-center stat-icon ${iconBgMap[theme]}`}>
           {icon}
         </div>
-        <span className="text-3xl font-black text-stone-900 tabular-nums">{value}</span>
+        <span className="text-2xl sm:text-3xl font-black text-stone-900 tabular-nums truncate max-w-[50%] sm:max-w-none">{value}</span>
       </div>
-      <h3 className="font-bold text-stone-800 text-base mb-1">{label}</h3>
+      <h3 className="font-bold text-stone-800 text-sm sm:text-base mb-1">{label}</h3>
       {subtext && <p className="text-xs text-stone-400">{subtext}</p>}
 
       {/* ミニ棒グラフ */}

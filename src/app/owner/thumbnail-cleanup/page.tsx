@@ -42,20 +42,20 @@ export default async function ThumbnailCleanupPage() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto px-6 py-12 space-y-8 text-stone-900">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8 text-stone-900">
         {/* ページヘッダー */}
         <div className="animate-float-in">
-          <div className="relative bg-white border border-stone-200 rounded-[2rem] p-8 overflow-hidden shadow-sm">
-            <div className="absolute -top-12 -left-12 w-36 h-36 bg-stone-100 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
-              <ImageMinus className="w-16 h-16 text-stone-400/30 ml-6 mt-6" />
+          <div className="relative bg-white border border-stone-200 rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 overflow-hidden shadow-sm">
+            <div className="absolute -top-12 sm:-top-12 -left-12 sm:-left-12 w-28 sm:w-36 h-28 sm:h-36 bg-stone-100 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
+              <ImageMinus className="w-14 sm:w-16 h-14 sm:h-16 text-stone-400/30 ml-5 sm:ml-6 mt-5 sm:mt-6" />
             </div>
-            <div className="absolute -right-10 -bottom-10 w-28 h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
+            <div className="absolute -right-8 sm:-right-10 -bottom-8 sm:-bottom-10 w-24 sm:w-28 h-24 sm:h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
             <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-1.5 h-7 bg-stone-400 rounded-full" />
-                <h1 className="text-3xl font-black text-stone-900 tracking-tight">サムネイルクリーンアップ</h1>
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <div className="w-1 sm:w-1.5 h-6 sm:h-7 bg-stone-400 rounded-full shrink-0" />
+                <h1 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">サムネイルクリーンアップ</h1>
               </div>
-              <p className="text-stone-500 text-sm pl-4">参照されていない（項目に関連付けられていない）サムネイル画像を削除し、ストレージを整理します。</p>
+              <p className="text-stone-500 text-sm pl-3 sm:pl-4">参照されていない（項目に関連付けられていない）サムネイル画像を削除し、ストレージを整理します。</p>
             </div>
           </div>
         </div>
@@ -69,8 +69,8 @@ export default async function ThumbnailCleanupPage() {
           <div className="space-y-6">
             <ThumbnailStatsCard initialStats={initialStats} />
 
-            <div className="bg-white border border-stone-200 rounded-[1.75rem] p-8 shadow-sm">
-              <h2 className="text-lg font-bold text-stone-800 mb-6 pb-4 border-b border-stone-100">クリーンアップ実行</h2>
+            <div className="bg-white border border-stone-200 rounded-2xl sm:rounded-[1.75rem] p-5 sm:p-8 shadow-sm">
+              <h2 className="text-base sm:text-lg font-bold text-stone-800 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-stone-100">クリーンアップ実行</h2>
               <OrphanThumbnailCleanupForm />
             </div>
           </div>

@@ -88,20 +88,20 @@ export default async function AccountCreateLinksPage(props: {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 text-stone-900">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8 text-stone-900">
         {/* ページヘッダー */}
         <div className="animate-float-in">
-          <div className="relative bg-white border border-stone-200 rounded-[2rem] p-8 overflow-hidden shadow-sm">
-            <div className="absolute -top-12 -left-12 w-36 h-36 bg-blue-50 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
-              <svg className="w-16 h-16 text-blue-400/30 ml-6 mt-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+          <div className="relative bg-white border border-stone-200 rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 overflow-hidden shadow-sm">
+            <div className="absolute -top-12 sm:-top-12 -left-12 sm:-left-12 w-28 sm:w-36 h-28 sm:h-36 bg-blue-50 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
+              <svg className="w-14 sm:w-16 h-14 sm:h-16 text-blue-400/30 ml-5 sm:ml-6 mt-5 sm:mt-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
             </div>
-            <div className="absolute -right-10 -bottom-10 w-28 h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
+            <div className="absolute -right-8 sm:-right-10 -bottom-8 sm:-bottom-10 w-24 sm:w-28 h-24 sm:h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
             <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-1.5 h-7 bg-blue-500 rounded-full" />
-                <h1 className="text-3xl font-black text-stone-900 tracking-tight">アカウント作成リンク管理</h1>
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <div className="w-1 sm:w-1.5 h-6 sm:h-7 bg-blue-500 rounded-full shrink-0" />
+                <h1 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">アカウント作成リンク管理</h1>
               </div>
-              <p className="text-stone-500 text-sm pl-4">新規ユーザーの登録セッションリンクを発行・管理します。</p>
+              <p className="text-stone-500 text-sm pl-3 sm:pl-4">新規ユーザーの登録セッションリンクを発行・管理します。</p>
             </div>
           </div>
         </div>
@@ -109,9 +109,9 @@ export default async function AccountCreateLinksPage(props: {
         {/* 新規発行フォーム */}
         <div className="card">
           <div className="card-body">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-1.5 h-7 bg-blue-500 rounded-full" />
-              <h2 className="text-xl font-black text-stone-800 tracking-tight">新しいリンクを発行</h2>
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <div className="w-1 sm:w-1.5 h-6 sm:h-7 bg-blue-500 rounded-full shrink-0" />
+              <h2 className="text-lg sm:text-xl font-black text-stone-800 tracking-tight">新しいリンクを発行</h2>
             </div>
             <AccountCreateLinkForm />
           </div>
@@ -120,8 +120,8 @@ export default async function AccountCreateLinksPage(props: {
         {/* 発行済みリンク一覧 */}
         <div className="card">
           {/* ツールバー: 検索 + フィルター */}
-          <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <SearchInput
                 defaultValue={currentQ}
                 sort={currentSort}
@@ -148,7 +148,7 @@ export default async function AccountCreateLinksPage(props: {
             </div>
             <Link
               href="#new-link-form"
-              className="btn-primary btn-sm"
+              className="btn-primary btn-sm self-start"
               style={{
                 background: '#3b82f6',
                 color: 'white',
@@ -182,23 +182,24 @@ export default async function AccountCreateLinksPage(props: {
               {links.map((link) => (
                 <div
                   key={link.uuid}
-                  className="px-6 py-4 hover:bg-blue-50/30 transition-colors"
+                  className="px-4 sm:px-6 py-4 hover:bg-blue-50/30 transition-colors"
                 >
-                  <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                  <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         {getStatusBadge(link.status)}
-                        <span className="text-xs text-stone-400">
+                        <span className="text-[10px] sm:text-xs text-stone-400">
                           {link.startAt.toLocaleDateString('ja-JP')}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-stone-600 font-mono">{link.uuid}</span>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs sm:text-sm text-stone-600 font-mono truncate max-w-full sm:max-w-[200px]">{link.uuid}</span>
                         <CopyLinkButton uuid={link.uuid} path="/auth/register?session=" />
                       </div>
-                      <p className="text-xs text-stone-400 mt-0.5">
-                        作成者: {link.authorName ?? `user:${link.authorId}`} | 有効期限: {link.endAt.toLocaleDateString('ja-JP')}
-                      </p>
+                      <div className="text-[10px] sm:text-xs text-stone-400 mt-0.5">
+                        <div>作成者: {link.authorName ?? `user:${link.authorId}`}</div>
+                        <div>有効期限: {link.endAt.toLocaleDateString('ja-JP')}</div>
+                      </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
                       {link.status === 'active' && (
@@ -212,7 +213,7 @@ export default async function AccountCreateLinksPage(props: {
           )}
 
           {/* フッター: ページネーション */}
-          <div className="px-6 py-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
             <span className="text-sm text-stone-500">全 <strong className="text-stone-700">{totalCount}</strong> 件</span>
             {totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} pageUrl={pageUrl} />}
           </div>

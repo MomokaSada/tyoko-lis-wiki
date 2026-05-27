@@ -28,7 +28,7 @@ export default async function EditLinkUsageDetailPage(props: Props) {
   const { record, editLogs } = detail;
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12 space-y-8 text-stone-900">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8 text-stone-900">
       {/* 戻る */}
       <Link
         href="/owner/edit-link-usage"
@@ -40,20 +40,20 @@ export default async function EditLinkUsageDetailPage(props: Props) {
 
       {/* タイトル: セッションUUID／作成者／作成日時 */}
       <div className="animate-float-in">
-        <div className="relative bg-white border border-stone-200 rounded-[2rem] p-8 overflow-hidden shadow-sm">
-          <div className="absolute -top-12 -left-12 w-36 h-36 bg-emerald-50 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
-            <FileEdit className="w-16 h-16 text-emerald-400/30 ml-6 mt-6" />
+        <div className="relative bg-white border border-stone-200 rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 overflow-hidden shadow-sm">
+          <div className="absolute -top-12 -left-12 w-28 sm:w-36 h-28 sm:h-36 bg-emerald-50 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
+            <FileEdit className="w-14 sm:w-16 h-14 sm:h-16 text-emerald-400/30 ml-5 sm:ml-6 mt-5 sm:mt-6" />
           </div>
-          <div className="absolute -right-10 -bottom-10 w-28 h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
+          <div className="absolute -right-8 sm:-right-10 -bottom-8 sm:-bottom-10 w-24 sm:w-28 h-24 sm:h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
           <div className="relative z-10">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-1.5 h-7 bg-emerald-500 rounded-full" />
-              <h1 className="text-3xl font-black text-stone-900 tracking-tight">編集セッション詳細</h1>
+            <div className="flex items-center gap-2 sm:gap-3 mb-2">
+              <div className="w-1 sm:w-1.5 h-6 sm:h-7 bg-emerald-500 rounded-full shrink-0" />
+              <h1 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">編集セッション詳細</h1>
             </div>
-            <div className="flex flex-wrap gap-x-8 gap-y-2 mt-4 text-sm">
-              <div>
+            <div className="flex flex-col sm:flex-row flex-wrap gap-x-8 gap-y-2 mt-4 text-xs sm:text-sm">
+              <div className="min-w-0">
                 <span className="text-stone-400 font-bold">セッションUUID</span>
-                <code className="ml-2 font-mono bg-stone-100 text-stone-700 px-2.5 py-1 rounded-lg border border-stone-200">
+                <code className="ml-2 font-mono bg-stone-100 text-stone-700 px-2.5 py-1 rounded-lg border border-stone-200 truncate max-w-full inline-block align-middle">
                   {record.sessionId}
                 </code>
               </div>
@@ -85,7 +85,7 @@ export default async function EditLinkUsageDetailPage(props: Props) {
             <p className="text-sm text-stone-400 py-8 text-center">このセッションによる操作は記録されていません。</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="table">
+              <table className="table min-w-[700px]">
                 <thead>
                   <tr>
                     <th style={{ textAlign: 'left' }}>操作対象コンテンツ</th>
