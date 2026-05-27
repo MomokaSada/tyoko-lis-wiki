@@ -11,6 +11,8 @@ import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   // 本番データ取得 (最新3件を急上昇項目代わりに表示)
   const { posts } = await searchVisibleContentList('', false);
