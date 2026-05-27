@@ -2,9 +2,9 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { GitCompare, X, Loader2 } from 'lucide-react';
+import { GitCompare, X, Loader2, Tag, FolderTree, Plus, Minus } from 'lucide-react';
 import { getRevisionDiff } from '@/server/actions/revisionActions';
-import type { DiffPart } from '@/server/actions/revisionActions';
+import type { DiffPart, TagCategoryDiff } from '@/server/actions/revisionActions';
 
 type DiffLine = {
   kind: 'add' | 'del' | 'normal';
@@ -117,6 +117,8 @@ export function DiffModal({
     newTitle: string | null;
     titleDiff: DiffPart[];
     bodyDiff: DiffPart[];
+    tagDiff: TagCategoryDiff;
+    categoryDiff: TagCategoryDiff;
   } | null>(null);
 
   const close = useCallback(() => {
@@ -234,7 +236,61 @@ export function DiffModal({
                 </div>
               )}
 
-              {diff && <DiffViewer lines={bodyLines} />}
+              {diff && (
+                <>
+                  {/* タグ・カテゴリ変更 */}
+                  {(diff.tagDiff.added.length > 0 || diff.tagDiff.removed.length > 0 ||
+                    diff.categoryDiff.added.length > 0 || diff.categoryDiff.removed.length > 0) && (
+                    <section className="space-y-2">
+                      <h4 className="text-xs font-bold text-stone-400">タグ・カテゴリ変更</h4>
+                      <div className="flex flex-wrap gap-4 text-sm">
+                        {diff.tagDiff.added.length > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                            {diff.tagDiff.added.map((t) => (
+                              <span key={t.id} className="inline-flex items-center gap-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md px-2 py-0.5 text-xs font-bold">
+                                <Plus className="w-3 h-3" />{t.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {diff.tagDiff.removed.length > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <Tag className="w-3.5 h-3.5 text-red-600" />
+                            {diff.tagDiff.removed.map((t) => (
+                              <span key={t.id} className="inline-flex items-center gap-0.5 bg-red-50 text-red-700 border border-red-200 rounded-md px-2 py-0.5 text-xs font-bold">
+                                <Minus className="w-3 h-3" />{t.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {diff.categoryDiff.added.length > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <FolderTree className="w-3.5 h-3.5 text-emerald-600" />
+                            {diff.categoryDiff.added.map((c) => (
+                              <span key={c.id} className="inline-flex items-center gap-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-md px-2 py-0.5 text-xs font-bold">
+                                <Plus className="w-3 h-3" />{c.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {diff.categoryDiff.removed.length > 0 && (
+                          <div className="flex items-center gap-1.5">
+                            <FolderTree className="w-3.5 h-3.5 text-red-600" />
+                            {diff.categoryDiff.removed.map((c) => (
+                              <span key={c.id} className="inline-flex items-center gap-0.5 bg-red-50 text-red-700 border border-red-200 rounded-md px-2 py-0.5 text-xs font-bold">
+                                <Minus className="w-3 h-3" />{c.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  )}
+
+                  <DiffViewer lines={bodyLines} />
+                </>
+              )}
 
               {/* 凡例 */}
               {diff && (
