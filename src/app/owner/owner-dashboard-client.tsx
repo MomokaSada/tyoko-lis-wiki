@@ -11,6 +11,14 @@ import {
   Home,
 } from 'lucide-react';
 import { DashboardCard } from '@/components/ui/DashboardCard';
+import { DbStatusCard } from '@/components/ui/DbStatusCard';
+
+type DbHealthStatus = {
+  isConnected: boolean;
+  latencyMs: number | null;
+  error: string | null;
+  dbName: string | null;
+};
 
 type AccountCreateLink = {
   uuid: string;
@@ -59,6 +67,7 @@ type DeviceSessionUsageRecord = {
 
 export function OwnerDashboardClient(props: {
   isOwner: boolean;
+  dbStatus: DbHealthStatus;
   accountCreateLinks: AccountCreateLink[];
   manageableAccounts: ManageableAccount[];
   activeIpBans: ActiveIpBan[];
@@ -70,6 +79,7 @@ export function OwnerDashboardClient(props: {
 }) {
   const {
     isOwner,
+    dbStatus,
     accountCreateLinks,
     manageableAccounts,
     activeIpBans,
@@ -205,6 +215,9 @@ export function OwnerDashboardClient(props: {
           </div>
         </div>
       </div>
+
+      {/* ── DB 接続状態 ── */}
+      <DbStatusCard status={dbStatus} />
     </div>
   );
 }

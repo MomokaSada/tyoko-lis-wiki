@@ -1,5 +1,6 @@
 import { headers } from 'next/headers';
 import { type Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { gte, sql, eq, and } from 'drizzle-orm';
 import { Crown, Shield, Plus, RefreshCw } from 'lucide-react';
 import { db } from '@/db';
@@ -9,6 +10,8 @@ import { getAccountCreateLinks } from '@/server/services/accountCreateLinkServic
 import { getManageableAccounts } from '@/server/services/accountBanService';
 import { getActiveIpBans, getIpDeviceRecords } from '@/server/services/ipBanService';
 import { getDeviceSessionUsageRecords } from '@/server/services/deviceService';
+import { checkDbHealth } from '@/server/services/dbHealthService';
+import type { DbHealthStatus } from '@/server/services/dbHealthService';
 import { OwnerDashboardClient } from './owner-dashboard-client';
 import { MobileActions } from '@/components/posts/MobileActions';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
@@ -24,6 +27,14 @@ export default async function OwnerPage() {
   const editor = await getCurrentEditor();
   const hasEditSession = !!(editor && editor.type === 'session');
   const today = new Date().toLocaleDateString('ja-JP');
+
+  // ── DBヘルスチェック ──
+  const dbStatus: DbHealthStatus = await checkDbHealth();
+
+  if (!dbStatus.isConnected) {
+    const msg = encodeURIComponent(dbStatus.error ?? 'データベースに接続できません');
+    redirect(`/owner/db-error?error=${msg}`);
+  }
 
   const actor = await getCurrentActor();
   const isOwner = actor?.role === 'owner';
@@ -143,6 +154,7 @@ export default async function OwnerPage() {
       <section className="max-w-7xl mx-auto px-6 pb-16">
         <OwnerDashboardClient
           isOwner={isOwner}
+          dbStatus={dbStatus}
           accountCreateLinks={accountCreateLinks}
           manageableAccounts={manageableAccounts}
           activeIpBans={activeIpBans}
