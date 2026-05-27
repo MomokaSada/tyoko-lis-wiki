@@ -240,6 +240,7 @@ export async function getDeviceSessionEditLogs(deviceSessionId: number) {
       revisionNumber: contentEditLogs.revisionNumber,
       type: contentEditLogs.type,
       title: contentEditLogs.title,
+      thumbnail: contentEditLogs.thumbnail,
       tagChanged: contentEditLogs.tagChanged,
       categoryChanged: contentEditLogs.categoryChanged,
       createdAt: contentEditLogs.createdAt,

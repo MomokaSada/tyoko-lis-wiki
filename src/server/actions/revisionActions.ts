@@ -3,7 +3,7 @@
 import { eq, and, inArray } from 'drizzle-orm';
 import { diffWords, diffLines } from 'diff';
 import { db } from '@/db';
-import { contentEditLogs, contentEditLogTags, contentEditLogCategories, tags, categories } from '@/db/schema';
+import { contents, contentEditLogs, contentEditLogTags, contentEditLogCategories, tags, categories } from '@/db/schema';
 import { getCurrentActor } from '@/server/lib/currentActor';
 
 export type DiffPart = { value: string; added?: boolean; removed?: boolean };
@@ -49,6 +49,9 @@ export async function getRevisionDiff(
   newTitle: string | null;
   titleDiff: DiffPart[];
   bodyDiff: DiffPart[];
+  oldThumbnail: string | null;
+  newThumbnail: string | null;
+  thumbnailChanged: boolean;
   tagDiff: TagCategoryDiff;
   categoryDiff: TagCategoryDiff;
 } | null> {
@@ -56,7 +59,7 @@ export async function getRevisionDiff(
   if (actor?.role !== 'owner') return null;
 
   const current = await db
-    .select({ id: contentEditLogs.id, title: contentEditLogs.title, data: contentEditLogs.data })
+    .select({ id: contentEditLogs.id, title: contentEditLogs.title, data: contentEditLogs.data, thumbnail: contentEditLogs.thumbnail })
     .from(contentEditLogs)
     .where(
       and(
@@ -69,17 +72,27 @@ export async function getRevisionDiff(
 
   if (!current) return null;
 
-  const previous = await db
-    .select({ id: contentEditLogs.id, title: contentEditLogs.title, data: contentEditLogs.data })
-    .from(contentEditLogs)
-    .where(
-      and(
-        eq(contentEditLogs.contentId, contentId),
-        eq(contentEditLogs.revisionNumber, revisionNumber - 1),
-      ),
-    )
-    .limit(1)
-    .then((rows) => rows[0] ?? null);
+  const [previous, content] = await Promise.all([
+    db
+      .select({ id: contentEditLogs.id, title: contentEditLogs.title, data: contentEditLogs.data, thumbnail: contentEditLogs.thumbnail })
+      .from(contentEditLogs)
+      .where(
+        and(
+          eq(contentEditLogs.contentId, contentId),
+          eq(contentEditLogs.revisionNumber, revisionNumber - 1),
+        ),
+      )
+      .limit(1)
+      .then((rows) => rows[0] ?? null),
+    db
+      .select({ currentThumbnail: contents.currentThumbnail })
+      .from(contents)
+      .where(eq(contents.id, contentId))
+      .limit(1)
+      .then((rows) => rows[0] ?? null),
+  ]);
+
+  const contentThumbnail = content?.currentThumbnail ?? null;
 
   // タグ・カテゴリの変更を取得
   const [currentTags, previousTags, currentCategories, previousCategories] = await Promise.all([
@@ -88,6 +101,15 @@ export async function getRevisionDiff(
     getCategoryNames(current.id),
     previous ? getCategoryNames(previous.id) : [],
   ]);
+
+  // 両方の edit log で thumbnail が null なら、コンテンツの現在値で表示する（変更なし）
+  // 片方だけ null の場合はそれが実際の変更（追加 or 削除）
+  const rawOld = previous?.thumbnail ?? null;
+  const rawNew = current.thumbnail;
+  const bothNull = rawOld === null && rawNew === null;
+
+  const oldThumbnail = bothNull ? contentThumbnail : rawOld;
+  const newThumbnail = bothNull ? contentThumbnail : rawNew;
 
   return {
     oldTitle: previous?.title ?? null,
@@ -98,6 +120,9 @@ export async function getRevisionDiff(
     bodyDiff: previous
       ? diffLines(previous.data ?? '', current.data ?? '')
       : [{ value: current.data ?? '' }],
+    oldThumbnail,
+    newThumbnail,
+    thumbnailChanged: oldThumbnail !== newThumbnail,
     tagDiff: computeDiff(previousTags, currentTags),
     categoryDiff: computeDiff(previousCategories, currentCategories),
   };
