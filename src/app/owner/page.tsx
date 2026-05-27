@@ -1,6 +1,9 @@
 import { headers } from 'next/headers';
 import { type Metadata } from 'next';
+import { gte, sql, eq, and } from 'drizzle-orm';
 import { Crown, Shield, Plus, RefreshCw } from 'lucide-react';
+import { db } from '@/db';
+import { users, contents } from '@/db/schema';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
 import { getManageableAccounts } from '@/server/services/accountBanService';
@@ -42,6 +45,40 @@ export default async function OwnerPage() {
     blockedBy: number; blockedByName: string | null; createdAt: Date;
   }[];
   const deviceSessionUsageRecords = deviceSessionUsageRecordsResult.items;
+
+  // ── システム概要の実データ ──
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const [todayUsersRows, totalUsersRows, totalContentsRows, publishedContentsRows] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(gte(users.createdAt, todayStart)),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(users),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(contents),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(contents)
+      .where(eq(contents.isPublished, true)),
+  ]);
+
+  const todayUsers = Number(todayUsersRows[0]?.count ?? 0);
+  const totalUsers = Number(totalUsersRows[0]?.count ?? 0);
+  const totalContents = Number(totalContentsRows[0]?.count ?? 0);
+  const publishedContents = Number(publishedContentsRows[0]?.count ?? 0);
+
+  // 編集利用率：全セッションの editsUsed / maxEdits の平均
+  const totalEditsUsed = deviceSessionUsageRecords.reduce((sum, r) => sum + r.editsUsed, 0);
+  const totalMaxEdits = deviceSessionUsageRecords.reduce((sum, r) => sum + r.maxEdits, 0);
+  const editUtilization = totalMaxEdits > 0 ? Math.round((totalEditsUsed / totalMaxEdits) * 100) : 0;
+
+  // 項目公開率
+  const publishRate = totalContents > 0 ? Math.round((publishedContents / totalContents) * 100) : 0;
 
   return (
     <>
@@ -96,18 +133,7 @@ export default async function OwnerPage() {
                   )}
                 </div>
               </div>
-
-              {/* 右: アクション群 */}
-              <div className="flex flex-wrap gap-3 shrink-0">
-                <button className="btn-primary inline-flex items-center gap-2 bg-stone-900 text-white font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-stone-800 transition-colors shadow-md">
-                  <Plus className="w-4 h-4" />
-                  新規作成
-                </button>
-                <button className="inline-flex items-center gap-2 bg-white text-stone-700 font-bold text-sm px-5 py-2.5 rounded-xl border border-stone-200 hover:bg-stone-50 hover:border-stone-300 transition-all">
-                  <RefreshCw className="w-4 h-4" />
-                  更新
-                </button>
-              </div>
+              
             </div>
           </div>
         </div>
@@ -121,6 +147,10 @@ export default async function OwnerPage() {
           manageableAccounts={manageableAccounts}
           activeIpBans={activeIpBans}
           deviceSessionUsageRecords={deviceSessionUsageRecords}
+          todayUsers={todayUsers}
+          totalUsers={totalUsers}
+          editUtilization={editUtilization}
+          publishRate={publishRate}
         />
       </section>
 
