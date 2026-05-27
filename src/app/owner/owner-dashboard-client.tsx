@@ -114,49 +114,9 @@ export function OwnerDashboardClient(props: {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-      <DashboardCard
-        href="/owner/account-create-links"
-        icon={<KeySquare className="w-5 h-5" />}
-        title="アカウント作成リンク"
-        description="登録セッションの発行・失効"
-        badgeText={accountCreateLinksCountText}
-        theme="blue"
-      />
-      <DashboardCard
-        href="/owner/account-bans"
-        icon={<UserX className="w-5 h-5" />}
-        title="アカウントBAN"
-        description="強制ログアウト・再ログイン抑止"
-        badgeText={manageableAccountsCountText}
-        theme="red"
-      />
-      <DashboardCard
-        href="/owner/ip-bans"
-        icon={<ShieldBan className="w-5 h-5" />}
-        title="IP BAN"
-        description="悪意あるアクセス元の遮断"
-        badgeText={activeIpBansCountText}
-        theme="amber"
-      />
-      <DashboardCard
-        href="/owner/edit-link-usage"
-        icon={<Link2 className="w-5 h-5" />}
-        title="編集リンク使用状況"
-        description="デバイス別の使用記録の確認"
-        badgeText={editUsageCountText}
-        theme="emerald"
-      />
-      <DashboardCard
-        href="/owner/thumbnail-cleanup"
-        icon={<ImageMinus className="w-5 h-5" />}
-        title="サムネイルクリーンアップ"
-        description="未使用サムネイルの削除"
-        theme="stone"
-      />
-
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
       {/* ── System Overview Card (ダークグラデーション) ── */}
-      <div className="card-base bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 border border-stone-700 rounded-[1.75rem] p-6 overflow-hidden relative">
+      <div className="card-base bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 border border-stone-700 rounded-[1.75rem] p-6 overflow-hidden relative lg:col-span-2">
         {/* 光彩 */}
         <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-stone-700/30 rounded-full blur-2xl pointer-events-none" />
@@ -168,7 +128,7 @@ export function OwnerDashboardClient(props: {
               <Home className="w-3.5 h-3.5" />
               今日のアクティビティ
             </div>
-            <h3 className="text-2xl font-black text-white mb-3 tracking-tight">システム概要</h3>
+            <h3 className="text-xl sm:text-2xl font-black text-white mb-3 tracking-tight">システム概要</h3>
             <p className="text-stone-400 text-sm leading-relaxed">全ステータスとシステム状態</p>
           </div>
 
@@ -218,6 +178,46 @@ export function OwnerDashboardClient(props: {
 
       {/* ── DB 接続状態 ── */}
       <DbStatusCard status={dbStatus} />
+
+      <DashboardCard
+        href="/owner/account-create-links"
+        icon={<KeySquare className="w-5 h-5" />}
+        title="アカウント作成リンク"
+        description="登録セッションの発行・失効"
+        badgeText={accountCreateLinksCountText}
+        theme="blue"
+      />
+      <DashboardCard
+        href="/owner/account-bans"
+        icon={<UserX className="w-5 h-5" />}
+        title="アカウントBAN"
+        description="強制ログアウト・再ログイン抑止"
+        badgeText={manageableAccountsCountText}
+        theme="red"
+      />
+      <DashboardCard
+        href="/owner/ip-bans"
+        icon={<ShieldBan className="w-5 h-5" />}
+        title="IP BAN"
+        description="悪意あるアクセス元の遮断"
+        badgeText={activeIpBansCountText}
+        theme="amber"
+      />
+      <DashboardCard
+        href="/owner/edit-link-usage"
+        icon={<Link2 className="w-5 h-5" />}
+        title="編集リンク使用状況"
+        description="デバイス別の使用記録の確認"
+        badgeText={editUsageCountText}
+        theme="emerald"
+      />
+      <DashboardCard
+        href="/owner/thumbnail-cleanup"
+        icon={<ImageMinus className="w-5 h-5" />}
+        title="サムネイルクリーンアップ"
+        description="未使用サムネイルの削除"
+        theme="stone"
+      />
     </div>
   );
 }

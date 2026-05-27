@@ -102,8 +102,8 @@ export async function DataTable<T extends Record<string, unknown>>({
   return (
     <div className="card">
       {/* ── ツールバー: 検索 ── */}
-      <div className="px-6 py-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
           {toolbar}
           {!hideSearch && (
             <DataTableSearch
@@ -186,7 +186,7 @@ export async function DataTable<T extends Record<string, unknown>>({
       )}
 
       {/* ── フッター: 件数 + ページネーション ── */}
-      <div className="px-6 py-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
         <span className="text-sm text-stone-500">
           全 <strong className="text-stone-700">{totalCount}</strong> 件
           {currentQ && (
