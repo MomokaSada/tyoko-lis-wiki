@@ -165,7 +165,7 @@ export function TagInput({
       </div>
 
       {isFocused && suggestions.length > 0 && (
-        <ul className="absolute z-20 w-full mt-1 bg-white border border-stone-300 rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar py-1">
+        <ul className="absolute z-[60] w-full mt-1 bg-white border border-stone-300 rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar py-1">
           {suggestions.map((item) => (
             <li
               key={item.id}

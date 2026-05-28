@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useScrollLock } from '@/lib/useScrollLock';
 
@@ -21,9 +22,9 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md' 
 
   if (!mounted || !isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div 
+  const overlay = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm">
+      <div
         className={`bg-white w-full ${maxWidth} rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 flex flex-col max-h-[90vh]`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -45,9 +46,12 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md' 
           {children}
         </div>
       </div>
-      
+
       {/* Backdrop for closing */}
       <div className="absolute inset-0 -z-10" onClick={onClose} />
     </div>
   );
+
+  // Render at body level to avoid ancestor transform/stacking-context interference
+  return createPortal(overlay, document.body);
 }

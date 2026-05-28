@@ -2,6 +2,7 @@ import { requireEditSession } from '@/lib/auth/guards';
 import { getEditableContentDetail, getTaxonomyOptions } from '@/server/services/contentService';
 import { PostForm } from '@/components/features/posts/PostForm';
 import Link from 'next/link';
+import { ChevronLeft } from 'lucide-react';
 
 export default async function ModifyPostPage({
   searchParams,
@@ -40,18 +41,31 @@ export default async function ModifyPostPage({
     : [];
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500">
-      <div className="border-b border-stone-200 pb-8">
-        <Link href={backHref} className="inline-flex items-center text-xs font-bold text-stone-400 hover:text-stone-800 transition-colors mb-4 uppercase tracking-widest">
-          ← {content?.title ?? '記事一覧'}に戻る
-        </Link>
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-black text-stone-900 tracking-tighter leading-none">項目編集</h1>
+    <>
+      {/* スティッキーヘッダー */}
+      <header className="sticky top-16 md:top-20 z-40 bg-white/80 backdrop-blur-md border-b border-stone-200/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <Link
+            href={backHref}
+            className="inline-flex items-center gap-1.5 text-[11px] font-bold text-stone-400 hover:text-stone-800 transition-colors uppercase tracking-widest truncate max-w-[200px]"
+          >
+            <ChevronLeft size={12} />
+            {content?.title ?? '記事一覧'}に戻る
+          </Link>
         </div>
-      </div>
+      </header>
 
-      {content ? (
-        <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm relative mt-8">
+      {/* ページコンテンツ */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 pb-48 lg:pb-8">
+        {/* ページタイトル */}
+        <div className="mb-8 animate-fade-up">
+          <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight leading-tight">
+            記事を編集
+          </h2>
+          <p className="text-sm text-stone-500 mt-1">内容を修正して更新しましょう</p>
+        </div>
+
+        {content ? (
           <PostForm
             mode="modify"
             sessionToken={token ?? null}
@@ -60,12 +74,13 @@ export default async function ModifyPostPage({
             availableCategories={serializedCategories}
             content={content}
           />
-        </div>
-      ) : (
-        <div className="text-center py-12 border-2 border-dashed border-stone-200 bg-stone-50 rounded-3xl mt-8">
-          <p className="text-stone-500 font-medium">上の検索バーで編集対象の slug を指定するとフォームが表示されます。</p>
-        </div>
-      )}
-    </div>
+        ) : (
+          <div className="text-center py-16 border-2 border-dashed border-stone-200 bg-stone-50 rounded-3xl">
+            <p className="text-stone-400 font-bold text-sm">編集対象の記事が見つかりませんでした</p>
+            <p className="text-xs text-stone-300 mt-2">URLパラメータに正しい slug を指定してください</p>
+          </div>
+        )}
+      </div>
+    </>
   );
 }

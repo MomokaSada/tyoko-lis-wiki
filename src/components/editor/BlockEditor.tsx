@@ -248,9 +248,6 @@ export default function BlockEditor({
       <input type="hidden" name={name} value={markdown} />
 
       <div className="relative flex flex-col h-[75vh] sm:h-[calc(100vh-6rem)] min-h-[600px] sm:min-h-[800px]">
-        <span className="flex-none px-3 pt-2.5 pb-1 text-xs font-bold text-stone-500 uppercase tracking-wider bg-stone-50 dark:bg-[#232428] dark:text-stone-300">
-          本文内容
-        </span>
 
         {status === 'loading' ? (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white text-sm text-stone-500">
