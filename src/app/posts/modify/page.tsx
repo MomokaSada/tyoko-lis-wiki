@@ -56,7 +56,7 @@ export default async function ModifyPostPage({
       </header>
 
       {/* ページコンテンツ */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 pb-48 lg:pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* ページタイトル */}
         <div className="mb-8 animate-fade-up">
           <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight leading-tight">
