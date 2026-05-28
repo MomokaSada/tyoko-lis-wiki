@@ -1,6 +1,7 @@
 import { requireEditSession } from '@/lib/auth/guards';
 import { getTaxonomyOptions } from '@/server/services/contentService';
 import Link from 'next/link';
+import { ChevronLeft } from 'lucide-react';
 import { PostForm } from '@/components/features/posts/PostForm';
 
 function toSafeId(value: unknown): number {
@@ -70,17 +71,30 @@ export default async function CreatePostPage({
     : [];
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-500">
-      <div className="border-b border-stone-200 pb-8">
-        <Link href={homeHref} className="inline-flex items-center text-xs font-bold text-stone-400 hover:text-stone-800 transition-colors mb-4 uppercase tracking-widest">
-          ← ホームに戻る
-        </Link>
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-black text-stone-900 tracking-tighter leading-none">新規項目作成</h1>
+    <>
+      {/* スティッキーヘッダー */}
+      <header className="sticky top-16 md:top-20 z-40 bg-white/80 backdrop-blur-md border-b border-stone-200/60">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+          <Link
+            href={homeHref}
+            className="inline-flex items-center gap-1.5 text-[11px] font-bold text-stone-400 hover:text-stone-800 transition-colors uppercase tracking-widest"
+          >
+            <ChevronLeft size={12} />
+            ホームに戻る
+          </Link>
         </div>
-      </div>
+      </header>
 
-      <div className="relative mt-8">
+      {/* ページコンテンツ */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 pb-48 lg:pb-8">
+        {/* ページタイトル */}
+        <div className="mb-8 animate-fade-up">
+          <h2 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight leading-tight">
+            記事を作成
+          </h2>
+          <p className="text-sm text-stone-500 mt-1">コンテンツを入力して公開しましょう</p>
+        </div>
+
         <PostForm
           mode="create"
           sessionToken={token ?? null}
@@ -89,6 +103,6 @@ export default async function CreatePostPage({
           availableCategories={serializedCategories}
         />
       </div>
-    </div>
+    </>
   );
 }

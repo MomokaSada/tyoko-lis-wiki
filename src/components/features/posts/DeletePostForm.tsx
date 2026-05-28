@@ -5,7 +5,7 @@ import {
   deleteContentAction,
   type ContentActionState,
 } from '@/server/actions/contentActions';
-import { Trash2, AlertTriangle } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 
 const initialState: ContentActionState = {
@@ -52,27 +52,23 @@ export function DeletePostForm({ contentId, compact = false }: DeletePostFormPro
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="項目の削除"
-        maxWidth="max-w-md"
+        maxWidth="max-w-sm"
       >
         <div className="space-y-6">
-          <div className="flex items-start gap-4 p-4 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800">
-            <AlertTriangle className="w-6 h-6 shrink-0" />
-            <div className="space-y-1">
-              <p className="font-black text-sm uppercase tracking-wider">警告</p>
-              <p className="text-sm font-medium leading-relaxed">
-                この項目を完全に削除します。この操作は取り消せません。本当によろしいですか？
-              </p>
-            </div>
-          </div>
+          <p className="text-sm text-stone-600 leading-relaxed">
+            この項目を完全に削除します。
+            <br />
+            この操作は<strong className="text-red-600">取り消せません</strong>。本当によろしいですか？
+          </p>
 
-          <form action={action} className="flex flex-col gap-3">
+          <form action={action} className="space-y-3">
             <input type="hidden" name="contentId" value={contentId} />
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 type="submit"
                 disabled={isPending}
-                className="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-5 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-sm shadow-red-600/20 disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
               >
                 {isPending ? (
                   <>
@@ -80,14 +76,14 @@ export function DeletePostForm({ contentId, compact = false }: DeletePostFormPro
                     削除中...
                   </>
                 ) : (
-                  'はい、この項目を削除します'
+                  '削除する'
                 )}
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="flex-1 px-6 py-3 bg-stone-100 text-stone-600 rounded-xl font-bold hover:bg-stone-200 transition-colors"
+                className="flex-1 px-5 py-2.5 bg-stone-100 text-stone-600 font-bold rounded-xl hover:bg-stone-200 transition-colors text-sm"
                 disabled={isPending}
               >
                 キャンセル
@@ -95,7 +91,7 @@ export function DeletePostForm({ contentId, compact = false }: DeletePostFormPro
             </div>
 
             {state.error && (
-              <p className="text-sm font-bold text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
+              <p className="text-xs font-bold text-red-600 bg-red-50 p-3 rounded-lg border border-red-100">
                 {state.error}
               </p>
             )}
