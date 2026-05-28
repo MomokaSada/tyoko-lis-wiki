@@ -75,9 +75,16 @@ h6 {
 .toastui-host .toastui-editor-defaultUI-toolbar {
   background: #fafaf9;
   border-bottom: 1px solid #e7e5e4;
-  padding: 0.5rem 0.75rem;
+  padding: 0.375rem 0.75rem;
   display: flex;
   align-items: center;
+  /* ツールバーとその子要素（ドロップダウン）をエディタ本文より
+     前面のレイヤーにする。
+     ww-container の z-index:20 より高くする必要がある。
+     また vendor CSS の height:45px を auto に戻す。            */
+  position: relative;
+  z-index: 30 !important;
+  height: auto;
 }
 
 .toastui-host .toastui-editor-main {
@@ -132,6 +139,57 @@ h6 {
 
 .toastui-host .toastui-editor-md-splitter {
   margin: 0;
+}
+
+/* ── ツールバー「その他」ドロップダウン ──
+   ├ z-index → エディタ本文より前面
+   ├ flex-wrap + max-width → 横長回避
+   ├ toolbar-group → 余計な余白をリセット
+   ├ toolbar-divider → vendor CSS margin:14px 12px を除去
+   └ max-height:88px + overflow-y:auto → 2行制限＋スクロール
+                                                                  */
+.toastui-host .toastui-editor-dropdown-toolbar {
+  /* ① 前面に出す */
+  z-index: 100 !important;
+  /* ② 幅制限＋折り返し。3行目以降ははみ出すのでスクロール */
+  flex-wrap: wrap !important;
+  height: auto !important;
+  max-width: min(420px, 70vw) !important;
+  min-width: 160px;
+  padding: 6px;
+  gap: 2px;
+  max-height: 88px;
+  overflow-y: auto;
+  /* デザイン統一 */
+  border-radius: 12px !important;
+  border-color: #d6d3d1 !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06) !important;
+  background: #ffffff !important;
+}
+.toastui-host .toastui-editor-dropdown-toolbar .toastui-editor-toolbar-group {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+.toastui-host .toastui-editor-dropdown-toolbar .toastui-editor-toolbar-divider {
+  /* vendor CSS の margin:14px 12px をリセット */
+  margin: 0 4px;
+  height: 20px;
+  width: 1px;
+  background-color: #d6d3d1;
+  display: inline-block;
+}
+.toastui-host .toastui-editor-dropdown-toolbar button {
+  height: 32px !important;
+  width: 32px !important;
+  margin: 2px !important;
+  border-radius: 8px !important;
+  transition: background 0.15s ease;
+}
+.toastui-host .toastui-editor-dropdown-toolbar button:hover {
+  background: #f5f5f4 !important;
+  border-color: #d6d3d1 !important;
 }
 
 .article-viewer .toastui-editor-contents {
@@ -1222,9 +1280,10 @@ h6 {
   }
 
   .toastui-host .toastui-editor-defaultUI-toolbar {
-    padding: 0.5rem 0.75rem;
+    padding: 0.375rem 0.75rem;
     display: flex;
     align-items: center;
+    height: auto;
   }
 
   .toastui-host .toastui-editor-md-container .CodeMirror,
