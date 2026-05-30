@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { slugify } from '@/server/lib/slug';
+import { slugify } from '@/lib/slug-utils';
 import { optionalParentIdSchema } from './modules/optionalParentId';
 
 const slugSchema = z
@@ -31,7 +31,10 @@ const thumbnailUrlSchema = z.preprocess(
     .refine(
       (val) => {
         // 絶対パスは許可
-        if (val.startsWith('/')) return true;
+        if (val.startsWith('/')) {
+          // //evil.com のような network-path reference は拒否する
+          return !val.startsWith('//');
+        }
         // http/https スキームのみ許可し、httpsomething のような不正な形式は除外
         if (val.startsWith('https://') || val.startsWith('http://')) {
           try {

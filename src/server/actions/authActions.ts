@@ -1,14 +1,12 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { loginSchema, registerSchema } from '@/server/schemas/authSchemas';
-import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { recordAuditLog } from '@/server/services/auditLogService';
 import { registerAccount, signIn } from '@/server/services/authService';
-import { checkRateLimit } from '@/server/services/rateLimitService';
+import { withAction, parseOrError } from '@/server/lib/withAction';
 import type { BaseActionState } from '@/types/actionState';
 
 export type ActionState = BaseActionState;
@@ -18,35 +16,26 @@ export async function loginAction(
   _prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await recordCurrentRequestDevice();
+  const preflight = await withAction({ rateLimit: 'login' });
+  if (preflight) return preflight;
 
-  const rateLimitResult = await checkRateLimit('login');
-  if (!rateLimitResult.allowed) {
-    return { error: 'ログイン試行が多すぎます。しばらくしてから再度お試しください。' };
-  }
-
-  const parsed = loginSchema.safeParse({
+  const parsed = parseOrError(loginSchema, {
     username: formData.get('username'),
     password: formData.get('password'),
   });
-
-  if (!parsed.success) {
-    return { error: getFirstZodErrorMessage(parsed.error) };
-  }
+  if ('error' in parsed) return parsed;
 
   const activeBan = await getCurrentRequestBan();
-
   if (activeBan) {
     return { error: 'このIPアドレスからのログインは許可されていません' };
   }
 
-  const result = await signIn(parsed.data);
-
+  const result = await signIn(parsed.parsed);
   if (!result.success) {
     await recordAuditLog({
       actorId: null,
       action: 'login_failed',
-      detail: { username: parsed.data.username },
+      detail: { username: parsed.parsed.username },
     });
     return { error: result.error };
   }
@@ -59,7 +48,6 @@ export async function loginAction(
     targetId: actor?.id != null ? String(actor.id) : null,
   });
 
-  // サーバーサイドリダイレクト（クライアント往復なしで高速）
   redirect('/');
 }
 
@@ -67,41 +55,31 @@ export async function registerAction(
   _prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await recordCurrentRequestDevice();
+  const preflight = await withAction({ rateLimit: 'register' });
+  if (preflight) return preflight;
 
-  const rateLimitResult = await checkRateLimit('register');
-  if (!rateLimitResult.allowed) {
-    return { error: 'アカウント作成試行が多すぎます。しばらくしてから再度お試しください。' };
-  }
-
-  const parsed = registerSchema.safeParse({
+  const parsed = parseOrError(registerSchema, {
     session: formData.get('session'),
     username: formData.get('username'),
     password: formData.get('password'),
     confirmPassword: formData.get('confirmPassword'),
   });
-
-  if (!parsed.success) {
-    return { error: getFirstZodErrorMessage(parsed.error) };
-  }
+  if ('error' in parsed) return parsed;
 
   const activeBan = await getCurrentRequestBan();
-
   if (activeBan) {
     return { error: 'このIPアドレスからのアカウント作成は許可されていません' };
   }
 
-  const result = await registerAccount(parsed.data);
-
+  const result = await registerAccount(parsed.parsed);
   if (!result.success) {
     return { error: result.error };
   }
 
   const loginResult = await signIn({
-    username: parsed.data.username,
-    password: parsed.data.password,
+    username: parsed.parsed.username,
+    password: parsed.parsed.password,
   });
-
   if (!loginResult.success) {
     return { error: loginResult.error };
   }

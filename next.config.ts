@@ -1,10 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  typescript: {
-    // 開発速度向上のため、ビルド時の型チェックエラーを無視する
-    ignoreBuildErrors: true,
-  },
+  // 型チェックは build スクリプト内で tsc --noEmit により実行するため、
+  // next.config 側の ignoreBuildErrors は削除する。
+  // 参照: package.json scripts.build
   images: {
     remotePatterns: [
       {

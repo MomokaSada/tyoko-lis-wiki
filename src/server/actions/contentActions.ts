@@ -11,11 +11,11 @@ import {
 } from '@/server/schemas/contentSchemas';
 import { createContent, deleteContent, updateContent } from '@/server/services/contentService';
 import { getCurrentActor } from '@/server/lib/currentActor';
-import { recordCurrentEditDeviceSession, recordCurrentRequestDevice } from '@/server/services/deviceService';
+import { recordCurrentEditDeviceSession } from '@/server/services/deviceService';
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
-import { BaseActionState } from '@/types/actionState';
-import { checkRateLimit } from '@/server/services/rateLimitService';
 import { recordAuditLog } from '@/server/services/auditLogService';
+import { withAction, requireActor } from '@/server/lib/withAction';
+import type { BaseActionState } from '@/types/actionState';
 
 export type ContentActionState = BaseActionState & {
   slug: string | null;
@@ -27,16 +27,8 @@ export async function createContentAction(
   _prevState: ContentActionState,
   formData: FormData,
 ): Promise<ContentActionState> {
-  await recordCurrentRequestDevice();
-
-  const rateLimitResult = await checkRateLimit('createContent');
-  if (!rateLimitResult.allowed) {
-    return {
-      error: '項目作成試行が多すぎます。しばらくしてから再度お試しください。',
-      slug: null,
-      title: null,
-    };
-  }
+  const preflight = await withAction({ rateLimit: 'createContent' });
+  if (preflight) return { ...preflight, slug: null, title: null };
 
   const parsed = createContentSchema.safeParse({
     session: formData.get('session'),
@@ -62,7 +54,6 @@ export async function createContentAction(
   }
 
   const activeBan = await getCurrentRequestBan();
-
   if (activeBan) {
     return {
       error: 'このIPアドレスからの項目作成は許可されていません',
@@ -105,8 +96,6 @@ export async function createContentAction(
     detail: { slug: result.data.slug },
   });
 
-  await recordCurrentRequestDevice();
-
   const destination =
     parsed.data.session && parsed.data.session.length > 0
       ? `/posts/${encodeURIComponent(result.data.slug)}?session=${encodeURIComponent(parsed.data.session)}`
@@ -119,16 +108,9 @@ export async function updateContentAction(
   _prevState: ContentActionState,
   formData: FormData,
 ): Promise<ContentActionState> {
-  await recordCurrentRequestDevice();
+  const preflight = await withAction({ rateLimit: 'updateContent' });
+  if (preflight) return { ...preflight, slug: null, title: null };
 
-  const rateLimitResult = await checkRateLimit('updateContent');
-  if (!rateLimitResult.allowed) {
-    return {
-      error: '項目編集試行が多すぎます。しばらくしてから再度お試しください。',
-      slug: null,
-      title: null,
-    };
-  }
   const parsed = updateContentSchema.safeParse({
     session: formData.get('session'),
     contentId: formData.get('contentId'),
@@ -154,7 +136,6 @@ export async function updateContentAction(
   }
 
   const activeBan = await getCurrentRequestBan();
-
   if (activeBan) {
     return {
       error: 'このIPアドレスからの項目編集は許可されていません',
@@ -188,7 +169,6 @@ export async function updateContentAction(
     };
   }
 
-  await recordCurrentRequestDevice();
   await recordAuditLog({
     actorId: editor.type === "actor" ? editor.actorId : null,
     action: "update_content",
@@ -196,7 +176,6 @@ export async function updateContentAction(
     targetId: String(result.data.id),
     detail: { slug: result.data.slug },
   });
-
 
   const destination =
     parsed.data.session && parsed.data.session.length > 0
@@ -210,14 +189,9 @@ export async function deleteContentAction(
   _prevState: ContentActionState,
   formData: FormData,
 ): Promise<ContentActionState> {
-  const rateLimitResult = await checkRateLimit('deleteContent');
-  if (!rateLimitResult.allowed) {
-    return {
-      error: '項目削除試行が多すぎます。しばらくしてから再度お試しください。',
-      slug: null,
-      title: null,
-    };
-  }
+  const preflight = await withAction({ rateLimit: 'deleteContent', device: false });
+  if (preflight) return { ...preflight, slug: null, title: null };
+
   const parsed = deleteContentSchema.safeParse({
     contentId: formData.get('contentId'),
   });
@@ -230,14 +204,9 @@ export async function deleteContentAction(
     };
   }
 
-  const actor = await getCurrentActor();
-
-  if (!actor) {
-    return {
-      error: '項目削除権限がありません',
-      slug: null,
-      title: null,
-    };
+  const actor = await requireActor();
+  if ('error' in actor) {
+    return { error: '項目削除権限がありません', slug: null, title: null };
   }
 
   const result = await deleteContent(

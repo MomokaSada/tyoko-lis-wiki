@@ -1,5 +1,6 @@
 import { isIP } from 'node:net';
 import { headers } from 'next/headers';
+import { HEADER_CLIENT_IP } from '@/lib/auth/constants';
 
 const BROWSER_MAX_LENGTH = 512;
 
@@ -46,16 +47,8 @@ function normalizeBrowser(userAgent: string | null) {
 
 export async function getCurrentRequestDevice(): Promise<RequestDeviceInfo | null> {
   const headersList = await headers();
-  const forwardedFor = headersList.get('x-forwarded-for');
-  const realIp = headersList.get('x-real-ip');
-  const candidateIps = [
-    ...(forwardedFor ? forwardedFor.split(',') : []),
-    realIp,
-  ];
-
-  const ip = candidateIps
-    .map((candidate) => normalizeCandidateIp(candidate))
-    .find((candidate): candidate is string => Boolean(candidate));
+  const clientIp = headersList.get(HEADER_CLIENT_IP);
+  const ip = normalizeCandidateIp(clientIp);
 
   if (!ip) {
     return null;
