@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { findEditSessions, insertEditSession } from '@/server/repositories/editLinkRepository';
+import { findEditSessions, insertEditSession, deactivateEditSession, type StatusFilter } from '@/server/repositories/editLinkRepository';
 import type { CreateEditLinkInput } from '@/server/schemas/editLinkSchemas';
 import type { Actor } from '@/types/actor';
 import { isUniqueViolation } from '@/server/services/modules/pgError';
+import type { ListQuery, ListResult } from '@/types/listQuery';
 
 type CreateEditLinkResult =
   | {
@@ -80,22 +81,49 @@ export async function createEditLink(
   };
 }
 
-export async function getEditLinks(actor: Actor): Promise<EditLinkListItem[]> {
+export async function getEditLinks(
+  actor: Actor,
+  query?: ListQuery<'createdAt' | 'endAt' | 'editsUsed'>,
+  statusFilter?: StatusFilter,
+): Promise<ListResult<EditLinkListItem>> {
   if (actor.role !== 'owner' && actor.role !== 'admin') {
-    return [];
+    return { items: [], totalCount: 0 };
   }
 
-  const rows = await findEditSessions();
+  const { items, totalCount } = await findEditSessions(query, statusFilter);
   const now = new Date();
 
-  return rows.map((row) => ({
-    ...row,
-    status: !row.isActive
-      ? 'inactive'
-      : row.editsUsed >= row.maxEdits
-        ? 'limit-reached'
-        : row.endAt <= now
-          ? 'expired'
-          : 'active',
-  }));
+  return {
+    items: items.map((row) => ({
+      ...row,
+      status: !row.isActive
+        ? 'inactive'
+        : row.editsUsed >= row.maxEdits
+          ? 'limit-reached'
+          : row.endAt <= now
+            ? 'expired'
+            : 'active',
+    })),
+    totalCount,
+  };
+}
+
+type DeactivateEditLinkResult =
+  | { success: true }
+  | { success: false; error: string };
+
+export async function deactivateEditLink(
+  actor: Actor,
+  uuid: string,
+): Promise<DeactivateEditLinkResult> {
+  if (actor.role !== 'owner' && actor.role !== 'admin') {
+    return { success: false, error: '権限がありません' };
+  }
+
+  const result = await deactivateEditSession(uuid);
+  if (!result) {
+    return { success: false, error: 'リンクが見つかりませんでした' };
+  }
+
+  return { success: true };
 }

@@ -27,17 +27,17 @@ import {
 
 export type CreateContentResult =
   | {
-      success: true;
-      data: {
-        id: number;
-        slug: string;
-        title: string;
-      };
-    }
-  | {
-      success: false;
-      error: string;
+    success: true;
+    data: {
+      id: number;
+      slug: string;
+      title: string;
     };
+  }
+  | {
+    success: false;
+    error: string;
+  };
 
 export async function createContent(
   editor: EditorContext,
@@ -70,7 +70,7 @@ export async function createContent(
     newCategoryParentId: input.newCategoryParentId,
   });
 
-  const effectiveIsPublished = editor.type === 'actor' ? input.isPublished : false;
+  const effectiveIsPublished = editor.type === 'actor' ? input.isPublished : true;
 
   const created = await createContentWithInitialRevision({
     slug: input.slug,
@@ -124,7 +124,7 @@ export async function searchPublishedContentList(query: string, sort?: ContentSo
 }
 
 export async function searchVisibleContentList(
-  query: string, 
+  query: string,
   includeUnpublished: boolean,
   sort?: ContentSortKey,
   order?: SortOrder,
@@ -213,18 +213,18 @@ export async function getEditableContentDetail(slug: string) {
 
 export type UpdateContentResult =
   | {
-      success: true;
-      data: {
-        id: number;
-        slug: string;
-        title: string;
-        latestRevision: number | null;
-      };
-    }
-  | {
-      success: false;
-      error: string;
+    success: true;
+    data: {
+      id: number;
+      slug: string;
+      title: string;
+      latestRevision: number | null;
     };
+  }
+  | {
+    success: false;
+    error: string;
+  };
 
 export async function updateContent(
   editor: EditorContext,
@@ -238,7 +238,7 @@ export async function updateContent(
   if (!current) {
     return {
       success: false,
-      error: '対象の記事が見つかりません',
+      error: '対象の項目が見つかりません',
     };
   }
 
@@ -297,17 +297,17 @@ type ActorOnlyEditor = Extract<EditorContext, { type: 'actor' }>;
 
 export type DeleteContentResult =
   | {
-      success: true;
-      data: {
-        id: number;
-        slug: string;
-        title: string;
-      };
-    }
-  | {
-      success: false;
-      error: string;
+    success: true;
+    data: {
+      id: number;
+      slug: string;
+      title: string;
     };
+  }
+  | {
+    success: false;
+    error: string;
+  };
 
 export async function deleteContent(
   editor: ActorOnlyEditor,
@@ -316,7 +316,7 @@ export async function deleteContent(
   if (editor.role !== 'owner' && editor.role !== 'admin') {
     return {
       success: false,
-      error: '記事削除権限がありません',
+      error: '項目削除権限がありません',
     };
   }
 
@@ -325,7 +325,7 @@ export async function deleteContent(
   if (!deleted) {
     return {
       success: false,
-      error: '対象の記事が見つかりません',
+      error: '対象の項目が見つかりません',
     };
   }
 

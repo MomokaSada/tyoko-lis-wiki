@@ -34,8 +34,8 @@ export function PostShareActions({ title }: PostShareActionsProps) {
   return (
     <div className="mt-12 pt-8 border-t border-stone-100">
       <div className="flex flex-col items-center gap-6">
-        <p className="text-stone-500 text-sm font-bold tracking-wider">この記事をシェアする</p>
-        
+        <p className="text-stone-500 text-sm font-bold tracking-wider">この項目をシェアする</p>
+
         <div className="flex items-center gap-4">
           {/* X (Twitter) */}
           <a
@@ -77,11 +77,10 @@ export function PostShareActions({ title }: PostShareActionsProps) {
           {/* URL Copy */}
           <button
             onClick={handleCopy}
-            className={`w-12 h-12 flex items-center justify-center rounded-full border-2 transition-all shadow-sm ${
-              copied 
-                ? 'bg-green-50 border-green-500 text-green-500' 
+            className={`w-12 h-12 flex items-center justify-center rounded-full border-2 transition-all shadow-sm ${copied
+                ? 'bg-green-50 border-green-500 text-green-500'
                 : 'bg-white border-stone-200 text-stone-600 hover:border-stone-400'
-            }`}
+              }`}
             aria-label="URLをコピー"
           >
             {copied ? <Check size={20} /> : <Link2 size={20} />}

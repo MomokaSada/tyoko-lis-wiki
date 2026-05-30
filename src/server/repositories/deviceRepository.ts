@@ -1,6 +1,8 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, sql } from 'drizzle-orm';
+import { escapeLikePattern } from './modules/escapeLike';
 import { db } from '@/db';
-import { contentEditLogs, deviceSessions, devices, editSessions, users } from '@/db/schema';
+import { contentEditLogs, contents, deviceSessions, devices, editSessions, users } from '@/db/schema';
+import type { ListQuery, ListResult } from '@/types/listQuery';
 
 export async function findDeviceByIpAndBrowser(ip: string, browser: string) {
   const [device] = await db
@@ -90,47 +92,161 @@ export async function touchDeviceSessionRecord(id: number) {
   return record ?? null;
 }
 
+export type DeviceSessionUsageRecordRow = {
+  recordId: number;
+  sessionId: string;
+  sessionAuthorId: number | null;
+  sessionAuthorName: string | null;
+  maxEdits: number;
+  editsUsed: number;
+  sessionIsActive: boolean;
+  sessionStartAt: Date;
+  sessionEndAt: Date;
+  sessionCreatedAt: Date;
+  deviceId: number;
+  ip: string;
+  browser: string;
+  firstRecordedAt: Date;
+  lastRecordedAt: Date;
+  revisionCount: number;
+};
+
+const usageRecordQuery = {
+  recordId: deviceSessions.id,
+  sessionId: deviceSessions.sessionId,
+  sessionAuthorId: editSessions.authorId,
+  sessionAuthorName: users.name,
+  maxEdits: editSessions.maxEdits,
+  editsUsed: editSessions.editsUsed,
+  sessionIsActive: editSessions.isActive,
+  sessionStartAt: editSessions.startAt,
+  sessionEndAt: editSessions.endAt,
+  sessionCreatedAt: editSessions.createdAt,
+  deviceId: devices.id,
+  ip: devices.ip,
+  browser: devices.browser,
+  firstRecordedAt: deviceSessions.createdAt,
+  lastRecordedAt: deviceSessions.updatedAt,
+  revisionCount: sql<number>`count(${contentEditLogs.id})`,
+};
+
+const usageRecordGroupBy = [
+  deviceSessions.id,
+  deviceSessions.sessionId,
+  deviceSessions.createdAt,
+  deviceSessions.updatedAt,
+  editSessions.authorId,
+  editSessions.maxEdits,
+  editSessions.editsUsed,
+  editSessions.isActive,
+  editSessions.startAt,
+  editSessions.endAt,
+  editSessions.createdAt,
+  users.name,
+  devices.id,
+  devices.ip,
+  devices.browser,
+];
+
 export async function listDeviceSessionUsageRecords() {
   return db
-    .select({
-      recordId: deviceSessions.id,
-      sessionId: deviceSessions.sessionId,
-      sessionAuthorId: editSessions.authorId,
-      sessionAuthorName: users.name,
-      maxEdits: editSessions.maxEdits,
-      editsUsed: editSessions.editsUsed,
-      sessionIsActive: editSessions.isActive,
-      sessionStartAt: editSessions.startAt,
-      sessionEndAt: editSessions.endAt,
-      sessionCreatedAt: editSessions.createdAt,
-      deviceId: devices.id,
-      ip: devices.ip,
-      browser: devices.browser,
-      firstRecordedAt: deviceSessions.createdAt,
-      lastRecordedAt: deviceSessions.updatedAt,
-      revisionCount: sql<number>`count(${contentEditLogs.id})`,
-    })
+    .select(usageRecordQuery)
     .from(deviceSessions)
     .innerJoin(devices, eq(deviceSessions.deviceId, devices.id))
     .innerJoin(editSessions, eq(deviceSessions.sessionId, editSessions.uuid))
     .leftJoin(users, eq(editSessions.authorId, users.id))
     .leftJoin(contentEditLogs, eq(contentEditLogs.deviceSessionId, deviceSessions.id))
-    .groupBy(
-      deviceSessions.id,
-      deviceSessions.sessionId,
-      deviceSessions.createdAt,
-      deviceSessions.updatedAt,
-      editSessions.authorId,
-      editSessions.maxEdits,
-      editSessions.editsUsed,
-      editSessions.isActive,
-      editSessions.startAt,
-      editSessions.endAt,
-      editSessions.createdAt,
-      users.name,
-      devices.id,
-      devices.ip,
-      devices.browser,
-    )
+    .groupBy(...usageRecordGroupBy)
     .orderBy(desc(deviceSessions.updatedAt), desc(deviceSessions.createdAt));
+}
+
+export async function listDeviceSessionUsageRecordsPaginated(
+  query?: ListQuery<'updatedAt' | 'editsUsed'>,
+): Promise<ListResult<DeviceSessionUsageRecordRow>> {
+  const page = query?.page ?? 1;
+  const limit = query?.limit ?? 20;
+  const offset = (page - 1) * limit;
+
+  const conditions = [];
+
+  if (query?.searchQuery) {
+    const escaped = escapeLikePattern(query.searchQuery);
+    conditions.push(
+      ilike(deviceSessions.sessionId, `%${escaped}%`),
+    );
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const orderByColumn = query?.sortBy === 'editsUsed'
+    ? editSessions.editsUsed
+    : deviceSessions.updatedAt;
+  const orderByDir = query?.sortOrder === 'asc' ? asc : desc;
+
+  const rows = await db
+    .select(usageRecordQuery)
+    .from(deviceSessions)
+    .innerJoin(devices, eq(deviceSessions.deviceId, devices.id))
+    .innerJoin(editSessions, eq(deviceSessions.sessionId, editSessions.uuid))
+    .leftJoin(users, eq(editSessions.authorId, users.id))
+    .leftJoin(contentEditLogs, eq(contentEditLogs.deviceSessionId, deviceSessions.id))
+    .where(where)
+    .groupBy(...usageRecordGroupBy)
+    .orderBy(orderByDir(orderByColumn))
+    .limit(limit)
+    .offset(offset);
+
+  // Count query needs a subquery since it has GROUP BY
+  const countSubquery = db
+    .select({ id: deviceSessions.id })
+    .from(deviceSessions)
+    .innerJoin(devices, eq(deviceSessions.deviceId, devices.id))
+    .innerJoin(editSessions, eq(deviceSessions.sessionId, editSessions.uuid))
+    .leftJoin(users, eq(editSessions.authorId, users.id))
+    .where(where)
+    .as('count_sub');
+
+  const [countResult] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(countSubquery);
+
+  return {
+    items: rows,
+    totalCount: Number(countResult?.count ?? 0),
+  };
+}
+
+export async function getDeviceSessionUsageRecord(id: number) {
+  const [record] = await db
+    .select(usageRecordQuery)
+    .from(deviceSessions)
+    .innerJoin(devices, eq(deviceSessions.deviceId, devices.id))
+    .innerJoin(editSessions, eq(deviceSessions.sessionId, editSessions.uuid))
+    .leftJoin(users, eq(editSessions.authorId, users.id))
+    .leftJoin(contentEditLogs, eq(contentEditLogs.deviceSessionId, deviceSessions.id))
+    .where(eq(deviceSessions.id, id))
+    .groupBy(...usageRecordGroupBy)
+    .limit(1);
+
+  return record ?? null;
+}
+
+export async function getDeviceSessionEditLogs(deviceSessionId: number) {
+  return db
+    .select({
+      id: contentEditLogs.id,
+      contentId: contentEditLogs.contentId,
+      slug: contents.slug,
+      revisionNumber: contentEditLogs.revisionNumber,
+      type: contentEditLogs.type,
+      title: contentEditLogs.title,
+      thumbnail: contentEditLogs.thumbnail,
+      tagChanged: contentEditLogs.tagChanged,
+      categoryChanged: contentEditLogs.categoryChanged,
+      createdAt: contentEditLogs.createdAt,
+    })
+    .from(contentEditLogs)
+    .innerJoin(contents, eq(contentEditLogs.contentId, contents.id))
+    .where(eq(contentEditLogs.deviceSessionId, deviceSessionId))
+    .orderBy(desc(contentEditLogs.createdAt));
 }

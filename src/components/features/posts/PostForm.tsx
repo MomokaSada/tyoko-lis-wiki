@@ -6,7 +6,10 @@ import {
   updateContentAction,
   type ContentActionState,
 } from '@/server/actions/contentActions';
-import { ImagePlus, Save, RefreshCw } from 'lucide-react';
+import {
+  ImagePlus, RefreshCw, Heading1, Link2, PenLine,
+  Image, Tag, Folder, Clock, Rocket, Globe, Trash2,
+} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { TagInput } from '@/components/ui/TagInput';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
@@ -14,6 +17,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ImageCropper } from '@/components/ui/ImageCropper';
 import { DeletePostForm } from '@/components/features/posts/DeletePostForm';
 import { slugify } from '@/lib/slug-utils';
+import { getCategoryPath } from '@/lib/clientCategoryUtils';
 
 const BlockEditor = dynamic(() => import('@/components/editor/BlockEditor'), { ssr: false, loading: () => <p>エディタを読み込み中...</p> });
 
@@ -42,7 +46,6 @@ const initialState: ContentActionState = {
 type CategoryOption = {
   id: number;
   name: string;
-  label?: string;
   parentId: number | null;
 };
 
@@ -197,97 +200,220 @@ export function PostForm({
   }
 
   return (
-    <form action={action} className="space-y-6">
-      <input type="hidden" name="session" value={sessionToken ?? ''} />
-      {isEdit && <input type="hidden" name="contentId" value={content.id} />}
-      <input type="hidden" name="thumbnail" value={removeThumbnail ? '' : thumbnailUrl} />
-
-      {/* === メインエリア: タイトル + スラッグ === */}
-      <div className="bg-white border border-stone-200 rounded-2xl p-6 space-y-6">
-        <label className="block space-y-2">
-          <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">タイトル</span>
-          <input
-            name="title"
-            type="text"
-            required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full text-3xl font-black text-stone-900 placeholder:text-stone-300 border-none bg-transparent focus:ring-0 px-0 focus:outline-none"
-            placeholder="記事のタイトルを入力..."
+    <>
+      {/* 画像トリミングモーダル（フォームの外＝画面全体に固定） */}
+      <Modal
+        isOpen={isCropperOpen}
+        onClose={() => setIsCropperOpen(false)}
+        title="画像をトリミング"
+        maxWidth="max-w-2xl"
+      >
+        {imageToCrop && (
+          <ImageCropper
+            image={imageToCrop}
+            onCropComplete={handleCropComplete}
+            onCancel={() => setIsCropperOpen(false)}
           />
-          {state.fieldErrors?.title && (
-            <p className="text-[10px] font-bold text-red-500 ml-1">{state.fieldErrors.title}</p>
-          )}
-        </label>
+        )}
+      </Modal>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-stone-500 uppercase tracking-wider">スラッグ (URL)</span>
-            {!isEdit && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSlug(slugify(title));
-                  setIsSlugManuallyEdited(false);
-                }}
-                className="text-[10px] font-bold text-stone-400 hover:text-amber-600 transition-colors flex items-center gap-1 group"
-              >
-                <RefreshCw className="w-3 h-3 group-hover:rotate-180 transition-transform duration-500" />
-                タイトルから生成
-              </button>
-            )}
-          </div>
-          {isEdit ? (
+      <form action={action} className="space-y-8">
+        <input type="hidden" name="session" value={sessionToken ?? ''} />
+        {isEdit && <input type="hidden" name="contentId" value={content.id} />}
+        <input type="hidden" name="thumbnail" value={removeThumbnail ? '' : thumbnailUrl} />
+
+        {/* ============================================
+            2カラムレイアウト（デスクトップ）
+            ============================================ */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 items-start">
+
+          {/* ──── LEFT COLUMN ──── */}
+          <div className="space-y-8 min-w-0">
+
+            {/* ── タイトル + スラッグ カード ── */}
+            <section className="bg-white border border-stone-200 rounded-2xl p-6 lg:p-8 space-y-6 transition-all duration-200">
+            {/* タイトル */}
             <div className="space-y-2">
-              <div className="w-full font-mono text-sm text-stone-400 bg-stone-100 border border-stone-200 rounded-lg px-3 py-2 font-medium cursor-not-allowed">
-                {slug}
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-2">
+                <Heading1 size={14} className="text-stone-400" />
+                <span>タイトル</span>
               </div>
-              <input type="hidden" name="slug" value={slug} />
-              <p className="text-[10px] font-bold text-amber-600 flex items-center gap-1">
-                <span className="text-amber-500">⚠</span> 公開後のスラッグ変更はできません。新規作成時にのみ設定可能です。
-              </p>
-              {state.fieldErrors?.slug && (
-                <p className="text-[10px] font-bold text-red-500 ml-1">{state.fieldErrors.slug}</p>
-              )}
-            </div>
-          ) : (
-            <>
               <input
-                name="slug"
+                name="title"
                 type="text"
                 required
-                value={slug}
-                onChange={(e) => {
-                  setSlug(e.target.value);
-                  setIsSlugManuallyEdited(true);
-                }}
-                className="w-full font-mono text-sm text-blue-600 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all font-medium"
-                placeholder="スラッグを入力"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full text-2xl lg:text-3xl font-black text-stone-900 placeholder:text-stone-300 border-none bg-transparent focus:ring-0 px-0 focus:outline-none transition-colors"
+                placeholder="項目のタイトルを入力..."
               />
-              {!isSlugManuallyEdited && title && (
-                <p className="text-[10px] text-stone-400 font-bold ml-1 animate-pulse">✨ タイトルに合わせて自動更新中</p>
+              {state.fieldErrors?.title && (
+                <p className="text-[10px] font-bold text-red-500 ml-1">{state.fieldErrors.title}</p>
               )}
-              {state.fieldErrors?.slug && (
-                <p className="text-[10px] font-bold text-red-500 ml-1">{state.fieldErrors.slug}</p>
-              )}
-            </>
-          )}
-        </div>
-      </div>
+            </div>
 
-      {/* === メタデータエリア: サムネイル / タグ / カテゴリ / 公開設定 === */}
-      <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 space-y-5">
-        <div>
-          <span className="text-xs font-bold text-stone-500 uppercase tracking-wider block mb-3">サムネイル画像</span>
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            <div className="relative w-full max-w-md aspect-video rounded-xl border border-stone-200 overflow-hidden shadow-sm bg-stone-50 group">
-              <ThumbnailImage
-                src={(!removeThumbnail && (localPreviewUrl || getPublicThumbnailUrl(thumbnailUrl))) ? (localPreviewUrl || getPublicThumbnailUrl(thumbnailUrl) || '/images/no-image.png') : '/images/no-image.png'}
-                alt="Thumbnail preview"
-                className={`w-full h-full object-cover transition-all duration-300 ${isUploadingThumbnail ? 'blur-sm scale-105' : ''}`}
-              />
+            {/* スラッグ */}
+            <div className="pt-5 border-t border-stone-100 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-stone-500 uppercase tracking-wider">
+                  <Link2 size={12} className="text-stone-400" />
+                  <span>スラッグ (URL)</span>
+                </div>
+                {!isEdit && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSlug(slugify(title));
+                      setIsSlugManuallyEdited(false);
+                    }}
+                    className="text-[10px] font-bold text-stone-400 hover:text-amber-600 transition-colors flex items-center gap-1 group"
+                  >
+                    <RefreshCw className="w-3 h-3 group-hover:rotate-180 transition-transform duration-500" />
+                    タイトルから生成
+                  </button>
+                )}
+              </div>
+              {isEdit ? (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-stone-400 font-medium shrink-0">/posts/</span>
+                    <div className="flex-1 font-mono text-sm text-stone-400 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 font-medium cursor-not-allowed truncate">
+                      {slug}
+                    </div>
+                  </div>
+                  <input type="hidden" name="slug" value={slug} />
+                  <p className="text-[10px] font-bold text-amber-600 flex items-center gap-1">
+                    <span className="text-amber-500">⚠</span> 公開後のスラッグ変更はできません。新規作成時にのみ設定可能です。
+                  </p>
+                  {state.fieldErrors?.slug && (
+                    <p className="text-[10px] font-bold text-red-500 ml-1">{state.fieldErrors.slug}</p>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-stone-400 font-medium shrink-0">/posts/</span>
+                    <input
+                      name="slug"
+                      type="text"
+                      required
+                      value={slug}
+                      onChange={(e) => {
+                        setSlug(e.target.value);
+                        setIsSlugManuallyEdited(true);
+                      }}
+                      className="flex-1 font-mono text-sm text-blue-600 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all font-medium"
+                      placeholder="url-slug-here"
+                    />
+                  </div>
+                  {!isSlugManuallyEdited && title && (
+                    <p className="text-[10px] text-stone-400 font-bold ml-1">✨ タイトルに合わせて自動更新中</p>
+                  )}
+                  {state.fieldErrors?.slug && (
+                    <p className="text-[10px] font-bold text-red-500 ml-1">{state.fieldErrors.slug}</p>
+                  )}
+                  <p className="text-[10px] text-stone-400 flex items-center gap-1">
+                    <span className="text-stone-300">ℹ</span> スラッグはURLに使用されます。公開後は変更できません。
+                  </p>
+                </>
+              )}
+            </div>
+          </section>
+
+          {/* ── 本文エディタ カード ── */}
+          <section className="bg-white border border-stone-200 rounded-2xl p-6 lg:p-8 transition-all duration-200">
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-4">
+              <PenLine size={14} className="text-stone-400" />
+              <span>本文</span>
+            </div>
+            <div className="-mx-2">
+              <BlockEditor initialMarkdown={content?.content ?? ''} name="content" />
+            </div>
+            {state.fieldErrors?.content && (
+              <p className="text-[10px] font-bold text-red-500 mt-3">{state.fieldErrors.content}</p>
+            )}
+          </section>
+
+          {/* ── デスクトップ用: 最終保存表示（モバイルでは非表示） ── */}
+          <div className="hidden lg:flex items-center justify-between">
+            <p className="text-xs text-stone-400 flex items-center gap-1.5">
+              <Clock size={12} className="text-stone-300" />
+              最終保存: 未保存
+            </p>
+          </div>
+        </div>
+
+        {/* ──── RIGHT COLUMN: サイドバー ──── */}
+        <div className="space-y-6 lg:sticky lg:top-28">
+
+          {/* ── 公開設定 カード ── */}
+          <div className="bg-gradient-to-br from-stone-900 to-stone-800 rounded-2xl p-5 animate-fade-up" style={{ animationDelay: '0.05s' }}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1">
+                <p className="font-bold text-sm text-white flex items-center gap-1.5">
+                  <Globe size={14} />
+                  公開する
+                </p>
+                <p className="text-[10px] text-stone-400 mt-0.5">オフにすると下書きになります</p>
+              </div>
+              {canPublish ? (
+                <label className="form-switch">
+                  <input name="isPublished" type="checkbox" defaultChecked={isEdit ? content.isPublished : true} />
+                  <span className="slider"></span>
+                </label>
+              ) : isEdit ? (
+                <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-md whitespace-nowrap ${content?.isPublished
+                  ? 'bg-white/10 text-stone-300 border border-stone-600'
+                  : 'bg-stone-800 text-stone-400 border border-stone-700'
+                  }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${content?.isPublished ? 'bg-amber-500' : 'bg-stone-400'}`} />
+                  {content?.isPublished ? '公開中' : '下書き'}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-md bg-white/10 text-stone-300 border border-stone-600">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  公開
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* ── サムネイル画像 カード ── */}
+          <section className="bg-white border border-stone-200 rounded-2xl p-5 transition-all duration-200 animate-fade-up" style={{ animationDelay: '0.1s' }}>
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-3">
+              <Image size={14} className="text-stone-400" />
+              <span>サムネイル画像</span>
+            </div>
+
+            <div className="thumbnail-group relative aspect-video rounded-xl border-2 border-dashed border-stone-300 overflow-hidden cursor-pointer bg-stone-50 transition-all duration-200 hover:border-amber-400 hover:bg-amber-50/30"
+              onClick={() => document.getElementById('thumb-input')?.click()}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') document.getElementById('thumb-input')?.click(); }}
+            >
+              {(!removeThumbnail && (localPreviewUrl || getPublicThumbnailUrl(thumbnailUrl))) ? (
+                <>
+                  <ThumbnailImage
+                    src={localPreviewUrl || getPublicThumbnailUrl(thumbnailUrl) || '/images/no-image.png'}
+                    alt="Thumbnail preview"
+                    className={`w-full h-full object-cover transition-all duration-300 ${isUploadingThumbnail ? 'blur-sm scale-105' : ''}`}
+                  />
+                  <div className="thumbnail-overlay">
+                    <span className="inline-flex items-center gap-1.5 px-4 py-2 bg-white rounded-lg text-xs font-bold text-stone-700 shadow-sm">
+                      <ImagePlus size={14} />
+                      変更
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center w-full h-full p-4">
+                  <Image size={32} className="text-stone-300 mb-2" />
+                  <p className="text-xs font-bold text-stone-400 text-center">クリックして画像を選択</p>
+                  <p className="text-[10px] text-stone-300 mt-1 text-center">5MB以下のPNG/JPEG/WEBP</p>
+                </div>
+              )}
               {isUploadingThumbnail && (
-                <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex items-center justify-center z-10">
+                <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex items-center justify-center z-10 rounded-xl">
                   <div className="flex flex-col items-center gap-2">
                     <RefreshCw className="w-6 h-6 text-amber-500 animate-spin" />
                     <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">アップロード中...</span>
@@ -296,59 +422,48 @@ export function PostForm({
               )}
             </div>
 
-            <div className="space-y-3 flex-1">
-              <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-white border border-stone-200 text-stone-600 rounded-lg hover:bg-stone-100 transition-colors text-xs font-bold shadow-sm">
-                <ImagePlus className="w-3.5 h-3.5" />
-                {thumbnailUrl && !removeThumbnail ? '画像を変更' : '画像をアップロード'}
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/gif"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-              </label>
-
-              {thumbnailUrl && !removeThumbnail && (
-                <div className="flex items-center gap-2">
-                  <input
-                    id="removeThumbnail"
-                    name="removeThumbnail"
-                    type="checkbox"
-                    checked={removeThumbnail}
-                    onChange={(event) => setRemoveThumbnail(event.currentTarget.checked)}
-                    className="w-4 h-4 border-stone-300 rounded text-amber-600 focus:ring-amber-500"
-                  />
-                  <label htmlFor="removeThumbnail" className="text-sm font-medium text-stone-600">
-                    サムネイルを削除する
-                  </label>
-                </div>
-              )}
-
-              {thumbnailError && <p className="text-xs font-bold text-red-600">{thumbnailError}</p>}
-              <p className="text-xs text-stone-400 font-medium">5MB以下のPNG/JPEG/WEBP等推奨。16:9でトリミングされます。</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Cropper Modal */}
-        <Modal
-          isOpen={isCropperOpen}
-          onClose={() => setIsCropperOpen(false)}
-          title="画像をトリミング"
-          maxWidth="max-w-2xl"
-        >
-          {imageToCrop && (
-            <ImageCropper
-              image={imageToCrop}
-              onCropComplete={handleCropComplete}
-              onCancel={() => setIsCropperOpen(false)}
+            <input
+              id="thumb-input"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onChange={handleFileSelect}
+              className="hidden"
             />
-          )}
-        </Modal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-stone-200">
-          <fieldset className="space-y-3">
-            <legend className="text-xs font-bold text-stone-500 uppercase tracking-wider block mb-2">タグ</legend>
+            {thumbnailUrl && !removeThumbnail && (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setRemoveThumbnail(true)}
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 transition-colors active:scale-[0.98]"
+                >
+                  <Trash2 size={13} />
+                  サムネイルを削除
+                </button>
+              </div>
+            )}
+            {removeThumbnail && (
+              <div className="mt-3 flex items-center gap-2 text-xs text-amber-600 font-medium bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                <span>削除予定</span>
+                <button
+                  type="button"
+                  onClick={() => setRemoveThumbnail(false)}
+                  className="ml-auto text-stone-500 hover:text-stone-800 underline transition-colors"
+                >
+                  元に戻す
+                </button>
+              </div>
+            )}
+
+            {thumbnailError && <p className="text-xs font-bold text-red-600 mt-2">{thumbnailError}</p>}
+          </section>
+
+          {/* ── タグ カード ── */}
+          <section className="bg-white border border-stone-200 rounded-2xl p-5 transition-all duration-200 animate-fade-up" style={{ animationDelay: '0.15s' }}>
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-3">
+              <Tag size={14} className="text-stone-400" />
+              <span>タグ</span>
+            </div>
             <TagInput
               availableItems={availableTags}
               initialSelectedItems={isEdit ? content.tagIds.map(id => {
@@ -357,22 +472,26 @@ export function PostForm({
               }).filter((item): item is { id: number, name: string } => !!item) : []}
               nameForExisting="tagIds"
               nameForNew="newTags"
-              placeholder="タグを検索または新規入力して追加..."
+              placeholder="タグを検索または追加..."
               allowMultipleNew={true}
             />
-          </fieldset>
+          </section>
 
-          <fieldset className="space-y-3">
-            <legend className="text-xs font-bold text-stone-500 uppercase tracking-wider block mb-2">カテゴリ</legend>
+          {/* ── カテゴリ カード ── */}
+          <section className="bg-white border border-stone-200 rounded-2xl p-5 transition-all duration-200 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center gap-1.5 text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-3">
+              <Folder size={14} className="text-stone-400" />
+              <span>カテゴリ</span>
+            </div>
             <TagInput
               availableItems={categoriesWithDepth}
               initialSelectedItems={isEdit ? content.categoryIds.map(id => {
                 const cat = categoriesWithDepth.find(c => c.id === id);
-                return cat ? { id: cat.id, name: cat.label ?? cat.name } : null;
+                return cat ? { id: cat.id, name: cat.name } : null;
               }).filter((item): item is { id: number, name: string } => !!item) : []}
               nameForExisting="categoryIds"
               nameForNew="newCategoryName"
-              placeholder="カテゴリを検索または新規入力..."
+              placeholder="カテゴリを検索または入力..."
               allowMultipleNew={false}
               onNewItemChange={setHasNewCategory}
             />
@@ -380,12 +499,12 @@ export function PostForm({
             {/* 新規カテゴリ作成時のみ親選択ツリーを表示 */}
             <input type="hidden" name="newCategoryParentId" value={selectedCategoryParentId ?? ''} />
             {hasNewCategory && (
-              <div className="mt-3 bg-amber-50/30 border border-amber-100 rounded-xl p-3">
+              <div className="mt-3 bg-amber-50/30 border border-amber-100 rounded-xl p-3 animate-fade-up">
                 <p className="text-[10px] font-bold text-amber-700 mb-2 flex items-center gap-1.5">
                   <span className="text-xs">✚</span>
                   新規カテゴリの親を選択（省略可）:
                 </p>
-                <div className="max-h-40 overflow-y-auto bg-white border border-stone-200 rounded-lg p-1 space-y-0.5 custom-scrollbar shadow-sm">
+                <div className="max-h-40 overflow-y-auto bg-white border border-stone-200 rounded-lg p-1 space-y-0.5 shadow-sm">
                   <button
                     type="button"
                     onClick={() => setSelectedCategoryParentId(null)}
@@ -404,9 +523,7 @@ export function PostForm({
                   </button>
                   {categoriesWithDepth.map((cat) => {
                     const depth = cat.depth ?? 0;
-                    const parentPath = cat.label && cat.name
-                      ? cat.label.split(' > ').slice(0, -1).join(' > ')
-                      : '';
+                    const parentPath = getCategoryPath(cat.id, availableCategories).slice(0, -1).join(' > ');
                     const isSelected = selectedCategoryParentId === cat.id;
                     return (
                       <button
@@ -445,75 +562,57 @@ export function PostForm({
                 </div>
               </div>
             )}
-          </fieldset>
-        </div>
+          </section>
 
-        <div className="pt-6 border-t border-stone-200 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {canPublish ? (
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input name="isPublished" type="checkbox" defaultChecked={isEdit ? content.isPublished : true} className="sr-only peer" />
-                <div className="w-11 h-6 bg-stone-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
-                <span className="ml-3 text-sm font-extrabold text-stone-800 peer-checked:text-amber-700">記事を公開状態にする</span>
-              </label>
-            ) : isEdit ? (
-              <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md ${content?.isPublished
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-stone-100 text-stone-500 border border-stone-200'
-                }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${content?.isPublished ? 'bg-emerald-500' : 'bg-stone-400'
-                  }`} />
-                {content?.isPublished ? '公開中' : '下書き'}
-                <span className="text-[10px] opacity-70">（変更不可）</span>
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 bg-stone-100 text-stone-500 border border-stone-200 rounded-md">
-                <span className="w-1.5 h-1.5 bg-stone-400 rounded-full" />
-                下書き
-                <span className="text-[10px] opacity-70">（変更不可）</span>
-              </span>
-            )}
+          {/* ── アクションボタン カード ── */}
+          <div className="bg-gradient-to-br from-stone-900 to-stone-800 rounded-2xl p-5 animate-fade-up" style={{ animationDelay: '0.25s' }}>
+            <button
+              type="submit"
+              disabled={isPending || isUploadingThumbnail}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition-all duration-200 shadow-lg shadow-amber-500/20 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 text-sm"
+            >
+              {isPending || isUploadingThumbnail ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  {isUploadingThumbnail ? '画像アップロード中...' : '保存中...'}
+                </>
+              ) : (
+                <>
+                  <Rocket size={16} />
+                  {isEdit ? '項目を更新する' : '公開する'}
+                </>
+              )}
+            </button>
+            <p className="text-[10px] text-stone-400 text-center mt-3">
+              公開すると誰もが閲覧できるようになります
+            </p>
           </div>
+
         </div>
       </div>
 
-      {/* === メインコンテンツ: 本文 === */}
-      <div className="mt-8">
-        <div className="">
-          <BlockEditor initialMarkdown={content?.content ?? ''} name="content" />
-        </div>
-        {state.fieldErrors?.content && (
-          <p className="text-[10px] font-bold text-red-500 mt-2">{state.fieldErrors.content}</p>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between pt-4">
-        {isEdit && canPublish && content && (
+      {/* ── 削除（管理者/オーナー、編集モードのみ） ── */}
+      {isEdit && canPublish && content && (
+        <div className="flex justify-center pt-4 border-t border-stone-200 animate-fade-up">
           <DeletePostForm contentId={content.id} />
-        )}
-        <div className="flex-1 flex justify-end">
-          <button
-            type="submit"
-            disabled={isPending || isUploadingThumbnail}
-            className="bg-stone-900 text-white font-bold px-6 py-2.5 rounded-xl hover:bg-stone-800 transition-colors shadow-lg shadow-stone-900/10 active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:translate-y-0 flex items-center gap-2 text-sm"
-          >
-            <Save className="w-4 h-4" />
-            {isUploadingThumbnail ? '画像アップロード中...' : isPending ? '保存中...' : (isEdit ? '記事を更新する' : '記事を作成する')}
-          </button>
         </div>
-      </div>
+      )}
 
+      {/* ============================================
+          エラー/成功 バナー
+          ============================================ */}
       {(state.error || state.fieldErrors?._general) && (
-        <div className="bg-red-50 text-red-700 border border-red-200 p-4 rounded-xl font-bold text-sm">
+        <div className="bg-red-50 text-red-700 border border-red-200 p-4 rounded-xl font-bold text-sm animate-fade-up">
           {state.fieldErrors?._general ?? state.error}
         </div>
       )}
 
       {state.slug && (
-        <div className="bg-green-50 text-green-700 border border-green-200 p-4 rounded-xl font-bold text-sm">
-          ✓ {isEdit ? '更新完了' : '作成完了'}: {state.title} (Slug: {state.slug})
+        <div className="bg-green-50 text-green-700 border border-green-200 p-4 rounded-xl font-bold text-sm animate-fade-up">
+          ✓ {isEdit ? '更新完了' : '作成完了'}: {state.title}
         </div>
       )}
     </form>
+    </>
   );
 }

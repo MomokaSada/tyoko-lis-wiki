@@ -48,6 +48,18 @@ export const RATE_LIMIT_RULES = {
         windowMs: 60 * 60 * 1000,
         maxAttempts: 10,
     },
+    deactivateEditLink: {
+        windowMs: 60 * 60 * 1000,
+        maxAttempts: 30,
+    },
+    deleteCategory: {
+        windowMs: 60 * 60 * 1000,
+        maxAttempts: 20,
+    },
+    banAccount: {
+        windowMs: 60 * 60 * 1000,
+        maxAttempts: 20,
+    },
 } as const satisfies Record<string, RateLimitRuleConfig>;
 
 export type RateLimitAction = keyof typeof RATE_LIMIT_RULES;

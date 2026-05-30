@@ -27,7 +27,8 @@ export function RegisterForm({ sessionToken }: { sessionToken: string }) {
           required
           minLength={3}
           maxLength={32}
-          placeholder="Wiki 太郎"
+          placeholder="ユーザー名を入力
+          "
           className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all font-medium text-stone-900"
         />
       </div>
@@ -46,7 +47,7 @@ export function RegisterForm({ sessionToken }: { sessionToken: string }) {
           type="password"
           required
           minLength={8}
-          placeholder="••••••••"
+          placeholder="パスワードを入力"
           className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all font-medium text-stone-900"
         />
       </div>
@@ -61,7 +62,7 @@ export function RegisterForm({ sessionToken }: { sessionToken: string }) {
           type="password"
           required
           minLength={8}
-          placeholder="••••••••"
+          placeholder="パスワードを再度入力"
           className="w-full px-4 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all font-medium text-stone-900"
         />
       </div>

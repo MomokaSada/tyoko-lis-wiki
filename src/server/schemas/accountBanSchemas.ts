@@ -5,3 +5,5 @@ export const banAccountSchema = z.object({
 });
 
 export type BanAccountInput = z.infer<typeof banAccountSchema>;
+
+

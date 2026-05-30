@@ -6,7 +6,6 @@ import { X } from 'lucide-react';
 export type TagItem = {
   id: number;
   name: string;
-  label?: string;
   depth?: number; // 階層表示用の深さ（カテゴリのみ）
 };
 
@@ -52,8 +51,7 @@ export function TagInput({
   // 入力値に基づいてサジェストを生成
   const suggestions = inputValue.trim() ? availableItems.filter(
     (item) =>
-      (item.label?.toLowerCase().includes(inputValue.toLowerCase()) || 
-       item.name.toLowerCase().includes(inputValue.toLowerCase())) &&
+      item.name.toLowerCase().includes(inputValue.toLowerCase()) &&
       !selected.some((s) => s.id === item.id)
   ) : [];
 
@@ -63,11 +61,11 @@ export function TagInput({
     if (!trimmed) return;
 
     const preciseMatch = suggestions.find(
-      (s) => s.name.toLowerCase() === trimmed.toLowerCase() || s.label?.toLowerCase() === trimmed.toLowerCase()
+      (s) => s.name.toLowerCase() === trimmed.toLowerCase()
     );
 
     if (preciseMatch) {
-      addSelectedItem({ id: preciseMatch.id, name: preciseMatch.label ?? preciseMatch.name });
+      addSelectedItem({ id: preciseMatch.id, name: preciseMatch.name });
     } else {
       addSelectedItem({ name: trimmed });
     }
@@ -167,65 +165,20 @@ export function TagInput({
       </div>
 
       {isFocused && suggestions.length > 0 && (
-        <ul className="absolute z-20 w-full mt-1 bg-white border border-stone-300 rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar py-1">
-          {suggestions.map((item) => {
-            // ラベルからパスセグメントを抽出
-            const pathSegments = item.label && item.name
-              ? item.label.split(' > ')
-              : [item.name];
-            const selfName = item.name;
-            // selfName の位置を特定（最後の一致）
-            const selfIdx = pathSegments.lastIndexOf(selfName);
-            // 表示するパス（最大3セグメント＝自身＋2祖先）
-            const MAX_SEGMENTS = 3;
-            let displaySegments: string[];
-            let showEllipsis = false;
-            if (selfIdx <= 0 || pathSegments.length <= MAX_SEGMENTS) {
-              displaySegments = pathSegments;
-            } else {
-              // 深すぎる場合は末尾MAX_SEGMENTS個だけ表示し先頭に ... を付ける
-              const start = Math.max(0, selfIdx - MAX_SEGMENTS + 1);
-              if (start > 0) showEllipsis = true;
-              displaySegments = pathSegments.slice(start);
-            }
-            return (
-              <li
-                key={item.id}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  justSelectedRef.current = true;
-                  addSelectedItem({ id: item.id, name: item.label ?? item.name });
-                }}
-                className="cursor-pointer px-3 py-2.5 hover:bg-amber-50 transition-colors border-b last:border-0 border-stone-100"
-              >
-                <div className="flex items-center gap-0.5 flex-wrap min-w-0">
-                  {showEllipsis && (
-                    <span className="text-[11px] text-stone-400 font-medium shrink-0 mr-0.5">…</span>
-                  )}
-                  {displaySegments.map((seg, si) => {
-                    const isLast = si === displaySegments.length - 1;
-                    const isSelf = seg === selfName && isLast;
-                    return (
-                      <span key={si} className="inline-flex items-center gap-0.5 min-w-0">
-                        {si > 0 && (
-                          <span className="text-stone-300 mx-1 text-xs select-none shrink-0">›</span>
-                        )}
-                        <span
-                          className={`truncate ${
-                            isSelf
-                              ? 'text-sm font-bold text-stone-800'
-                              : 'text-[11px] font-medium text-stone-400'
-                          }`}
-                        >
-                          {seg}
-                        </span>
-                      </span>
-                    );
-                  })}
-                </div>
-              </li>
-            );
-          })}
+        <ul className="absolute z-[60] w-full mt-1 bg-white border border-stone-300 rounded-xl shadow-xl max-h-56 overflow-y-auto custom-scrollbar py-1">
+          {suggestions.map((item) => (
+            <li
+              key={item.id}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                justSelectedRef.current = true;
+                addSelectedItem({ id: item.id, name: item.name });
+              }}
+              className="cursor-pointer px-3 py-2.5 hover:bg-amber-50 transition-colors border-b last:border-0 border-stone-100"
+            >
+              <span className="text-sm font-bold text-stone-800">{item.name}</span>
+            </li>
+          ))}
         </ul>
       )}
     </div>

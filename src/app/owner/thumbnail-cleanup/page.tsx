@@ -1,68 +1,94 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
+import { getOrphanThumbnailStats } from '@/server/services/thumbnailService';
 import { OrphanThumbnailCleanupForm } from '../orphan-thumbnail-cleanup-form';
-import { ImageMinus, ShieldAlert } from 'lucide-react';
-import { OwnerLayout } from '@/components/layout/admin/OwnerLayout';
+import { ThumbnailStatsCard } from './thumbnail-stats-card';
+import { MobileActions } from '@/components/posts/MobileActions';
+import { headers } from 'next/headers';
+import { HEADER_USER_ROLE } from '@/lib/auth/constants';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+import Link from 'next/link';
+import { ImageMinus, AlertTriangle } from 'lucide-react';
+import type { ThumbnailScanResult } from '@/server/actions/thumbnailActions';
 
 export default async function ThumbnailCleanupPage() {
   const actor = await getCurrentActor();
   const isOwner = actor?.role === 'owner';
 
-  if (!isOwner) {
-    return (
-      <OwnerLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-3xl flex items-center gap-3 font-bold text-sm animate-in slide-in-from-top-2">
-            <ShieldAlert className="w-5 h-5 shrink-0" />
-            この機能は owner のみ利用できます。
-          </div>
-        </div>
-      </OwnerLayout>
-    );
+  let initialStats: ThumbnailScanResult = {
+    scannedCount: 0,
+    referencedCount: 0,
+    orphanCount: 0,
+    orphanSize: 0,
+    scannedAt: new Date().toISOString(),
+  };
+
+  if (isOwner && actor) {
+    const stats = await getOrphanThumbnailStats(actor);
+    if (stats.scannedAt) {
+      initialStats = {
+        scannedCount: stats.scannedCount,
+        referencedCount: stats.referencedCount,
+        orphanCount: stats.orphanCount,
+        orphanSize: stats.orphanSize,
+        scannedAt: stats.scannedAt.toISOString(),
+      };
+    }
   }
 
+  const headersList = await headers();
+  const userRole = headersList.get(HEADER_USER_ROLE);
+  const editor = await getCurrentEditor();
+  const hasEditSession = !!(editor && editor.type === 'session');
+
   return (
-    <OwnerLayout>
-      <div className="space-y-8 animate-in fade-in duration-500">
-        {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-stone-500 font-bold text-xs uppercase tracking-widest">
-              <ImageMinus size={14} />
-              <span>System Maintenance</span>
+    <>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8 text-stone-900">
+        {/* ページヘッダー */}
+        <div className="animate-float-in">
+          <div className="relative bg-white border border-stone-200 rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 overflow-hidden shadow-sm">
+            <div className="absolute -top-12 sm:-top-12 -left-12 sm:-left-12 w-28 sm:w-36 h-28 sm:h-36 bg-stone-100 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
+              <ImageMinus className="w-14 sm:w-16 h-14 sm:h-16 text-stone-400/30 ml-5 sm:ml-6 mt-5 sm:mt-6" />
             </div>
-            <h1 className="text-3xl font-black text-stone-900 tracking-tight">サムネイルクリーンアップ</h1>
+            <div className="absolute -right-8 sm:-right-10 -bottom-8 sm:-bottom-10 w-24 sm:w-28 h-24 sm:h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <div className="w-1 sm:w-1.5 h-6 sm:h-7 bg-stone-400 rounded-full shrink-0" />
+                <h1 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">サムネイルクリーンアップ</h1>
+              </div>
+              <p className="text-stone-500 text-sm pl-3 sm:pl-4">参照されていない（項目に関連付けられていない）サムネイル画像を削除し、ストレージを整理します。</p>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Description Card */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-stone-100 text-stone-600 flex items-center justify-center mb-4">
-                <ImageMinus size={24} />
-              </div>
-              <h2 className="text-lg font-black text-stone-800">ストレージの最適化</h2>
-              <p className="text-sm text-stone-500 leading-relaxed">
-                どの記事からもリンクされていない孤立したサムネイルファイルを検出し、一括削除することでストレージを最適化します。
-              </p>
-              <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl text-xs text-amber-800 font-medium">
-                ⚠️ この操作は取り消すことができません。慎重に実行してください。
-              </div>
-            </div>
+        {!isOwner ? (
+          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center gap-2 font-bold text-sm">
+            <AlertTriangle className="w-5 h-5" />
+            この機能は owner のみ利用できます。
           </div>
+        ) : (
+          <div className="space-y-6">
+            <ThumbnailStatsCard initialStats={initialStats} />
 
-          {/* Action Panel */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-2 h-8 bg-stone-400 rounded-full" />
-                <h2 className="text-lg font-black text-stone-800">クリーンアップ実行</h2>
-              </div>
+            <div className="bg-white border border-stone-200 rounded-2xl sm:rounded-[1.75rem] p-5 sm:p-8 shadow-sm">
+              <h2 className="text-base sm:text-lg font-bold text-stone-800 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-stone-100">クリーンアップ実行</h2>
               <OrphanThumbnailCleanupForm />
             </div>
           </div>
+        )}
+
+        <div className="pt-8">
+          <Link href="/owner" className="text-sm font-bold text-stone-500 hover:text-stone-800 transition-colors">
+            ← オーナー画面に戻る
+          </Link>
         </div>
       </div>
-    </OwnerLayout>
+
+      <MobileActions
+        userRole={userRole}
+        hasEditSession={hasEditSession}
+        hideShare={true}
+        hideProfile={true}
+      />
+    </>
   );
 }

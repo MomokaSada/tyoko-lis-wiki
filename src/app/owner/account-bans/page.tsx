@@ -2,118 +2,157 @@ import { BanButton, UnbanButton } from './ban-unban-buttons';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { formatDateTimeJst } from '@/lib/format/formatDateTime';
 import { getManageableAccounts } from '@/server/services/accountBanService';
-import { UserX, ShieldAlert } from 'lucide-react';
-import { OwnerLayout } from '@/components/layout/admin/OwnerLayout';
+import { MobileActions } from '@/components/posts/MobileActions';
+import { headers } from 'next/headers';
+import { HEADER_USER_ROLE } from '@/lib/auth/constants';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+import { parseListQuery } from '@/types/listQuery';
+import { DataTable } from '@/components/ui/DataTable';
+import type { Column } from '@/components/ui/DataTable';
+import Link from 'next/link';
+import { UserX, AlertTriangle } from 'lucide-react';
 
-export default async function AccountBansPage() {
+function getAvatarStyle(name: string) {
+  const colors = ['avatar-amber', 'avatar-emerald', 'avatar-blue', 'avatar-purple', 'avatar-stone'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = ((hash << 5) - hash) + name.charCodeAt(i);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+type ManageableAccount = {
+  id: number;
+  name: string;
+  isActive: boolean;
+  createdAt: Date;
+};
+
+export default async function AccountBansPage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const searchParams = await props.searchParams;
   const actor = await getCurrentActor();
   const isOwner = actor?.role === 'owner';
-  const accounts = actor ? await getManageableAccounts(actor) : [];
+  const query = parseListQuery(searchParams, ['name', 'createdAt', 'isActive'], 'name', 'asc');
+  const accountsResult = actor ? await getManageableAccounts(actor, query) : { items: [], totalCount: 0 };
+  const accounts = accountsResult.items as ManageableAccount[];
+  const totalCount = accountsResult.totalCount;
 
-  if (!isOwner) {
-    return (
-      <OwnerLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-3xl flex items-center gap-3 font-bold text-sm animate-in slide-in-from-top-2">
-            <ShieldAlert className="w-5 h-5 shrink-0" />
-            この機能は owner のみ利用できます。
+  const columns: Column<ManageableAccount>[] = [
+    // 1. メイン情報（左寄せ）
+    {
+      key: 'name',
+      label: 'アカウント',
+      sortable: true,
+      headerAlign: 'left',
+      cellAlign: 'left',
+      render: (_, account) => {
+        const initial = account.name.charAt(0).toUpperCase() + (account.name.charAt(1) || '').toLowerCase();
+        const avatarColor = getAvatarStyle(account.name);
+        return (
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className={`avatar ${avatarColor} shrink-0`}>{initial}</div>
+            <span className="font-bold text-stone-800 truncate max-w-[120px] sm:max-w-none">{account.name}</span>
           </div>
+        );
+      },
+    },
+    // 3. 横幅が予測できる要素（中央寄せ）
+    {
+      key: 'createdAt',
+      label: '登録日',
+      sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
+      cellClassName: 'text-sm text-stone-500',
+      render: (v) => formatDateTimeJst(v as Date).split(' ')[0],
+    },
+    // 4. ステータス（中央寄せ）
+    {
+      key: 'isActive',
+      label: 'ステータス',
+      sortable: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
+      render: (_, account) =>
+        account.isActive ? (
+          <span className="badge badge-stone"><span className="badge-dot" />アクティブ</span>
+        ) : (
+          <span className="badge badge-red"><span className="badge-dot" />BAN中</span>
+        ),
+    },
+    // 6. アクション（中央寄せ）
+    {
+      key: 'id',
+      label: '操作',
+      headerAlign: 'center',
+      cellAlign: 'center',
+      render: (_, account) => (
+        <div className="flex items-center justify-center gap-1">
+          {account.isActive ? <BanButton userId={account.id} /> : <UnbanButton userId={account.id} />}
         </div>
-      </OwnerLayout>
-    );
-  }
+      ),
+    },
+  ];
 
-  const bannedCount = accounts.filter(a => !a.isActive).length;
+  const headersList = await headers();
+  const userRole = headersList.get(HEADER_USER_ROLE);
+  const editor = await getCurrentEditor();
+  const hasEditSession = !!(editor && editor.type === 'session');
 
   return (
-    <OwnerLayout>
-      <div className="space-y-8 animate-in fade-in duration-500">
-        {/* Page Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-red-600 font-bold text-xs uppercase tracking-widest">
-              <UserX size={14} />
-              <span>User Security</span>
+    <>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 sm:space-y-8 text-stone-900">
+        {/* ページヘッダー */}
+        <div className="animate-float-in">
+          <div className="relative bg-white border border-stone-200 rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 overflow-hidden shadow-sm">
+            <div className="absolute -top-12 sm:-top-12 -left-12 sm:-left-12 w-28 sm:w-36 h-28 sm:h-36 bg-red-50 rounded-full flex items-center justify-center border-[8px] border-white/60 shadow-inner pointer-events-none">
+              <UserX className="w-14 sm:w-16 h-14 sm:h-16 text-red-400/30 ml-5 sm:ml-6 mt-5 sm:mt-6" />
             </div>
-            <h1 className="text-3xl font-black text-stone-900 tracking-tight">アカウントBAN管理</h1>
-          </div>
-        </div>
-
-        {/* Summary Panel */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center">
-              <UserX size={24} />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-stone-400 uppercase">Banned Users</p>
-              <p className="text-2xl font-black text-stone-900">{bannedCount}名</p>
-            </div>
-          </div>
-          <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-sm flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center">
-              <ShieldAlert size={24} />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-stone-400 uppercase">Active Users</p>
-              <p className="text-2xl font-black text-stone-900">{accounts.length - bannedCount}名</p>
+            <div className="absolute -right-8 sm:-right-10 -bottom-8 sm:-bottom-10 w-24 sm:w-28 h-24 sm:h-28 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <div className="w-1 sm:w-1.5 h-6 sm:h-7 bg-red-600 rounded-full shrink-0" />
+                <h1 className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">アカウントBAN管理</h1>
+              </div>
+              <p className="text-stone-500 text-sm pl-3 sm:pl-4">強制ログアウト・再ログイン抑止中のアカウント</p>
             </div>
           </div>
         </div>
 
-        {/* Data Table Panel */}
-        <div className="bg-white border border-stone-200 rounded-3xl overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-stone-100 flex items-center justify-between">
-            <h2 className="text-lg font-black text-stone-800">アカウント一覧</h2>
+        {!isOwner ? (
+          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center gap-2 font-bold text-sm">
+            <AlertTriangle className="w-5 h-5" />
+            この機能は owner のみ利用できます。
           </div>
-          
-          {accounts.length === 0 ? (
-            <div className="p-12 text-center text-stone-500 font-medium">
-              管理可能なアカウントはありません。
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-stone-50 text-stone-400 border-b border-stone-100 font-bold uppercase tracking-wider text-[10px]">
-                  <tr>
-                    <th className="py-4 px-6">Status</th>
-                    <th className="py-4 px-6">User Details</th>
-                    <th className="py-4 px-6">Created At</th>
-                    <th className="py-4 px-6 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-50">
-                  {accounts.map((account) => (
-                    <tr key={account.id} className="hover:bg-stone-50/50 transition-colors group">
-                      <td className="py-4 px-6">
-                        {account.isActive ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-bold text-[10px] uppercase tracking-wider"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> Active</span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-bold text-[10px] uppercase tracking-wider"><div className="w-1.5 h-1.5 rounded-full bg-red-500"></div> Banned</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-6">
-                        <div className="font-bold text-stone-800">{account.name}</div>
-                        <div className="text-[10px] text-stone-400 uppercase tracking-widest font-black">{account.type}</div>
-                      </td>
-                      <td className="py-4 px-6 text-xs font-medium text-stone-500">
-                        {formatDateTimeJst(account.createdAt)}
-                      </td>
-                      <td className="py-4 px-6 text-right">
-                        {account.isActive ? (
-                          <BanButton userId={account.id} />
-                        ) : (
-                          <UnbanButton userId={account.id} />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        ) : (
+          <DataTable
+              items={accounts}
+              query={query}
+              totalCount={totalCount}
+              columns={columns}
+              basePath="/owner/account-bans"
+              defaultSortBy="name"
+              defaultSortOrder="asc"
+              emptyMessage="BAN対象の（または管理可能な）アカウントはありません。"
+              searchPlaceholder="アカウントを検索..."
+            />
+        )}
+
+        <div className="pt-8">
+          <Link href="/owner" className="text-sm font-bold text-stone-500 hover:text-stone-800 transition-colors">
+            ← オーナー画面に戻る
+          </Link>
         </div>
       </div>
-    </OwnerLayout>
+
+      <MobileActions
+        userRole={userRole}
+        hasEditSession={hasEditSession}
+        hideShare={true}
+        hideProfile={true}
+      />
+    </>
   );
 }

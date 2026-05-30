@@ -39,14 +39,13 @@ export function ArticleProfile({
   isMobile = false,
 }: ArticleProfileProps) {
   return (
-    <div className={`bg-white overflow-hidden ${
-      isMobile 
-        ? 'rounded-none border-0' 
+    <div className={`bg-white overflow-hidden ${isMobile
+        ? 'rounded-none border-0'
         : 'border border-stone-200 rounded-[2rem] lg:rounded-4xl shadow-[0_4px_20px_rgba(0,0,0,0.03)] animate-in slide-in-from-right-4 duration-500 delay-300'
-    }`}>
+      }`}>
       {/* ダークヘッダー */}
       <div className="bg-[#1c1c1c] py-3 text-center border-b border-white/5">
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/90">記事プロフィール</span>
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/90">項目プロフィール</span>
       </div>
 
       {/* サムネイル (ヘッダー直下に隙間なく配置) */}

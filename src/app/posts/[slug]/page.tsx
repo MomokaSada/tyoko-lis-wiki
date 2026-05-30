@@ -79,7 +79,7 @@ export async function generateMetadata(
 
     if (!post) {
       return {
-        title: '記事が見つかりません | Tyokore Wiki',
+        title: '項目が見つかりません | Tyokore Wiki',
       };
     }
 
@@ -92,10 +92,10 @@ export async function generateMetadata(
 
     return {
       title: `${post.title} | Tyokore Wiki`,
-      description: description || '記事詳細ページ',
+      description: description || '項目詳細ページ',
       openGraph: {
         title: post.title,
-        description: description || '記事詳細ページ',
+        description: description || '項目詳細ページ',
         type: 'article',
         images: [
           {
@@ -109,14 +109,14 @@ export async function generateMetadata(
       twitter: {
         card: 'summary_large_image',
         title: post.title,
-        description: description || '記事詳細ページ',
+        description: description || '項目詳細ページ',
         images: [ogImage],
       },
     };
   } catch (error) {
     return {
-      title: '記事詳細 | Tyokore Wiki',
-      description: 'Tyokore Wiki の記事詳細ページです。',
+      title: '項目詳細 | Tyokore Wiki',
+      description: 'Tyokore Wiki の項目詳細ページです。',
     };
   }
 }
@@ -264,7 +264,7 @@ export default async function PostDetailPage({
                   href={editHref}
                   className="px-5 py-2.5 bg-white text-stone-900 text-sm font-black rounded-2xl hover:bg-stone-200 transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-white/5"
                 >
-                  <Edit3 size={18} /> 記事を編集
+                  <Edit3 size={18} /> 項目を編集
                 </Link>
               )}
             </div>
@@ -287,7 +287,7 @@ export default async function PostDetailPage({
                     className="flex items-center gap-2 text-stone-500 hover:text-stone-900 font-bold transition-colors text-sm"
                   >
                     <ChevronLeft size={16} />
-                    記事一覧に戻る
+                    項目一覧に戻る
                   </Link>
                   <div className="flex items-center gap-4 text-stone-300">
                     <TyokoreIcon className="w-8 h-8 opacity-20" />
@@ -299,7 +299,7 @@ export default async function PostDetailPage({
                     {post.title}
                   </h1>
                 </div>
-                {/* 記事冒頭のアイキャッチ */}
+                {/* 項目冒頭のアイキャッチ */}
                 <div className="mb-10 md:mb-12 rounded-3xl overflow-hidden border border-stone-100 shadow-sm bg-stone-50 relative aspect-video">
                   <Image
                     src={thumbnailUrl || fallbackThumbnail}
@@ -317,7 +317,7 @@ export default async function PostDetailPage({
                   </div>
                 </div>
 
-                {/* 記事末尾の共有エリア */}
+                {/* 項目末尾の共有エリア */}
                 <PostShareActions title={post.title} />
               </div>
             </div>
