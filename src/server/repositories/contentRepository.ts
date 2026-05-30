@@ -396,6 +396,7 @@ export async function updateContentWithRevision(data: {
     const [current] = await tx
       .select({
         latestRevision: contents.latestRevision,
+        currentThumbnail: contents.currentThumbnail,
       })
       .from(contents)
       .where(eq(contents.id, data.contentId))
@@ -403,13 +404,16 @@ export async function updateContentWithRevision(data: {
 
     const nextRevision = (current?.latestRevision ?? 0) + 1;
 
+    // サムネイルが送信されなかった（null）場合は現在の値を維持する
+    const resolvedThumbnail = data.thumbnail ?? current?.currentThumbnail ?? null;
+
     const [updatedContent] = await tx
       .update(contents)
       .set({
         slug: data.slug,
         currentTitle: data.title,
         currentContent: data.content,
-        currentThumbnail: data.thumbnail,
+        currentThumbnail: resolvedThumbnail,
         isPublished: data.isPublished,
         latestRevision: nextRevision,
         updatedAt: new Date(),
@@ -430,7 +434,7 @@ export async function updateContentWithRevision(data: {
       type: 'snapshot',
       title: data.title,
       data: data.content,
-      thumbnail: data.thumbnail,
+      thumbnail: resolvedThumbnail,
       tagChanged: data.tagChanged,
       categoryChanged: data.categoryChanged,
     }).returning({

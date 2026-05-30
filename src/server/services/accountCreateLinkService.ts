@@ -2,13 +2,16 @@ import { randomUUID } from 'crypto';
 import {
     deactivateAccountCreateSession,
     findAccountCreateSessions,
+    findAccountCreateSessionsPaginated,
     insertAccountCreateSession,
 } from '@/server/repositories/accountCreateLinkRepository';
+import type { AccountCreateSessionRow, AccountStatusFilter } from '@/server/repositories/accountCreateLinkRepository';
 import type {
     CreateAccountCreateLinkInput,
     DeactivateAccountCreateLinkInput,
 } from '@/server/schemas/accountCreateLinkSchemas';
 import type { Actor } from '@/types/actor';
+import type { ListQuery, ListResult } from '@/types/listQuery';
 import { isUniqueViolation } from '@/server/services/modules/pgError';
 
 type CreateAccountCreateLinkResult = 
@@ -81,22 +84,38 @@ export async function createAccountCreateLink(
     };
 }
 
-export async function getAccountCreateLinks(actor: Actor): Promise<AccountCreateLinkListItem[]> {
+function enrichRow(
+  row: AccountCreateSessionRow,
+  now: Date,
+): AccountCreateLinkListItem {
+  return {
+    ...row,
+    status: !row.isActive
+      ? 'inactive'
+      : row.endAt <= now
+        ? 'expired'
+        : 'active',
+  };
+}
+
+export async function getAccountCreateLinks(
+  actor: Actor,
+  query?: ListQuery<'createdAt' | 'endAt'>,
+  statusFilter?: AccountStatusFilter,
+): Promise<ListResult<AccountCreateLinkListItem>> {
     if (actor.role !== 'owner') {
-        return [];
+        return { items: [], totalCount: 0 };
+    }
+
+    const now = new Date();
+
+    if (query) {
+      const { items: rows, totalCount } = await findAccountCreateSessionsPaginated(query, statusFilter);
+      return { items: rows.map((row: AccountCreateSessionRow) => enrichRow(row, now)), totalCount };
     }
 
     const rows = await findAccountCreateSessions();
-    const now = new Date();
-
-    return rows.map((row) => ({
-        ...row,
-        status: !row.isActive
-            ? 'inactive'
-            : row.endAt <= now
-              ? 'expired'
-              : 'active',
-    }));
+    return { items: rows.map((row) => enrichRow(row, now)), totalCount: rows.length };
 }
 
 export async function deactivateAccountCreateLink(

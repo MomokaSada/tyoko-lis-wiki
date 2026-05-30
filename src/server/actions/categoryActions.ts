@@ -3,8 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
-import { createCategorySchema, updateCategorySchema } from '@/server/schemas/categorySchemas';
-import { createCategoryAsAdmin, updateCategoryAsAdmin } from '@/server/services/taxonomyService';
+import { createCategorySchema, deleteCategorySchema, updateCategorySchema } from '@/server/schemas/categorySchemas';
+import { createCategoryAsAdmin, deleteCategoryAsAdmin, updateCategoryAsAdmin } from '@/server/services/taxonomyService';
 import { BaseActionState } from '@/types/actionState';
 import { checkRateLimit } from '@/server/services/rateLimitService';
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
@@ -116,5 +116,52 @@ export async function updateCategoryAction(
   return {
     error: null,
     success: `カテゴリ「${result.data.name}」を更新しました`,
+  };
+}
+
+export async function deleteCategoryAction(
+  _prevState: CategoryActionState,
+  formData: FormData,
+): Promise<CategoryActionState> {
+  await recordCurrentRequestDevice();
+
+  const rateLimitResult = await checkRateLimit('deleteCategory');
+  if (!rateLimitResult.allowed) {
+    return {
+      error: 'カテゴリ削除試行が多すぎます。しばらくしてから再度お試しください。',
+      success: null,
+    };
+  }
+
+  const parsed = deleteCategorySchema.safeParse({
+    id: formData.get('id'),
+  });
+
+  if (!parsed.success) {
+    return { error: getFirstZodErrorMessage(parsed.error), success: null };
+  }
+
+  const actor = await getCurrentActor();
+  if (!actor) {
+    return { error: 'カテゴリ管理権限がありません', success: null };
+  }
+
+  const result = await deleteCategoryAsAdmin(actor, parsed.data.id);
+  if (!result.success) {
+    return { error: result.error, success: null };
+  }
+
+  await recordAuditLog({
+    actorId: actor.id,
+    action: 'delete_category',
+    targetId: String(parsed.data.id),
+    targetType: 'category',
+  });
+
+  revalidatePath('/admin/categories');
+
+  return {
+    error: null,
+    success: 'カテゴリを削除しました',
   };
 }

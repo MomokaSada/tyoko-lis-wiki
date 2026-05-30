@@ -7,9 +7,12 @@ import {
   findActiveBlockByIp,
   findDeviceByIp,
   listActiveIpBans,
+  listActiveIpBansPaginated,
   listIpDeviceRecords,
+  listIpDeviceRecordsPaginated,
 } from '@/server/repositories/ipBanRepository';
 import type { PrivilegedActor as Actor } from '@/types/actor';
+import type { ListQuery, ListResult } from '@/types/listQuery';
 
 export async function createIpBan(actor: Actor, input: CreateIpBanInput) {
   if (actor.role !== 'owner') {
@@ -48,19 +51,31 @@ export async function createIpBan(actor: Actor, input: CreateIpBanInput) {
   };
 }
 
-export async function getActiveIpBans(actor: Actor) {
+export async function getActiveIpBans(
+  actor: Actor,
+  query?: ListQuery<'createdAt'>,
+): Promise<ListResult<Awaited<ReturnType<typeof listActiveIpBans>>['items'][number]>> {
   if (actor.role !== 'owner') {
-    return [];
+    return { items: [], totalCount: 0 };
   }
 
+  if (query) {
+    return listActiveIpBansPaginated(query);
+  }
   return listActiveIpBans();
 }
 
-export async function getIpDeviceRecords(actor: Actor) {
+export async function getIpDeviceRecords(
+  actor: Actor,
+  query?: ListQuery<'lastSeenAt'>,
+): Promise<ListResult<Awaited<ReturnType<typeof listIpDeviceRecords>>['items'][number]>> {
   if (actor.role !== 'owner') {
-    return [];
+    return { items: [], totalCount: 0 };
   }
 
+  if (query) {
+    return listIpDeviceRecordsPaginated(query);
+  }
   return listIpDeviceRecords();
 }
 

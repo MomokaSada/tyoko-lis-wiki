@@ -1,6 +1,8 @@
-import { desc, eq } from 'drizzle-orm';
+import { asc, desc, eq, and, sql, gt, lte } from 'drizzle-orm';
+import { escapeLikePattern } from './modules/escapeLike';
 import { db } from '@/db';
 import { accountCreateSessions, users } from '@/db/schema';
+import type { ListQuery, ListResult } from '@/types/listQuery';
 
 export async function insertAccountCreateSession(data: {
     uuid: string;
@@ -35,6 +37,90 @@ export async function findAccountCreateSessions() {
         .from(accountCreateSessions)
         .leftJoin(users, eq(accountCreateSessions.authorId, users.id))
         .orderBy(desc(accountCreateSessions.createdAt));
+}
+
+export type AccountCreateSessionRow = {
+  uuid: string;
+  authorId: number;
+  authorName: string | null;
+  isActive: boolean;
+  startAt: Date;
+  endAt: Date;
+  createdAt: Date;
+};
+
+export type AccountStatusFilter = 'active' | 'expired' | 'inactive';
+
+export async function findAccountCreateSessionsPaginated(
+  query?: ListQuery<'createdAt' | 'endAt'>,
+  statusFilter?: AccountStatusFilter,
+): Promise<ListResult<AccountCreateSessionRow>> {
+  const page = query?.page ?? 1;
+  const limit = query?.limit ?? 20;
+  const offset = (page - 1) * limit;
+
+  const conditions = [];
+
+  if (query?.searchQuery) {
+    const escaped = escapeLikePattern(query.searchQuery);
+    conditions.push(
+      sql`${accountCreateSessions.uuid}::text ilike ${`%${escaped}%`}`,
+    );
+  }
+
+  if (statusFilter) {
+    switch (statusFilter) {
+      case 'active':
+        conditions.push(
+          eq(accountCreateSessions.isActive, true),
+          gt(accountCreateSessions.endAt, sql`now()`),
+        );
+        break;
+      case 'expired':
+        conditions.push(
+          eq(accountCreateSessions.isActive, true),
+          lte(accountCreateSessions.endAt, sql`now()`),
+        );
+        break;
+      case 'inactive':
+        conditions.push(eq(accountCreateSessions.isActive, false));
+        break;
+    }
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const orderByColumn = query?.sortBy === 'endAt'
+    ? accountCreateSessions.endAt
+    : accountCreateSessions.createdAt;
+  const orderByDir = query?.sortOrder === 'asc' ? asc : desc;
+
+  const rows = await db
+    .select({
+      uuid: accountCreateSessions.uuid,
+      authorId: accountCreateSessions.authorId,
+      authorName: users.name,
+      isActive: accountCreateSessions.isActive,
+      startAt: accountCreateSessions.startAt,
+      endAt: accountCreateSessions.endAt,
+      createdAt: accountCreateSessions.createdAt,
+    })
+    .from(accountCreateSessions)
+    .leftJoin(users, eq(accountCreateSessions.authorId, users.id))
+    .where(where)
+    .orderBy(orderByDir(orderByColumn))
+    .limit(limit)
+    .offset(offset);
+
+  const countResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(accountCreateSessions)
+    .where(where);
+
+  return {
+    items: rows,
+    totalCount: Number(countResult[0]?.count ?? 0),
+  };
 }
 
 export async function deactivateAccountCreateSession(uuid: string) {

@@ -24,7 +24,6 @@ type CategoryOption = {
   id: number;
   name: string;
   parentId: number | null;
-  label: string;
 };
 
 type TaxonomyOptions = {
@@ -45,24 +44,24 @@ export function AdminFormsClient({ editLinks, taxonomy }: AdminFormsClientProps)
   );
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <>
       <DashboardCard
         href="/admin/edit-links"
-        icon={<LinkIcon />}
+        icon={<LinkIcon className="w-5 h-5" />}
         title="編集リンク管理"
-        description="編集用の一時リンクを発行し、利用状況を管理します。"
+        description="発行・確認"
         badgeText={editLinksCountText}
         theme="amber"
       />
 
       <DashboardCard
         href="/admin/categories"
-        icon={<FolderTree />}
+        icon={<FolderTree className="w-5 h-5" />}
         title="カテゴリ管理"
-        description="記事の分類構造（親カテゴリ・子カテゴリ）を編集します。"
+        description="追加・更新"
         badgeText={categoriesCountText}
         theme="emerald"
       />
-    </div>
+    </>
   );
 }

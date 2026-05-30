@@ -15,22 +15,6 @@ type ToastUiEditorInstance = {
   destroy: () => void;
 };
 
-declare global {
-  interface Window {
-    toastui?: {
-      Editor: (new (options: Record<string, unknown>) => ToastUiEditorInstance) & {
-        factory?: (options: {
-          el: HTMLElement;
-          viewer: boolean;
-          initialValue: string;
-        }) => {
-          destroy?: () => void;
-        };
-      };
-    };
-  }
-}
-
 const TOASTUI_STYLE_ID = 'toastui-viewer-style';
 const TOASTUI_STYLE_HREF = '/vendor/toastui/toastui-editor.min.css';
 const TOASTUI_SCRIPT_ID = 'toastui-viewer-script';
