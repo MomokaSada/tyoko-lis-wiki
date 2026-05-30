@@ -27,18 +27,18 @@ async function seedSessions() {
 
   const EDIT_SESSION_UUID = '00000000-0000-4000-8000-000000000001';
   const ACCOUNT_SESSION_UUID = '00000000-0000-4000-8000-000000000002';
-  
+
   // 1年後の有効期限を設定
   const oneYearLater = new Date();
   oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
 
   try {
-    // ---- 1. edit_sessions の生成 (記事投稿用) ----
-    console.log('\n📝 記事作成用招待トークンを処理中...');
+    // ---- 1. edit_sessions の生成 (項目投稿用) ----
+    console.log('\n📝 項目作成用招待トークンを処理中...');
 
     // 既存セッションがあれば削除して再作成（冪等性）
     await db.delete(editSessions).where(eq(editSessions.uuid, EDIT_SESSION_UUID));
-    
+
     await db.insert(editSessions).values({
       uuid: EDIT_SESSION_UUID,
       authorId: adminId,
@@ -53,7 +53,7 @@ async function seedSessions() {
     console.log('\n👤 ユーザー登録用招待トークンを処理中...');
 
     await db.delete(accountCreateSessions).where(eq(accountCreateSessions.uuid, ACCOUNT_SESSION_UUID));
-    
+
     await db.insert(accountCreateSessions).values({
       uuid: ACCOUNT_SESSION_UUID,
       authorId: adminId,
@@ -64,7 +64,7 @@ async function seedSessions() {
 
     console.log('\n🎉 シーディング完了！ 以下のURLにブラウザ（未ログイン状態のシークレットウィンドウ等）でアクセスしてテストできます。');
     console.log('--------------------------------------------------');
-    console.log('▶️ 【未ログイン記事作成テスト】:');
+    console.log('▶️ 【未ログイン項目作成テスト】:');
     console.log(`    http://localhost:3000/posts/create?session=${EDIT_SESSION_UUID}`);
     console.log('');
     console.log('▶️ 【ユーザー登録招待テスト】:');

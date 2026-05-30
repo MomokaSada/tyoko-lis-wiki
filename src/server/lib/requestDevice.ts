@@ -19,11 +19,13 @@ function normalizeCandidateIp(candidate: string | null | undefined) {
     return null;
   }
 
-  if (isIP(trimmed)) {
-    return trimmed;
+  const withoutZoneId = trimmed.replace(/%[0-9A-Za-z_.-]+$/, '');
+
+  if (isIP(withoutZoneId)) {
+    return withoutZoneId;
   }
 
-  const withoutIpv4Port = trimmed.match(/^(\d{1,3}(?:\.\d{1,3}){3}):\d+$/);
+  const withoutIpv4Port = withoutZoneId.match(/^(\d{1,3}(?:\.\d{1,3}){3}):\d+$/);
 
   if (withoutIpv4Port && isIP(withoutIpv4Port[1])) {
     return withoutIpv4Port[1];

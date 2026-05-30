@@ -1,8 +1,16 @@
 'use server';
 
 import { getCurrentActor } from '@/server/lib/currentActor';
-import { cleanupOrphanThumbnails } from '@/server/services/thumbnailService';
-import type { BaseActionState } from '@/server/types/actionState';
+import { cleanupOrphanThumbnails, getOrphanThumbnailStats } from '@/server/services/thumbnailService';
+import type { BaseActionState } from '@/types/actionState';
+
+export type ThumbnailScanResult = {
+  scannedCount: number;
+  referencedCount: number;
+  orphanCount: number;
+  orphanSize: number;
+  scannedAt: string;
+};
 
 export type ThumbnailCleanupActionState = BaseActionState & {
   deletedCount: number;
@@ -10,6 +18,27 @@ export type ThumbnailCleanupActionState = BaseActionState & {
   referencedCount: number;
   minAgeHours: number;
 };
+
+export async function scanThumbnailsAction(): Promise<ThumbnailScanResult | { error: string }> {
+  const actor = await getCurrentActor();
+
+  if (!actor) {
+    return { error: '権限がありません' };
+  }
+
+  const stats = await getOrphanThumbnailStats(actor);
+  if (!stats.scannedAt) {
+    return { error: '権限がありません' };
+  }
+
+  return {
+    scannedCount: stats.scannedCount,
+    referencedCount: stats.referencedCount,
+    orphanCount: stats.orphanCount,
+    orphanSize: stats.orphanSize,
+    scannedAt: stats.scannedAt.toISOString(),
+  };
+}
 
 export async function cleanupOrphanThumbnailsAction(
   _prevState: ThumbnailCleanupActionState,

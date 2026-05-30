@@ -1,18 +1,34 @@
-import { createAdminClient } from '@/lib/supabase/admin';
 import type { BanAccountInput } from '@/server/schemas/accountBanSchemas';
 import {
   activateUserById,
   deactivateUserById,
+  findUserById,
   listManageableAccounts,
+  listManageableAccountsPaginated,
 } from '@/server/repositories/accountBanRepository';
 import type { Actor } from '@/types/actor';
+import type { ListQuery, ListResult } from '@/types/listQuery';
 
-export async function getManageableAccounts(actor: Actor) {
+export async function getManageableAccounts(
+  actor: Actor,
+  query?: ListQuery<'name' | 'createdAt' | 'isActive'>,
+): Promise<ListResult<{
+  id: number;
+  name: string;
+  type: string;
+  isActive: boolean;
+  createdAt: Date;
+}>> {
   if (actor.role !== 'owner') {
-    return [];
+    return { items: [], totalCount: 0 };
   }
 
-  return listManageableAccounts();
+  if (query) {
+    return listManageableAccountsPaginated(query as ListQuery<'name' | 'createdAt' | 'isActive'>);
+  }
+
+  const rows = await listManageableAccounts();
+  return { items: rows, totalCount: rows.length };
 }
 
 export async function banAccount(actor: Actor, input: BanAccountInput) {
@@ -30,28 +46,28 @@ export async function banAccount(actor: Actor, input: BanAccountInput) {
     };
   }
 
-  const updated = await deactivateUserById(input.userId);
-
-  if (!updated) {
+  const user = await findUserById(input.userId);
+  if (!user) {
     return {
       success: false as const,
       error: '対象ユーザーが見つかりません',
     };
   }
-  if (updated.authUserId) {
-    try {
-      const supabaseAdmin = createAdminClient();
-      await supabaseAdmin.auth.admin.deleteUser(updated.authUserId);
-    } catch (error) {
-      console.warn('Failed to deactivate user session:', error);
-    }
+
+  if (!user.isActive) {
+    return {
+      success: false as const,
+      error: 'このアカウントは既にBANされています',
+    };
   }
+
+  const updated = await deactivateUserById(input.userId);
+
   return {
     success: true as const,
-    data: updated,
+    data: updated!,
   };
 }
-
 export async function unbanAccount(actor: Actor, input: BanAccountInput) {
   if (actor.role !== 'owner') {
     return {

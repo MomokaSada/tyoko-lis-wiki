@@ -83,7 +83,7 @@ async function validateSession(
   }
 
   if (!sessionToken) {
-    redirect('/unauthorized');
+    redirect('/error/unauthorized');
   }
 
   // Drizzle でセッションの存在・期限・使用回数をチェック
@@ -92,7 +92,7 @@ async function validateSession(
     : await verifyAccountCreateSession(sessionToken);
 
   if (!isValid) {
-    redirect('/unauthorized');
+    redirect('/error/unauthorized');
   }
 
   return { valid: true as const, user: null, token: sessionToken };
@@ -101,7 +101,7 @@ async function validateSession(
 // ---------- エクスポート ----------
 
 /**
- * 記事作成・編集ページ用ガード
+ * 項目作成・編集ページ用ガード
  */
 export async function requireEditSession(sessionToken: string | undefined | null) {
   return validateSession(sessionToken, 'edit');

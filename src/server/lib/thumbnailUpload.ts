@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 
 const DEFAULT_BUCKET = 'content-thumbnails';
 const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024;
@@ -19,6 +20,7 @@ type StorageEntry = {
   id?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  metadata?: { size?: number } | null;
 };
 
 function getExtension(file: File) {
@@ -99,7 +101,16 @@ export async function uploadThumbnailFile(file: FormDataEntryValue | null) {
   }
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-  return data.publicUrl;
+
+  try {
+    const url = new URL(data.publicUrl);
+    // url.pathname はデコードされた状態で返る（例: %20 → スペース）ので、
+    // 不正な文字が含まれないようパスを再エンコードする
+    const encoded = url.pathname.split('/').map(seg => encodeURIComponent(seg)).join('/');
+    return encoded;
+  } catch {
+    return data.publicUrl;
+  }
 }
 
 function joinPrefix(prefix: string, name: string) {
@@ -135,13 +146,16 @@ async function listStorageEntries(prefix: string) {
   return entries;
 }
 
-export async function listAllThumbnailObjects(prefix = ''): Promise<Array<{
+export type ThumbnailObject = {
   path: string;
   createdAt: Date | null;
   updatedAt: Date | null;
-}>> {
+  size: number | null;
+};
+
+export async function listAllThumbnailObjects(prefix = ''): Promise<ThumbnailObject[]> {
   const entries = await listStorageEntries(prefix);
-  const files: Array<{ path: string; createdAt: Date | null; updatedAt: Date | null }> = [];
+  const files: ThumbnailObject[] = [];
 
   for (const entry of entries) {
     const path = joinPrefix(prefix, entry.name);
@@ -156,6 +170,7 @@ export async function listAllThumbnailObjects(prefix = ''): Promise<Array<{
       path,
       createdAt: entry.created_at ? new Date(entry.created_at) : null,
       updatedAt: entry.updated_at ? new Date(entry.updated_at) : null,
+      size: entry.metadata?.size ?? null,
     });
   }
 
@@ -179,6 +194,8 @@ export function extractThumbnailStoragePath(publicUrl: string) {
     return rawPath;
   }
 }
+
+export { getPublicThumbnailUrl };
 
 export async function deleteThumbnailObjects(paths: string[]) {
   if (paths.length === 0) {

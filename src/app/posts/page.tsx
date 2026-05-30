@@ -1,5 +1,33 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { searchVisibleContentList } from '@/server/services/contentService';
+import Link from 'next/link';
+import Image from 'next/image';
+import { type Metadata } from 'next';
+import { headers } from 'next/headers';
+import { HEADER_USER_ROLE } from '@/lib/auth/constants';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+import {
+  Eye,
+  AlertCircle,
+  Library,
+  Filter,
+  Calendar,
+  ArrowRight
+} from 'lucide-react';
+import { DeleteNotification } from '@/components/features/posts/DeleteNotification';
+import { Suspense } from 'react';
+import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
+import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
+import { PostSearchControl } from '@/components/posts/PostSearchControl';
+import { PrivacyToggle } from '@/components/posts/PrivacyToggle';
+import { PostPagination } from '@/components/posts/PostPagination';
+import type { ContentSortKey, SortOrder } from '@/server/repositories/contentRepository';
+import { MobileActions } from '@/components/posts/MobileActions';
+
+export const metadata: Metadata = {
+  title: '項目一覧 | Tyokore Wiki',
+  description: 'Tyokore Wiki の項目一覧ページです。カテゴリやタグで検索・フィルタリングできます。',
+};
 
 export default async function PostsPage({
   searchParams,
@@ -7,89 +35,232 @@ export default async function PostsPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const sp = await searchParams;
+  const pageSize = 12;
+  const page = typeof sp.page === 'string' ? Math.max(1, parseInt(sp.page)) : 1;
   const query = typeof sp.q === 'string' ? sp.q : '';
   const session = typeof sp.session === 'string' ? sp.session : '';
+  const sort = typeof sp.sort === 'string' ? sp.sort as ContentSortKey : 'updatedAt';
+  const order = typeof sp.order === 'string' ? sp.order as SortOrder : 'desc';
+  const categoryId = typeof sp.categoryId === 'string' ? parseInt(sp.categoryId) : undefined;
+
   const actor = await getCurrentActor();
   const canViewPrivate = Boolean(actor);
   const showPrivate = canViewPrivate && sp.showPrivate === '1';
-  const posts = await searchVisibleContentList(query, showPrivate);
-  const buildPostsUrl = (nextShowPrivate: boolean) => {
-    const params = new URLSearchParams();
 
-    if (query) {
-      params.set('q', query);
-    }
-    if (session) {
-      params.set('session', session);
-    }
-    if (nextShowPrivate) {
-      params.set('showPrivate', '1');
-    }
+  const headersList = await headers();
+  const userRole = headersList.get(HEADER_USER_ROLE);
+  const editor = await getCurrentEditor(session);
+  const hasEditSession = !!(editor && editor.type === 'session');
 
-    const qs = params.toString();
-    return qs ? `/posts?${qs}` : '/posts';
-  };
+  const { posts, pagination } = await searchVisibleContentList(
+    query,
+    showPrivate,
+    sort,
+    order,
+    page,
+    pageSize,
+    categoryId
+  );
+
+  const fallbackThumbnail = '/images/no-image.png';
 
   return (
-    <main style={{ padding: '2rem' }}>
-      <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '1rem' }}>
-        記事一覧
-      </h1>
+    <>
+      <div className="min-h-screen bg-stone-50/50 pb-16 md:pb-20 animate-in fade-in duration-700">
+        <Suspense fallback={null}>
+          <DeleteNotification />
+        </Suspense>
 
-      <form method="get" style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        {session && <input type="hidden" name="session" value={session} />}
-        {showPrivate && <input type="hidden" name="showPrivate" value="1" />}
-        <input
-          type="text"
-          name="q"
-          defaultValue={query}
-          placeholder="タイトル・本文・スラッグで検索"
-          style={{ minWidth: '20rem' }}
-        />
-        <button type="submit">検索</button>
-      </form>
+        {/* 1. ヒーローセクション: 検索とタイトルの統合 */}
+        <div className="relative bg-[#0c0c0c] text-white pt-20 md:pt-24 pb-24 md:pb-32 border-b border-white/5">
+          {/* 装飾用背景要素（ここでは overflow-hidden を適用） */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-amber-500/10 to-transparent" />
+            <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px]" />
+          </div>
 
-      {canViewPrivate && (
-        <p style={{ marginBottom: '1rem' }}>
-          <a
-            href={buildPostsUrl(!showPrivate)}
-            style={{ color: 'blue' }}
-          >
-            {showPrivate ? '公開中の記事だけを見る' : '非公開記事も見る'}
-          </a>
-        </p>
-      )}
+          <div className="relative max-w-[72rem] mx-auto px-4 sm:px-6">
+            {/* 管理用ツールボックス（右上） */}
+            {canViewPrivate && (
+              <div className="absolute top-0 right-6 z-30 animate-in fade-in slide-in-from-top-4 duration-700 delay-300">
+                <PrivacyToggle initialShowPrivate={showPrivate} />
+              </div>
+            )}
 
-      {posts.length === 0 ? (
-        <p>{query ? '検索条件に一致する記事はありません。' : '公開中の記事はまだありません。'}</p>
-      ) : (
-        <div style={{ display: 'grid', gap: '1rem' }}>
-          {posts.map((post) => (
-            <article key={post.id} style={{ border: '1px solid #ddd', padding: '1rem', background: '#fff' }}>
-              <p><strong>タイトル:</strong> {post.title}</p>
-              <p><strong>スラッグ:</strong> <code>{post.slug}</code></p>
-              {canViewPrivate && <p><strong>状態:</strong> {post.isPublished ? '公開' : '非公開'}</p>}
-              <p><strong>閲覧数:</strong> {post.viewCount}</p>
-              <p><strong>抜粋:</strong> {post.excerpt}</p>
-              <p><strong>最終更新:</strong> {post.updatedAt.toISOString()}</p>
-              <a
-                href={`${`/posts/${post.slug}`}${
-                  (() => {
-                    const params = new URLSearchParams();
-                    if (session) params.set('session', session);
-                    if (showPrivate) params.set('showPrivate', '1');
-                    const qs = params.toString();
-                    return qs ? `?${qs}` : '';
-                  })()
-                }`}
-                style={{ color: 'blue' }}
-              >
-                詳細を見る
-              </a>
-            </article>
-          ))}
+            <div className="flex items-center gap-3 mb-5 animate-in slide-in-from-bottom-4 duration-500">
+              <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md">
+                <Library size={20} className="text-amber-400" />
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-500">Wiki Article</span>
+            </div>
+
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 lg:gap-10">
+              <div className="max-w-xl space-y-3 animate-in slide-in-from-bottom-6 duration-700 delay-100">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter leading-none">
+                  項目一覧
+                </h1>
+                <p className="text-stone-400 text-sm md:text-base lg:text-lg font-medium leading-relaxed max-w-lg line-clamp-2 md:line-clamp-none">
+                  知見を体系化し、次世代へ繋ぐ。投稿されたすべてのナレッジをここで検索、管理することができます。
+                </p>
+              </div>
+
+              <div className="w-full lg:flex-1 relative z-30 animate-in slide-in-from-bottom-8 duration-700 delay-200">
+                <PostSearchControl
+                  initialQuery={query}
+                  initialSort={sort}
+                  initialOrder={order}
+                  session={session}
+                  showPrivate={showPrivate}
+                />
+              </div>
+            </div>
+          </div>
         </div>
-      )}
-    </main>
+
+        {/* 2. メインコンテンツエリア */}
+        <div className="max-w-[72rem] mx-auto px-4 sm:px-6 -mt-6 md:-mt-8 relative z-20">
+
+          {/* フィルタリング・ステータスバー */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 md:mb-10 bg-white border border-stone-200 p-3.5 md:p-4 rounded-[1.25rem] shadow-md">
+            <div className="flex items-center gap-4 text-sm font-bold text-stone-500 px-2">
+              <div className="flex items-center gap-2">
+                <Filter size={16} />
+                <span>表示中:</span>
+              </div>
+              <span className="text-stone-900 bg-stone-100 px-3 py-1 rounded-full text-xs">
+                {query ? `「${query}」の検索結果` : categoryId ? `カテゴリ #${categoryId} の項目` : 'すべての項目'}
+              </span>
+              <span className="text-stone-400">|</span>
+              <span className="text-stone-600 italic">全 {pagination.totalCount} 件</span>
+            </div>
+          </div>
+
+          {pagination.totalCount === 0 ? (
+            <div className="text-center py-20 md:py-24 bg-white border border-stone-200 rounded-[2.25rem] shadow-sm animate-in fade-in zoom-in-95 duration-500">
+              <div className="w-20 h-20 bg-stone-50 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-stone-100 shadow-inner">
+                <AlertCircle className="w-10 h-10 text-stone-300" />
+              </div>
+              <h3 className="text-xl md:text-2xl font-black text-stone-800 mb-3 tracking-tighter">項目が見つかりません</h3>
+              <p className="text-stone-500 font-medium max-w-md mx-auto leading-relaxed">
+                {query
+                  ? `「${query}」に一致する項目はありませんでした。キーワードを変えてお試しください。`
+                  : categoryId
+                    ? 'このカテゴリにはまだ項目がありません。'
+                    : '現在、表示できる項目がありません。'}
+              </p>
+              {(query || categoryId) && (
+                <Link href="/posts" className="mt-8 inline-flex items-center gap-2 text-amber-600 font-black hover:gap-3 transition-all">
+                  検索をリセット <ArrowRight size={18} />
+                </Link>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-7">
+                {posts.map((post, idx) => {
+                  const thumbnailUrl = getPublicThumbnailUrl(post.thumbnail);
+                  const formattedDate = post.updatedAt instanceof Date
+                    ? post.updatedAt.toLocaleDateString('ja-JP').replace(/\//g, '-')
+                    : '不明';
+
+                  return (
+                    <Link
+                      href={`${`/posts/${post.slug}`}${(() => {
+                          const params = new URLSearchParams();
+                          if (session) params.set('session', session);
+                          if (sort !== 'updatedAt') params.set('sort', sort);
+                          if (order !== 'desc') params.set('order', order);
+                          if (showPrivate) params.set('showPrivate', '1');
+                          if (categoryId) params.set('categoryId', String(categoryId));
+                          const qs = params.toString();
+                          return qs ? `?${qs}` : '';
+                        })()
+                        }`}
+                      key={post.id}
+                      className="group bg-white border border-stone-200 hover:border-amber-400 rounded-[2rem] flex flex-col transition-all hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 block h-full overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700"
+                      style={{ animationDelay: `${idx * 30}ms` }}
+                    >
+                      {/* サムネイルエリア */}
+                      <div className="relative aspect-[2/1] overflow-hidden bg-stone-100 border-b border-stone-100">
+                        <Image
+                          src={thumbnailUrl || fallbackThumbnail}
+                          alt={post.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                          unoptimized
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                        {canViewPrivate && !post.isPublished && (
+                          <div className="absolute top-4 right-4 bg-[#0c0c0c] text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10 shadow-xl">
+                            Private / 非公開
+                          </div>
+                        )}
+
+                        <div className="absolute bottom-4 left-4 flex items-center gap-2">
+                          <TyokoreIcon className="w-6 h-6 text-white drop-shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </div>
+                      </div>
+
+                      {/* コンテンツエリア */}
+                      <div className="p-6 flex-1 flex flex-col">
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-stone-400 break-all line-clamp-1">
+                            {post.slug}
+                          </span>
+                        </div>
+
+                        <h3 className="text-xl font-black text-stone-900 mb-4 group-hover:text-amber-700 transition-colors leading-tight tracking-tighter line-clamp-2">
+                          {post.title}
+                        </h3>
+
+                        <div className="mt-auto pt-6 border-t border-stone-100 flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-stone-500 mb-0.5">Views</span>
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-stone-600">
+                                <Eye className="w-3.5 h-3.5" />
+                                {post.viewCount}
+                              </div>
+                            </div>
+                            <div className="w-px h-6 bg-stone-100" />
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-stone-500 mb-0.5">Updated</span>
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-stone-600">
+                                <Calendar className="w-3.5 h-3.5" />
+                                {formattedDate}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="w-9 h-9 rounded-2xl bg-stone-50 flex items-center justify-center text-stone-400 group-hover:bg-amber-100 group-hover:text-amber-600 transition-all group-hover:rotate-12">
+                            <ArrowRight size={18} />
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              <PostPagination
+                totalPages={pagination.totalPages}
+                currentPage={pagination.currentPage}
+              />
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* モバイル限定アクションボタン (FAB: ナビゲーション統合) */}
+      <MobileActions
+        userRole={userRole}
+        hasEditSession={hasEditSession}
+        hideShare={true}
+        hideProfile={true}
+      />
+    </>
   );
 }

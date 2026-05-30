@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
-import { getFirstZodErrorMessage } from '@/server/lib/zodError';
+import { getFirstZodErrorMessage, getZodFieldErrors } from '@/server/lib/zodError';
 import {
   createContentSchema,
   deleteContentSchema,
@@ -13,13 +13,14 @@ import { createContent, deleteContent, updateContent } from '@/server/services/c
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { recordCurrentEditDeviceSession, recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
-import { BaseActionState } from '@/server/types/actionState';
+import { BaseActionState } from '@/types/actionState';
 import { checkRateLimit } from '@/server/services/rateLimitService';
 import { recordAuditLog } from '@/server/services/auditLogService';
 
 export type ContentActionState = BaseActionState & {
   slug: string | null;
   title: string | null;
+  fieldErrors?: Record<string, string>;
 };
 
 export async function createContentAction(
@@ -31,7 +32,7 @@ export async function createContentAction(
   const rateLimitResult = await checkRateLimit('createContent');
   if (!rateLimitResult.allowed) {
     return {
-      error: '記事作成試行が多すぎます。しばらくしてから再度お試しください。',
+      error: '項目作成試行が多すぎます。しばらくしてから再度お試しください。',
       slug: null,
       title: null,
     };
@@ -54,6 +55,7 @@ export async function createContentAction(
   if (!parsed.success) {
     return {
       error: getFirstZodErrorMessage(parsed.error),
+      fieldErrors: getZodFieldErrors(parsed.error),
       slug: null,
       title: null,
     };
@@ -63,7 +65,7 @@ export async function createContentAction(
 
   if (activeBan) {
     return {
-      error: 'このIPアドレスからの記事作成は許可されていません',
+      error: 'このIPアドレスからの項目作成は許可されていません',
       slug: null,
       title: null,
     };
@@ -74,7 +76,7 @@ export async function createContentAction(
 
   if (!editor) {
     return {
-      error: '記事作成権限がありません',
+      error: '項目作成権限がありません',
       slug: null,
       title: null,
     };
@@ -107,8 +109,8 @@ export async function createContentAction(
 
   const destination =
     parsed.data.session && parsed.data.session.length > 0
-      ? `/posts/${result.data.slug}?session=${encodeURIComponent(parsed.data.session)}`
-      : `/posts/${result.data.slug}`;
+      ? `/posts/${encodeURIComponent(result.data.slug)}?session=${encodeURIComponent(parsed.data.session)}`
+      : `/posts/${encodeURIComponent(result.data.slug)}`;
 
   redirect(destination);
 }
@@ -122,7 +124,7 @@ export async function updateContentAction(
   const rateLimitResult = await checkRateLimit('updateContent');
   if (!rateLimitResult.allowed) {
     return {
-      error: '記事編集試行が多すぎます。しばらくしてから再度お試しください。',
+      error: '項目編集試行が多すぎます。しばらくしてから再度お試しください。',
       slug: null,
       title: null,
     };
@@ -145,6 +147,7 @@ export async function updateContentAction(
   if (!parsed.success) {
     return {
       error: getFirstZodErrorMessage(parsed.error),
+      fieldErrors: getZodFieldErrors(parsed.error),
       slug: null,
       title: null,
     };
@@ -154,7 +157,7 @@ export async function updateContentAction(
 
   if (activeBan) {
     return {
-      error: 'このIPアドレスからの記事編集は許可されていません',
+      error: 'このIPアドレスからの項目編集は許可されていません',
       slug: null,
       title: null,
     };
@@ -164,7 +167,7 @@ export async function updateContentAction(
 
   if (!editor) {
     return {
-      error: '記事編集権限がありません',
+      error: '項目編集権限がありません',
       slug: null,
       title: null,
     };
@@ -197,8 +200,8 @@ export async function updateContentAction(
 
   const destination =
     parsed.data.session && parsed.data.session.length > 0
-      ? `/posts/${result.data.slug}?session=${encodeURIComponent(parsed.data.session)}`
-      : `/posts/${result.data.slug}`;
+      ? `/posts/${encodeURIComponent(result.data.slug)}?session=${encodeURIComponent(parsed.data.session)}`
+      : `/posts/${encodeURIComponent(result.data.slug)}`;
 
   redirect(destination);
 }
@@ -210,7 +213,7 @@ export async function deleteContentAction(
   const rateLimitResult = await checkRateLimit('deleteContent');
   if (!rateLimitResult.allowed) {
     return {
-      error: '記事削除試行が多すぎます。しばらくしてから再度お試しください。',
+      error: '項目削除試行が多すぎます。しばらくしてから再度お試しください。',
       slug: null,
       title: null,
     };
@@ -231,7 +234,7 @@ export async function deleteContentAction(
 
   if (!actor) {
     return {
-      error: '記事削除権限がありません',
+      error: '項目削除権限がありません',
       slug: null,
       title: null,
     };
@@ -262,9 +265,5 @@ export async function deleteContentAction(
     detail: { slug: result.data.slug, title: result.data.title },
   });
 
-  return {
-    error: null,
-    slug: result.data.slug,
-    title: result.data.title,
-  };
+  redirect('/posts?deleted=1');
 }

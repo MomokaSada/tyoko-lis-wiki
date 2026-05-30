@@ -4,11 +4,15 @@ import {
   createDeviceRecord,
   findDeviceSessionRecord,
   findDeviceByIpAndBrowser,
+  getDeviceSessionUsageRecord,
+  getDeviceSessionEditLogs,
   listDeviceSessionUsageRecords,
+  listDeviceSessionUsageRecordsPaginated,
   touchDeviceSessionRecord,
   touchDeviceRecord,
 } from '@/server/repositories/deviceRepository';
 import type { Actor } from '@/types/actor';
+import type { ListQuery, ListResult } from '@/types/listQuery';
 
 export async function recordCurrentRequestDevice() {
   const device = await getCurrentRequestDevice();
@@ -49,10 +53,34 @@ export async function recordCurrentEditDeviceSession(sessionId: string) {
   return created.id;
 }
 
-export async function getDeviceSessionUsageRecords(actor: Actor) {
+export async function getDeviceSessionUsageRecords(
+  actor: Actor,
+  query?: ListQuery<'updatedAt' | 'editsUsed'>,
+) {
   if (actor.role !== 'owner') {
-    return [];
+    return { items: [], totalCount: 0 };
   }
 
-  return listDeviceSessionUsageRecords();
+  if (query) {
+    return listDeviceSessionUsageRecordsPaginated(query);
+  }
+
+  const items = await listDeviceSessionUsageRecords();
+  return { items, totalCount: items.length };
+}
+
+export async function getDeviceSessionUsageDetail(
+  actor: Actor,
+  recordId: number,
+) {
+  if (actor.role !== 'owner') {
+    return null;
+  }
+
+  const record = await getDeviceSessionUsageRecord(recordId);
+  if (!record) return null;
+
+  const editLogs = await getDeviceSessionEditLogs(recordId);
+
+  return { record, editLogs };
 }

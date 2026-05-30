@@ -6,7 +6,9 @@ import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { banAccountSchema } from '@/server/schemas/accountBanSchemas';
 import { banAccount, unbanAccount } from '@/server/services/accountBanService';
 import { recordAuditLog } from '@/server/services/auditLogService';
-import type { BaseActionState } from '@/server/types/actionState';
+import { checkRateLimit } from '@/server/services/rateLimitService';
+import { recordCurrentRequestDevice } from '@/server/services/deviceService';
+import type { BaseActionState } from '@/types/actionState';
 
 export type BanAccountActionState = BaseActionState;
 
@@ -14,6 +16,15 @@ export async function banAccountAction(
   _prevState: BanAccountActionState,
   formData: FormData,
 ): Promise<BanAccountActionState> {
+  await recordCurrentRequestDevice();
+
+  const rateLimitResult = await checkRateLimit('banAccount');
+  if (!rateLimitResult.allowed) {
+    return {
+      error: 'BAN試行が多すぎます。しばらくしてから再度お試しください。',
+    };
+  }
+
   const parsed = banAccountSchema.safeParse({
     userId: formData.get('userId'),
   });
@@ -58,6 +69,15 @@ export async function unbanAccountAction(
   _prevState: BanAccountActionState,
   formData: FormData,
 ): Promise<BanAccountActionState> {
+  await recordCurrentRequestDevice();
+
+  const rateLimitResult = await checkRateLimit('banAccount');
+  if (!rateLimitResult.allowed) {
+    return {
+      error: '操作が多すぎます。しばらくしてから再度お試しください。',
+    };
+  }
+
   const parsed = banAccountSchema.safeParse({
     userId: formData.get('userId'),
   });
@@ -96,3 +116,4 @@ export async function unbanAccountAction(
     error: null,
   };
 }
+

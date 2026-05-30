@@ -7,7 +7,8 @@ const slugSchema = z
   .trim()
   .min(1, 'スラッグを入力してください')
   .max(255, 'スラッグは255文字以内で入力してください')
-  .regex(/^[\p{L}\p{N}-]+$/u, 'スラッグに使用できない文字が含まれています');
+  .transform(slugify)
+  .refine((val) => /^[\p{L}\p{N}-]+$/u.test(val), 'スラッグに使用できない文字が含まれています');
 
 const taxonomySelectionSchema = z.object({
   tagIds: z.array(z.coerce.number().int().positive()).default([]),
@@ -26,7 +27,25 @@ const thumbnailUrlSchema = z.preprocess(
     const trimmed = value.trim();
     return trimmed === '' ? null : trimmed;
   },
-  z.string().url('サムネイルURLは正しいURL形式で入力してください').nullable(),
+  z.string()
+    .refine(
+      (val) => {
+        // 絶対パスは許可
+        if (val.startsWith('/')) return true;
+        // http/https スキームのみ許可し、httpsomething のような不正な形式は除外
+        if (val.startsWith('https://') || val.startsWith('http://')) {
+          try {
+            new URL(val);
+            return true;
+          } catch {
+            return false;
+          }
+        }
+        return false;
+      },
+      'サムネイルはURLまたはパスの形式で入力してください'
+    )
+    .nullable(),
 );
 
 export const createContentSchema = z.object({
@@ -79,7 +98,7 @@ export function normalizeCreateContentInput(input: z.infer<typeof createContentS
 
 export const updateContentSchema = z.object({
   session: z.string().optional().nullable(),
-  contentId: z.coerce.number().int().positive('記事IDが不正です'),
+  contentId: z.coerce.number().int().positive('項目IDが不正です'),
   title: z.string().trim().min(1, 'タイトルを入力してください').max(255, 'タイトルは255文字以内で入力してください'),
   slug: slugSchema,
   content: z.string().trim().min(1, '本文を入力してください'),
@@ -90,7 +109,7 @@ export const updateContentSchema = z.object({
 export type UpdateContentInput = z.infer<typeof updateContentSchema>;
 
 export const deleteContentSchema = z.object({
-  contentId: z.coerce.number().int().positive('記事IDが不正です'),
+  contentId: z.coerce.number().int().positive('項目IDが不正です'),
 });
 
 export type DeleteContentInput = z.infer<typeof deleteContentSchema>;

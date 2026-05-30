@@ -1,6 +1,8 @@
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, and, sql, asc, lt, gt, lte, gte } from 'drizzle-orm';
+import { escapeLikePattern } from './modules/escapeLike';
 import { db } from '@/db';
 import { editSessions, users } from '@/db/schema';
+import type { ListQuery, ListResult } from '@/types/listQuery';
 
 export async function insertEditSession(data: {
   uuid: string;
@@ -25,8 +27,75 @@ export async function insertEditSession(data: {
   return created;
 }
 
-export async function findEditSessions() {
-  return db
+export type EditSessionRow = {
+  uuid: string;
+  authorId: number;
+  authorName: string | null;
+  maxEdits: number;
+  editsUsed: number;
+  isActive: boolean;
+  startAt: Date;
+  endAt: Date;
+  createdAt: Date;
+};
+
+export type StatusFilter = 'active' | 'expired' | 'inactive' | 'limit-reached';
+
+export async function findEditSessions(
+  query?: ListQuery<'createdAt' | 'endAt' | 'editsUsed'>,
+  statusFilter?: StatusFilter,
+): Promise<ListResult<EditSessionRow>> {
+  const page = query?.page ?? 1;
+  const limit = query?.limit ?? 20;
+  const offset = (page - 1) * limit;
+
+  const conditions = [];
+
+  if (query?.searchQuery) {
+    const escaped = escapeLikePattern(query.searchQuery);
+    conditions.push(
+      sql`${editSessions.uuid}::text ilike ${`%${escaped}%`}`,
+    );
+  }
+
+  if (statusFilter) {
+    switch (statusFilter) {
+      case 'active':
+        conditions.push(
+          eq(editSessions.isActive, true),
+          sql`${editSessions.editsUsed} < ${editSessions.maxEdits}`,
+          gt(editSessions.endAt, sql`now()`),
+        );
+        break;
+      case 'expired':
+        conditions.push(
+          eq(editSessions.isActive, true),
+          sql`${editSessions.editsUsed} < ${editSessions.maxEdits}`,
+          lte(editSessions.endAt, sql`now()`),
+        );
+        break;
+      case 'limit-reached':
+        conditions.push(
+          eq(editSessions.isActive, true),
+          sql`${editSessions.editsUsed} >= ${editSessions.maxEdits}`,
+        );
+        break;
+      case 'inactive':
+        conditions.push(eq(editSessions.isActive, false));
+        break;
+    }
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const orderByColumn = query?.sortBy === 'endAt'
+    ? editSessions.endAt
+    : query?.sortBy === 'editsUsed'
+      ? editSessions.editsUsed
+      : editSessions.createdAt;
+  const orderByDir = query?.sortOrder === 'asc' ? asc : desc;
+
+  const rows = await db
     .select({
       uuid: editSessions.uuid,
       authorId: editSessions.authorId,
@@ -40,5 +109,28 @@ export async function findEditSessions() {
     })
     .from(editSessions)
     .leftJoin(users, eq(editSessions.authorId, users.id))
-    .orderBy(desc(editSessions.createdAt));
+    .where(where)
+    .orderBy(orderByDir(orderByColumn))
+    .limit(limit)
+    .offset(offset);
+
+  const countResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(editSessions)
+    .where(where);
+
+  return {
+    items: rows,
+    totalCount: Number(countResult[0]?.count ?? 0),
+  };
+}
+
+export async function deactivateEditSession(uuid: string) {
+  const [updated] = await db
+    .update(editSessions)
+    .set({ isActive: false, updatedAt: new Date() })
+    .where(eq(editSessions.uuid, uuid))
+    .returning({ uuid: editSessions.uuid });
+
+  return updated ?? null;
 }

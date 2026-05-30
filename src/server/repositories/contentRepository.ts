@@ -1,17 +1,24 @@
-import { and, desc, eq, ilike, isNotNull, or, sql } from 'drizzle-orm';
+import { and, eq, ilike, isNotNull, or, sql, asc, desc as dsc, gte } from 'drizzle-orm';
 import { db } from '@/db';
-import {
-  contentCategories,
-  contentEditLogCategories,
-  contentEditLogs,
-  contentEditLogTags,
-  contentTags,
-  contents,
-  tags,
-  categories,
-  editSessions,
-} from '@/db/schema';
+import { contents, tags, categories, contentTags, contentCategories, contentEditLogs, contentEditLogTags, contentEditLogCategories, editSessions, contentViewStats } from '@/db/schema';
 import { escapeLikePattern } from './modules/escapeLike';
+
+export type ContentSortKey = 'updatedAt' | 'createdAt' | 'viewCount' | 'title';
+export type SortOrder = 'asc' | 'desc';
+
+function getOrderBy(sort: ContentSortKey = 'updatedAt', order: SortOrder = 'desc') {
+  const column = (() => {
+    switch (sort) {
+      case 'createdAt': return contents.createdAt;
+      case 'viewCount': return contents.viewCount;
+      case 'title': return contents.currentTitle;
+      case 'updatedAt':
+      default: return contents.updatedAt;
+    }
+  })();
+
+  return order === 'asc' ? asc(column) : dsc(column);
+}
 
 export async function findContentBySlug(slug: string) {
   const [content] = await db
@@ -132,7 +139,7 @@ export async function createContentWithInitialRevision(data: {
   });
 }
 
-export async function listPublishedContents() {
+export async function listPublishedContents(sort?: ContentSortKey, order?: SortOrder) {
   return db
     .select({
       id: contents.id,
@@ -147,12 +154,18 @@ export async function listPublishedContents() {
     })
     .from(contents)
     .where(eq(contents.isPublished, true))
-    .orderBy(desc(contents.updatedAt));
+    .orderBy(getOrderBy(sort, order));
 }
 
-export async function listVisibleContents(includeUnpublished: boolean) {
-  return db
-    .select({
+export async function listVisibleContents(includeUnpublished: boolean, sort?: ContentSortKey, order?: SortOrder, limit?: number, offset?: number, categoryId?: number) {
+  const conditions: ReturnType<typeof eq>[] = [];
+  
+  if (!includeUnpublished) {
+    conditions.push(eq(contents.isPublished, true));
+  }
+
+  let query = db
+    .selectDistinct({
       id: contents.id,
       slug: contents.slug,
       title: contents.currentTitle,
@@ -165,11 +178,79 @@ export async function listVisibleContents(includeUnpublished: boolean) {
       updatedAt: contents.updatedAt,
     })
     .from(contents)
-    .where(includeUnpublished ? undefined : eq(contents.isPublished, true))
-    .orderBy(desc(contents.updatedAt));
+    .orderBy(getOrderBy(sort, order))
+    .$dynamic();
+
+  if (categoryId !== undefined) {
+    query = query.leftJoin(contentCategories, eq(contents.id, contentCategories.contentId));
+    conditions.push(eq(contentCategories.categoryId, categoryId));
+  }
+
+  if (conditions.length > 0) {
+    query = query.where(and(...conditions));
+  }
+
+  if (limit !== undefined) {
+    query = query.limit(limit);
+  }
+  if (offset !== undefined) {
+    query = query.offset(offset);
+  }
+
+  return query;
 }
 
-export async function searchPublishedContents(query: string) {
+export async function countVisibleContents(queryText?: string, includeUnpublished?: boolean, categoryId?: number) {
+  const conditions: Array<ReturnType<typeof eq> | ReturnType<typeof or>> = [];
+  
+  if (!includeUnpublished) {
+    conditions.push(eq(contents.isPublished, true));
+  }
+  
+  if (queryText) {
+    const escapedQuery = escapeLikePattern(queryText);
+    if (categoryId !== undefined) {
+      conditions.push(eq(contentCategories.categoryId, categoryId));
+    }
+    conditions.push(
+      or(
+        ilike(contents.currentTitle, `%${escapedQuery}%`),
+        ilike(contents.currentContent, `%${escapedQuery}%`),
+        ilike(contents.slug, `%${escapedQuery}%`),
+        ilike(tags.name, `%${escapedQuery}%`),
+        ilike(categories.name, `%${escapedQuery}%`),
+      ),
+    );
+    const [count] = await db
+      .select({ count: sql<number>`count(distinct ${contents.id})` })
+      .from(contents)
+      .leftJoin(contentTags, eq(contents.id, contentTags.contentId))
+      .leftJoin(tags, eq(contentTags.tagId, tags.id))
+      .leftJoin(contentCategories, eq(contents.id, contentCategories.contentId))
+      .leftJoin(categories, eq(contentCategories.categoryId, categories.id))
+      .where(and(...conditions));
+    return count?.count ?? 0;
+  }
+
+  if (categoryId !== undefined) {
+    conditions.push(eq(contentCategories.categoryId, categoryId));
+    const [count] = await db
+      .select({ count: sql<number>`count(distinct ${contents.id})` })
+      .from(contents)
+      .leftJoin(contentCategories, eq(contents.id, contentCategories.contentId))
+      .where(and(...conditions));
+    return count?.count ?? 0;
+  }
+
+  const [count] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(contents)
+    .where(and(...conditions));
+  
+  return count?.count ?? 0;
+}
+
+export async function searchPublishedContents(query: string, sort?: ContentSortKey, order?: SortOrder) {
   const escapedQuery = escapeLikePattern(query);
   return db
     .selectDistinct({
@@ -200,14 +281,30 @@ export async function searchPublishedContents(query: string) {
         ),
       ),
     )
-    .orderBy(desc(contents.updatedAt));
+    .orderBy(getOrderBy(sort, order));
 }
 
-export async function searchVisibleContents(query: string, includeUnpublished: boolean) {
-  const visibilityClause = includeUnpublished ? undefined : eq(contents.isPublished, true);
-  const escapedQuery = escapeLikePattern(query);
+export async function searchVisibleContents(queryText: string, includeUnpublished: boolean, sort?: ContentSortKey, order?: SortOrder, limit?: number, offset?: number, categoryId?: number) {
+  const conditions: Array<ReturnType<typeof eq> | ReturnType<typeof or>> = [];
+  if (!includeUnpublished) {
+    conditions.push(eq(contents.isPublished, true));
+  }
+  const escapedQuery = escapeLikePattern(queryText);
 
-  return db
+  conditions.push(
+    or(
+      ilike(contents.currentTitle, `%${escapedQuery}%`),
+      ilike(contents.currentContent, `%${escapedQuery}%`),
+      ilike(contents.slug, `%${escapedQuery}%`),
+      ilike(tags.name, `%${escapedQuery}%`),
+      ilike(categories.name, `%${escapedQuery}%`),
+    ),
+  );
+  if (categoryId !== undefined) {
+    conditions.push(eq(contentCategories.categoryId, categoryId));
+  }
+
+  let query = db
     .selectDistinct({
       id: contents.id,
       slug: contents.slug,
@@ -225,19 +322,18 @@ export async function searchVisibleContents(query: string, includeUnpublished: b
     .leftJoin(tags, eq(contentTags.tagId, tags.id))
     .leftJoin(contentCategories, eq(contents.id, contentCategories.contentId))
     .leftJoin(categories, eq(contentCategories.categoryId, categories.id))
-    .where(
-      and(
-        visibilityClause,
-        or(
-          ilike(contents.currentTitle, `%${escapedQuery}%`),
-          ilike(contents.currentContent, `%${escapedQuery}%`),
-          ilike(contents.slug, `%${escapedQuery}%`),
-          ilike(tags.name, `%${escapedQuery}%`),
-          ilike(categories.name, `%${escapedQuery}%`),
-        ),
-      ),
-    )
-    .orderBy(desc(contents.updatedAt));
+    .where(and(...conditions))
+    .orderBy(getOrderBy(sort, order))
+    .$dynamic();
+
+  if (limit !== undefined) {
+    query = query.limit(limit);
+  }
+  if (offset !== undefined) {
+    query = query.offset(offset);
+  }
+
+  return query;
 }
 
 export async function findPublishedContentBySlug(slug: string) {
@@ -300,6 +396,7 @@ export async function updateContentWithRevision(data: {
     const [current] = await tx
       .select({
         latestRevision: contents.latestRevision,
+        currentThumbnail: contents.currentThumbnail,
       })
       .from(contents)
       .where(eq(contents.id, data.contentId))
@@ -307,13 +404,16 @@ export async function updateContentWithRevision(data: {
 
     const nextRevision = (current?.latestRevision ?? 0) + 1;
 
+    // サムネイルが送信されなかった（null）場合は現在の値を維持する
+    const resolvedThumbnail = data.thumbnail ?? current?.currentThumbnail ?? null;
+
     const [updatedContent] = await tx
       .update(contents)
       .set({
         slug: data.slug,
         currentTitle: data.title,
         currentContent: data.content,
-        currentThumbnail: data.thumbnail,
+        currentThumbnail: resolvedThumbnail,
         isPublished: data.isPublished,
         latestRevision: nextRevision,
         updatedAt: new Date(),
@@ -334,7 +434,7 @@ export async function updateContentWithRevision(data: {
       type: 'snapshot',
       title: data.title,
       data: data.content,
-      thumbnail: data.thumbnail,
+      thumbnail: resolvedThumbnail,
       tagChanged: data.tagChanged,
       categoryChanged: data.categoryChanged,
     }).returning({
@@ -409,18 +509,56 @@ export async function deleteContentById(contentId: number) {
 }
 
 export async function incrementContentViewCount(contentId: number) {
-  const [updated] = await db
-    .update(contents)
-    .set({
-      viewCount: sql`${contents.viewCount} + 1`,
-    })
-    .where(eq(contents.id, contentId))
-    .returning({
-      id: contents.id,
-      viewCount: contents.viewCount,
-    });
+  const today = new Date().toISOString().split('T')[0];
 
-  return updated ?? null;
+  return db.transaction(async (tx) => {
+    await tx
+      .insert(contentViewStats)
+      .values({ contentId, date: today, viewCount: 1 })
+      .onConflictDoUpdate({
+        target: [contentViewStats.contentId, contentViewStats.date],
+        set: { viewCount: sql`${contentViewStats.viewCount} + 1` },
+      });
+
+    const [updated] = await tx
+      .update(contents)
+      .set({
+        viewCount: sql`${contents.viewCount} + 1`,
+      })
+      .where(eq(contents.id, contentId))
+      .returning({
+        id: contents.id,
+        viewCount: contents.viewCount,
+      });
+
+    return updated ?? null;
+  });
+}
+
+export async function getWeeklyPopularContents(limitCount = 6) {
+  const oneWeekAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const oneWeekAgoStr = new Date(oneWeekAgoMs).toISOString().split('T')[0];
+
+  return db
+    .select({
+      id: contents.id,
+      slug: contents.slug,
+      title: contents.currentTitle,
+      thumbnail: contents.currentThumbnail,
+      viewCount: sql<number>`cast(sum(${contentViewStats.viewCount}) as int)`,
+      updatedAt: contents.updatedAt,
+    })
+    .from(contents)
+    .innerJoin(contentViewStats, eq(contents.id, contentViewStats.contentId))
+    .where(
+      and(
+        eq(contents.isPublished, true),
+        gte(contentViewStats.date, oneWeekAgoStr)
+      )
+    )
+    .groupBy(contents.id)
+    .orderBy(dsc(sql`sum(${contentViewStats.viewCount})`))
+    .limit(limitCount);
 }
 
 export async function listReferencedThumbnailUrls() {

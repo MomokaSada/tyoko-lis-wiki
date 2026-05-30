@@ -1,24 +1,246 @@
 import { headers } from 'next/headers';
+import { type Metadata } from 'next';
+import Link from 'next/link';
+import { and, sql, gte, lt } from 'drizzle-orm';
+import {
+  Settings,
+  Link as LinkIcon,
+  FileText,
+  Calendar,
+  Clock,
+  Eye,
+  Shield,
+  Plus,
+} from 'lucide-react';
+import { db } from '@/db';
+import { contents, contentViewStats } from '@/db/schema';
+import { searchVisibleContentList, countVisibleContents, getTaxonomyOptions } from '@/server/services/contentService';
+import { findEditSessions } from '@/server/repositories/editLinkRepository';
+import { getEditLinks } from '@/server/services/editLinkService';
+import { getCurrentActor } from '@/server/lib/currentActor';
+import { AdminFormsClient } from './admin-forms-client';
+import { StatCard } from '@/components/ui/StatCard';
+import { MobileActions } from '@/components/posts/MobileActions';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+import { HEADER_USER_ROLE } from '@/lib/auth/constants';
+
+export const metadata: Metadata = {
+  robots: { index: false },
+};
 
 export default async function AdminPage() {
   const headersList = await headers();
-  const userRole = headersList.get('x-user-role');
+  const userRole = headersList.get(HEADER_USER_ROLE);
+  const editor = await getCurrentEditor();
+  const hasEditSession = !!(editor && editor.type === 'session');
+
+  // 統計データ取得
+  const [{ posts: recentPosts }, { posts: publishedPosts }] = await Promise.all([
+    searchVisibleContentList('', true, 'updatedAt', 'desc', 1, 5),
+    searchVisibleContentList('', false, 'updatedAt', 'desc', 1, 100),
+  ]);
+
+  const totalPosts = await countVisibleContents('', true);
+  const publishedCount = await countVisibleContents('', false);
+
+  // 編集リンクの取得
+  const editSessions = await findEditSessions();
+
+  // カテゴリと編集リンク詳細の取得
+  const taxonomy = await getTaxonomyOptions();
+  const actor = await getCurrentActor();
+  const editLinksResult = actor ? await getEditLinks(actor) : { items: [], totalCount: 0 };
+
+  // アクティブなリンク数
+  const activeEditLinks = editSessions.items.filter(session => session.isActive).length;
+  const editSessionsCount = editSessions.totalCount;
+
+  // ── 今月の投稿数 ──
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const lastMonthStart = new Date(monthStart);
+  lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
+
+  const [thisMonthPosts, lastMonthPosts] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(contents)
+      .where(gte(contents.createdAt, monthStart)),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(contents)
+      .where(and(gte(contents.createdAt, lastMonthStart), lt(contents.createdAt, monthStart))),
+  ]);
+
+  const thisMonthCount = Number(thisMonthPosts[0]?.count ?? 0);
+  const lastMonthCount = Number(lastMonthPosts[0]?.count ?? 0);
+
+  // ── ビュー統計（実トレンド + 週間チャート） ──
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const sixtyDaysAgo = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+
+  const [last30Rows, prev30Rows, last7Rows] = await Promise.all([
+    // 直近30日
+    db
+      .select({ total: sql<number>`coalesce(sum(${contentViewStats.viewCount}),0)` })
+      .from(contentViewStats)
+      .where(gte(contentViewStats.date, thirtyDaysAgo)),
+    // 30〜60日前
+    db
+      .select({ total: sql<number>`coalesce(sum(${contentViewStats.viewCount}),0)` })
+      .from(contentViewStats)
+      .where(and(gte(contentViewStats.date, sixtyDaysAgo), lt(contentViewStats.date, thirtyDaysAgo))),
+    // 直近7日（日別）
+    db
+      .select({ date: contentViewStats.date, total: sql<number>`coalesce(sum(${contentViewStats.viewCount}),0)` })
+      .from(contentViewStats)
+      .where(gte(contentViewStats.date, new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10)))
+      .groupBy(contentViewStats.date)
+      .orderBy(contentViewStats.date),
+  ]);
+
+  const last30Total = last30Rows[0]?.total ?? 0;
+  const prev30Total = prev30Rows[0]?.total ?? 0;
+  const viewTrend = prev30Total > 0 ? ((last30Total - prev30Total) / prev30Total) * 100 : 0;
+
+  // 7日間の日別ビューを配列に（データがない日は0）
+  const last7Chart: number[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
+    const row = last7Rows.find((r) => r.date === d);
+    last7Chart.push(row?.total ?? 0);
+  }
+
+  // 本日の日付
+  const today = new Date().toLocaleDateString('ja-JP');
 
   return (
-    <main style={{ padding: '2rem' }}>
-      <h1>管理画面 (/admin)</h1>
-      <p>このページは role: admin 以上のユーザーのみアクセス可能です。</p>
-      <div style={{ padding: '1rem', background: '#f0f0f0', marginTop: '1rem' }}>
-        <strong>あなたのロール (Proxyから付与): </strong> {userRole || 'なし'}
-      </div>
-      <br/>
-      <a href="/admin/edit-links" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
-        記事編集リンク管理へ
-      </a>
-      <a href="/admin/categories" style={{ color: 'blue', display: 'inline-block', marginRight: '1rem' }}>
-        カテゴリ管理へ
-      </a>
-      <a href="/" style={{ color: 'blue' }}>ホームに戻る</a>
-    </main>
+    <>
+      {/* ═══ Admin Hero ═══ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-8 sm:pb-10">
+        <div className="animate-slide-up" style={{ animationDelay: '0.15s' }}>
+          <div className="relative bg-white border border-stone-200 rounded-2xl sm:rounded-[2rem] p-6 sm:p-8 lg:p-10 overflow-hidden shadow-sm">
+            {/* 左上のcircle + 設定アイコン */}
+            <div className="absolute -top-16 sm:-top-20 -left-16 sm:-left-20 w-40 sm:w-56 h-40 sm:h-56 bg-stone-100 rounded-full flex items-center justify-center border-[8px] sm:border-[12px] border-white/60 shadow-inner pointer-events-none">
+              <Settings className="w-20 sm:w-24 h-20 sm:h-24 text-stone-300/40 ml-6 sm:ml-8 mt-6 sm:mt-8" />
+            </div>
+
+            {/* 右下のオーブ */}
+            <div className="absolute -right-12 sm:-right-16 -bottom-12 sm:-bottom-16 w-36 sm:w-44 h-36 sm:h-44 bg-stone-50 rounded-full opacity-60 pointer-events-none" />
+            <div className="absolute top-6 sm:top-8 right-24 sm:right-32 w-2 sm:w-3 h-2 sm:h-3 bg-stone-400 rounded-full animate-pulse pointer-events-none" />
+
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-8 relative z-10">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 pl-1 sm:pl-2">
+                  <div className="w-1 sm:w-1.5 h-6 sm:h-8 bg-stone-400 rounded-full shrink-0" />
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-stone-900 tracking-tight leading-none">
+                    Admin Dashboard
+                  </h1>
+                </div>
+                <p className="text-stone-500 text-sm sm:text-base pl-3 sm:pl-4 max-w-lg leading-relaxed">
+                  Wikiの管理タスクとシステム統計の概要
+                </p>
+
+                <div className="flex flex-wrap gap-2 mt-4 sm:mt-5 pl-3 sm:pl-4">
+                  <span className="inline-flex items-center gap-1 sm:gap-1.5 bg-stone-100 text-stone-600 text-[10px] sm:text-xs font-bold px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-stone-200">
+                    <Clock className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+                    {today}
+                  </span>
+                  <span className="inline-flex items-center gap-1 sm:gap-1.5 bg-green-50 text-green-700 text-[10px] sm:text-xs font-bold px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-green-200">
+                    <Shield className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+                    {userRole || 'Admin'}
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ 統計カード 4点グリッド ═══ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-8 sm:pb-10">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <StatCard
+            icon={<FileText className="w-6 h-6" />}
+            label="全項目数"
+            value={totalPosts}
+            subtext={`公開: ${publishedCount} | 下書き: ${totalPosts - publishedCount}`}
+            theme="blue"
+            miniChart={last7Chart}
+          />
+          <StatCard
+            icon={<LinkIcon className="w-6 h-6" />}
+            label="アクティブ編集リンク"
+            value={activeEditLinks}
+            subtext={`合計 ${editSessionsCount} 件中`}
+            theme="emerald"
+            progress={editSessionsCount > 0 ? Math.round((activeEditLinks / editSessionsCount) * 100) : 0}
+          />
+          <StatCard
+            icon={<Calendar className="w-6 h-6" />}
+            label="今月の投稿"
+            value={thisMonthCount}
+            subtext={lastMonthCount > 0 ? `先月: ${lastMonthCount}件` : ''}
+            theme="purple"
+            progress={lastMonthCount > 0 ? Math.min(100, Math.round((thisMonthCount / lastMonthCount) * 100)) : 100}
+          />
+          <StatCard
+            icon={<Eye className="w-6 h-6" />}
+            label="総閲覧数"
+            value={publishedPosts.reduce((sum, post) => sum + (post.viewCount || 0), 0).toLocaleString()}
+            subtext="公開項目のみ"
+            theme="orange"
+            trendValue={viewTrend}
+          />
+        </div>
+      </section>
+
+      {/* ═══ Admin メイン グリッドカード ═══ */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-12 sm:pb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+          <AdminFormsClient
+            editLinks={editLinksResult.items}
+            taxonomy={taxonomy}
+          />
+
+          {/* 新規項目作成 (CTA) - amber gradient */}
+          <Link
+            href="/posts/create"
+            className="card-base group relative bg-gradient-to-br from-amber-500 via-amber-400 to-amber-500 border border-amber-400/30 rounded-2xl sm:rounded-[1.75rem] p-5 sm:p-6 overflow-hidden md:col-span-2 xl:col-span-1 shadow-lg shadow-amber-500/20"
+          >
+            {/* 光彩 */}
+            <div className="absolute -top-10 sm:-top-12 -right-10 sm:-right-12 w-32 sm:w-40 h-32 sm:h-40 bg-white/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-amber-600/20 to-transparent pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col h-full">
+              <div className="flex items-center gap-2.5 mb-auto">
+                <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-xl sm:rounded-2xl bg-white/25 backdrop-blur flex items-center justify-center text-white shrink-0">
+                  <Plus className="w-6 sm:w-7 h-6 sm:h-7" />
+                </div>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight">新規項目作成</h3>
+                  <p className="text-amber-100 text-xs sm:text-sm font-medium">新しい項目を追加する</p>
+                </div>
+              </div>
+
+              <div className="mt-4 sm:mt-6 w-full py-2.5 sm:py-3 bg-white text-amber-600 font-extrabold text-sm sm:text-base rounded-xl flex items-center justify-center gap-2 group-hover:bg-amber-50 transition-colors shadow-md">
+                項目を書く
+                <svg className="w-4 sm:w-5 h-4 sm:h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      <MobileActions
+        userRole={userRole}
+        hasEditSession={hasEditSession}
+        hideShare={true}
+        hideProfile={true}
+      />
+    </>
   );
 }
