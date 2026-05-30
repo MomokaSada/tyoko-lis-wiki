@@ -83,7 +83,11 @@ async function validateSession(
   }
 
   if (!sessionToken) {
-    redirect('/error/unauthorized');
+    redirect('/error-pages/unauthorized');
+  }
+
+  if (!sessionToken) {
+    redirect('/error-pages/unauthorized');
   }
 
   // Drizzle でセッションの存在・期限・使用回数をチェック
@@ -92,7 +96,7 @@ async function validateSession(
     : await verifyAccountCreateSession(sessionToken);
 
   if (!isValid) {
-    redirect('/error/unauthorized');
+    redirect('/error-pages/unauthorized');
   }
 
   return { valid: true as const, user: null, token: sessionToken };

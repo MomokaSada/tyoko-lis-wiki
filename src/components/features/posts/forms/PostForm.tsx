@@ -15,7 +15,7 @@ import { TagInput } from '@/components/ui/TagInput';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 import { Modal } from '@/components/ui/Modal';
 import { ImageCropper } from '@/components/ui/ImageCropper';
-import { DeletePostForm } from '@/components/features/posts/DeletePostForm';
+import { DeletePostForm } from './DeletePostForm';
 import { slugify } from '@/lib/slug-utils';
 import { getCategoryPath } from '@/lib/clientCategoryUtils';
 

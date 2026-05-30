@@ -1,7 +1,7 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { formatDateTimeJst } from '@/lib/format/formatDateTime';
 import { getDeviceSessionUsageRecords } from '@/server/services/deviceService';
-import { MobileActions } from '@/components/posts/MobileActions';
+import { MobileActions } from '@/components/layout/MobileActions';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
@@ -175,7 +175,6 @@ export default async function EditLinkUsagePage(props: {
         userRole={userRole}
         hasEditSession={hasEditSession}
         hideShare={true}
-        hideProfile={true}
       />
     </>
   );

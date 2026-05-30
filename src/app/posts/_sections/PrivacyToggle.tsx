@@ -48,7 +48,6 @@ export function PrivacyToggle({ initialShowPrivate }: PrivacyToggleProps) {
         )}
       </div>
       
-      {/* ホバー時のツールチップ的なラベル */}
       <span className="absolute right-full mr-4 px-3 py-1.5 rounded-lg bg-[#141414] border border-white/10 text-[10px] font-black uppercase tracking-widest text-white whitespace-nowrap opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all pointer-events-none">
         {initialShowPrivate ? 'Private Mode: ON' : 'Private Mode: OFF'}
       </span>

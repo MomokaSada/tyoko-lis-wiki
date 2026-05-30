@@ -46,7 +46,6 @@ export function PostPagination({ totalPages, currentPage }: PostPaginationProps)
 
   return (
     <div className="flex items-center justify-center gap-2 mt-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* 前へ */}
       {currentPage > 1 ? (
         <Link
           href={createPageUrl(currentPage - 1)}
@@ -65,7 +64,6 @@ export function PostPagination({ totalPages, currentPage }: PostPaginationProps)
         </span>
       )}
 
-      {/* ページ番号 */}
       <div className="flex items-center gap-2 bg-white/50 backdrop-blur-md border border-stone-200 p-1.5 rounded-3xl shadow-sm">
         {getPageNumbers().map((page, idx) => {
           if (page === '...') {
@@ -93,7 +91,6 @@ export function PostPagination({ totalPages, currentPage }: PostPaginationProps)
         })}
       </div>
 
-      {/* 次へ */}
       {currentPage < totalPages ? (
         <Link
           href={createPageUrl(currentPage + 1)}

@@ -10,8 +10,8 @@ import {
   AlertTriangle,
   Home,
 } from 'lucide-react';
-import { DashboardCard } from '@/components/ui/DashboardCard';
-import { DbStatusCard } from '@/components/ui/DbStatusCard';
+import { DashboardCard } from '@/components/features/admin/DashboardCard';
+import { DbStatusCard } from '@/components/features/owner/DbStatusCard';
 
 type DbHealthStatus = {
   isConnected: boolean;

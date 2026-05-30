@@ -37,7 +37,6 @@ export function PostShareActions({ title }: PostShareActionsProps) {
         <p className="text-stone-500 text-sm font-bold tracking-wider">この項目をシェアする</p>
 
         <div className="flex items-center gap-4">
-          {/* X (Twitter) */}
           <a
             href={shareLinks.x}
             target="_blank"
@@ -50,7 +49,6 @@ export function PostShareActions({ title }: PostShareActionsProps) {
             </svg>
           </a>
 
-          {/* Facebook */}
           <a
             href={shareLinks.facebook}
             target="_blank"
@@ -63,7 +61,6 @@ export function PostShareActions({ title }: PostShareActionsProps) {
             </svg>
           </a>
 
-          {/* Hatena Bookmark */}
           <a
             href={shareLinks.hatena}
             target="_blank"
@@ -74,7 +71,6 @@ export function PostShareActions({ title }: PostShareActionsProps) {
             <span className="font-black text-lg leading-none" style={{ fontFamily: 'sans-serif' }}>B!</span>
           </a>
 
-          {/* URL Copy */}
           <button
             onClick={handleCopy}
             className={`w-12 h-12 flex items-center justify-center rounded-full border-2 transition-all shadow-sm ${copied

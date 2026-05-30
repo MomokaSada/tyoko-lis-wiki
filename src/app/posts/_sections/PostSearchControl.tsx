@@ -38,7 +38,6 @@ export function PostSearchControl({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Debounced search update
   useEffect(() => {
     const timer = setTimeout(() => {
       if (query !== initialQuery) {
@@ -48,7 +47,6 @@ export function PostSearchControl({
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Handle outside click for dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -81,8 +79,6 @@ export function PostSearchControl({
   return (
     <div className="w-full max-w-3xl ml-auto animate-in fade-in slide-in-from-right-8 duration-1000 delay-200 px-2 sm:px-0">
       <div className="relative flex flex-col md:flex-row items-stretch md:h-[68px] bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl md:rounded-[2rem] shadow-[0_30px_100px_-15px_rgba(0,0,0,0.5)] focus-within:border-amber-500/30 focus-within:bg-white/10 transition-all duration-500 overflow-visible group">
-        
-        {/* 検索セクション */}
         <form 
           onSubmit={(e) => {
             e.preventDefault();
@@ -108,10 +104,8 @@ export function PostSearchControl({
           />
         </form>
 
-        {/* 区切り線 (モバイルでは非表示) */}
         <div className="hidden md:block w-px h-10 self-center bg-white/10 mx-2" />
 
-        {/* 並べ替えセクション */}
         <div className="relative flex items-center px-4 pb-4 md:pb-0 md:pr-2" ref={dropdownRef}>
           <div className="w-full flex items-center gap-1 h-12 md:h-[52px] bg-white/5 rounded-2xl md:rounded-full p-1 transition-all hover:bg-white/10">
             <button
@@ -145,7 +139,6 @@ export function PostSearchControl({
             </button>
           </div>
 
-          {/* ドロップダウンメニュー */}
           {isDropdownOpen && (
             <div className="absolute top-[calc(100%+16px)] right-0 w-60 bg-[#0a0a0a]/95 backdrop-blur-3xl border border-white/10 rounded-[1.5rem] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden z-[100] animate-in fade-in slide-in-from-top-4 duration-500">
               <div className="p-2.5 space-y-1">
@@ -187,7 +180,6 @@ export function PostSearchControl({
           )}
         </div>
       </div>
-      
     </div>
   );
 }

@@ -16,5 +16,5 @@ export const HEADER_CLIENT_IP = 'x-client-ip';
 /** よく使うパス */
 export const PATHS = {
   HOME: '/',
-  UNAUTHORIZED: '/error/unauthorized',
+  UNAUTHORIZED: '/error-pages/unauthorized',
 } as const;

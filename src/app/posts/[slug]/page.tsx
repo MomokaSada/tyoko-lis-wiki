@@ -20,14 +20,14 @@ import {
   Box
 } from 'lucide-react';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
-import TableOfContents from '@/components/posts/TableOfContents';
+import TableOfContents from './_sections/TableOfContents';
 import { BlockViewerDynamic } from '@/components/editor/BlockViewerDynamic';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 import { getFullContentTaxonomy, resolveCategoryPath } from '@/server/services/taxonomyService';
-import { PostShareActions } from '@/components/posts/PostShareActions';
-import { ArticleProfile } from '@/components/posts/ArticleProfile';
+import { PostShareActions } from './_sections/PostShareActions';
+import { ArticleProfile } from './_sections/ArticleProfile';
 import { createHeadingIdBase, createUniqueHeadingId, normalizeHeadingText } from '@/lib/heading';
-import { MobileActions } from '@/components/posts/MobileActions';
+import { MobileActions } from '@/components/layout/MobileActions';
 
 /**
  * Zenn風の高度な目次抽出ツール
@@ -345,21 +345,24 @@ export default async function PostDetailPage({
 
       {/* モバイル限定アクションボタン (FAB) */}
       <MobileActions
-        toc={toc}
         postTitle={post.title}
         userRole={userRole}
         hasEditSession={hasEditSession}
-        articleProfileProps={{
-          postTitle: post.title,
-          postSlug: post.slug,
-          viewCount: post.viewCount,
-          latestRevision: post.latestRevision ?? 1,
-          formattedDate,
-          thumbnailUrl,
-          fallbackThumbnail,
-          categoryPath,
-          tags,
-        }}
+        tocSlot={toc.length > 0 ? <TableOfContents toc={toc} isMobile /> : undefined}
+        profileSlot={
+          <ArticleProfile
+            postTitle={post.title}
+            postSlug={post.slug}
+            viewCount={post.viewCount}
+            latestRevision={post.latestRevision ?? 1}
+            formattedDate={formattedDate}
+            thumbnailUrl={thumbnailUrl}
+            fallbackThumbnail={fallbackThumbnail}
+            categoryPath={categoryPath}
+            tags={tags}
+            isMobile
+          />
+        }
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import { requireEditSession } from '@/lib/auth/guards';
 import { getEditableContentDetail, getTaxonomyOptions } from '@/server/services/contentService';
-import { PostForm } from '@/components/features/posts/PostForm';
+import { PostForm } from '@/components/features/posts/forms/PostForm';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 

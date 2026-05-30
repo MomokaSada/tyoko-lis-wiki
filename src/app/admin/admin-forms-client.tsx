@@ -5,7 +5,7 @@ import {
   FolderTree,
   Link as LinkIcon,
 } from 'lucide-react';
-import { DashboardCard } from '@/components/ui/DashboardCard';
+import { DashboardCard } from '@/components/features/admin/DashboardCard';
 
 type EditLinkSession = {
   uuid: string;

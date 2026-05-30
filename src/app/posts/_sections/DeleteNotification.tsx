@@ -20,7 +20,6 @@ export function DeleteNotification() {
 
   const handleClose = () => {
     setIsOpen(false);
-    // URLからパラメータを消去
     const params = new URLSearchParams(searchParams.toString());
     params.delete('deleted');
     const newQs = params.toString();

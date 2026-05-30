@@ -2,7 +2,7 @@ import { AccountCreateLinkForm } from './account-create-link-form';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
 import type { AccountStatusFilter } from '@/server/repositories/accountCreateLinkRepository';
-import { MobileActions } from '@/components/posts/MobileActions';
+import { MobileActions } from '@/components/layout/MobileActions';
 import { InvalidButton } from './invalid-button';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
@@ -230,7 +230,6 @@ export default async function AccountCreateLinksPage(props: {
         userRole={userRole}
         hasEditSession={hasEditSession}
         hideShare={true}
-        hideProfile={true}
       />
     </>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { type ReactNode, useState } from 'react';
 import {
   Menu, X, BookOpen, User, Share2, Home, List,
   FilePlus, Settings, Shield, Compass, Check, ChevronLeft
@@ -9,33 +9,25 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useScrollLock } from '@/lib/useScrollLock';
 import { useWithSession } from '@/lib/useWithSession';
-import { ArticleProfile, ArticleProfileProps } from './ArticleProfile';
-import TableOfContents from './TableOfContents';
-
-interface TocItem {
-  id: string;
-  text: string;
-  level: number;
-}
 
 interface MobileActionsProps {
-  toc?: TocItem[];
   postTitle?: string;
   userRole?: string | null;
   hasEditSession?: boolean;
   hideShare?: boolean;
-  hideProfile?: boolean;
-  articleProfileProps?: ArticleProfileProps;
+  /** TOC タブのスロット（渡さなければ目次タブを非表示） */
+  tocSlot?: ReactNode;
+  /** プロフィールタブのスロット（渡さなければプロフィールタブを非表示） */
+  profileSlot?: ReactNode;
 }
 
 export function MobileActions({
-  toc,
   postTitle,
   userRole,
   hasEditSession,
   hideShare = false,
-  hideProfile = false,
-  articleProfileProps
+  tocSlot,
+  profileSlot,
 }: MobileActionsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'nav' | 'toc' | 'profile'>('nav');
@@ -65,21 +57,6 @@ export function MobileActions({
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy: ', err);
-    }
-  };
-
-  const scrollToHeading = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      const offset = 80;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - offset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-      closeAll();
     }
   };
 
@@ -121,21 +98,13 @@ export function MobileActions({
           <div className={`${activeTab === 'profile' ? 'p-0' : 'p-6'} overflow-y-auto flex-1 overscroll-contain`}>
             {activeTab === 'toc' && (
               <div className="space-y-1">
-                {toc && toc.length > 0 ? (
-                  <TableOfContents toc={toc} isMobile={true} />
-                ) : (
-                  <p className="text-stone-400 text-center py-8">目次がありません</p>
-                )}
+                {tocSlot ?? <p className="text-stone-400 text-center py-8">目次がありません</p>}
               </div>
             )}
 
             {activeTab === 'profile' && (
               <div className="w-full">
-                {articleProfileProps ? (
-                  <ArticleProfile {...articleProfileProps} isMobile={true} />
-                ) : (
-                  <div className="p-8 text-center text-stone-400">プロファイル情報がありません</div>
-                )}
+                {profileSlot ?? <div className="p-8 text-center text-stone-400">プロファイル情報がありません</div>}
               </div>
             )}
 
@@ -193,7 +162,7 @@ export function MobileActions({
                       <span className="text-[11px] font-black uppercase tracking-[0.2em] text-stone-400">項目ナビゲーション</span>
                     </div>
                     <div className="grid gap-3">
-                      {toc && toc.length > 0 && (
+                      {tocSlot && (
                         <button
                           onClick={() => setActiveTab('toc')}
                           className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition text-left"
@@ -208,7 +177,7 @@ export function MobileActions({
                         </button>
                       )}
 
-                      {!hideProfile && (
+                      {profileSlot && (
                         <button
                           onClick={() => setActiveTab('profile')}
                           className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition text-left"

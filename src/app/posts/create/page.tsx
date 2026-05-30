@@ -2,7 +2,7 @@ import { requireEditSession } from '@/lib/auth/guards';
 import { getTaxonomyOptions } from '@/server/services/contentService';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-import { PostForm } from '@/components/features/posts/PostForm';
+import { PostForm } from '@/components/features/posts/forms/PostForm';
 
 function toSafeId(value: unknown): number {
   if (typeof value === 'bigint') {
