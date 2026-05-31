@@ -38,8 +38,9 @@ export const Footer = () => {
               </div>
             </div>
             <div className="space-y-4">
-              <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Legal</h4>
-              <ul className="space-y-2 text-xs font-bold text-stone-600">
+              <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Links</h4>
+              <ul className="space-y-3 text-xs font-bold text-stone-600">
+                <li className="hover:text-stone-900 cursor-pointer"><Link href="/guide/markdown">Markdownガイド</Link></li>
                 <li className="hover:text-stone-900 cursor-pointer"><Link href="/terms">利用規約</Link></li>
                 <li className="hover:text-stone-900 cursor-pointer"><Link href="/privacy">プライバシー</Link></li>
               </ul>

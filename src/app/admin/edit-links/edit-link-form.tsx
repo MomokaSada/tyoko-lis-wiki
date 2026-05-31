@@ -5,6 +5,7 @@ import {
   createEditLinkAction,
   type CreateEditLinkActionState,
 } from '@/server/actions/editLinkActions';
+import { formatDateTimeJp } from '@/lib/format/formatDateTime';
 
 const initialState: CreateEditLinkActionState = {
   error: null,
@@ -182,7 +183,7 @@ export function EditLinkForm() {
                   <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   <p className="text-[10px] text-emerald-400 font-bold uppercase">有効期限</p>
                 </div>
-                <p className="font-bold text-stone-800">{state.expiresAt}</p>
+                <p className="font-bold text-stone-800">{formatDateTimeJp(state.expiresAt)}</p>
               </div>
               <div className="bg-white rounded-xl p-4 border border-emerald-100">
                 <div className="flex items-center gap-2 mb-2">
@@ -201,7 +202,7 @@ export function EditLinkForm() {
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-xs font-bold border border-stone-200">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                {state.expiresAt}
+                {formatDateTimeJp(state.expiresAt)}
               </span>
             </div>
           </div>

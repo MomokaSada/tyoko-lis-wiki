@@ -6,6 +6,7 @@ import {
   type CreateAccountCreateLinkActionState,
 } from '@/server/actions/accountCreateLinkActions';
 import { CopyableLink } from '@/components/ui/CopyableLink';
+import { formatDateTimeJp } from '@/lib/format/formatDateTime';
 
 const initialState: CreateAccountCreateLinkActionState = {
   error: null,
@@ -134,14 +135,14 @@ export function AccountCreateLinkForm() {
                   <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   <p className="text-[10px] text-blue-400 font-bold uppercase">有効期限</p>
                 </div>
-                <p className="font-bold text-stone-800">{state.expiresAt}</p>
+                <p className="font-bold text-stone-800">{formatDateTimeJp(state.expiresAt)}</p>
               </div>
               <div className="bg-white rounded-xl p-4 border border-blue-100">
                 <div className="flex items-center gap-2 mb-2">
                   <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   <p className="text-[10px] text-blue-400 font-bold uppercase">発行日時</p>
                 </div>
-                <p className="font-bold text-stone-800">{new Date().toLocaleString('ja-JP')}</p>
+                <p className="font-bold text-stone-800">{formatDateTimeJp(new Date())}</p>
                 <p className="text-xs text-stone-500">発行者: owner</p>
               </div>
             </div>

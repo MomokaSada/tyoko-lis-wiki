@@ -11,6 +11,7 @@ import {
   Image, Tag, Folder, Clock, Rocket, Globe, Trash2,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { TagInput } from '@/components/ui/TagInput';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 import { Modal } from '@/components/ui/Modal';
@@ -322,9 +323,19 @@ export function PostForm({
 
           {/* ── 本文エディタ カード ── */}
           <section className="bg-white border border-stone-200 rounded-2xl p-6 lg:p-8 transition-all duration-200">
-            <div className="flex items-center gap-1.5 text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-4">
-              <PenLine size={14} className="text-stone-400" />
-              <span>本文</span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-stone-500 uppercase tracking-wider">
+                <PenLine size={14} className="text-stone-400" />
+                <span>本文</span>
+              </div>
+              <Link
+                href="/guide/markdown"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-bold text-stone-400 hover:text-amber-600 transition-colors underline decoration-dotted underline-offset-2"
+              >
+                Markdown記法ガイド ↗
+              </Link>
             </div>
             <div className="-mx-2">
               <BlockEditor initialMarkdown={content?.content ?? ''} name="content" />

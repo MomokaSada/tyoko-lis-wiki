@@ -4,9 +4,6 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getRevisionDiffData } from '@/server/services/revisionService';
 import type { DiffPart, TagCategoryDiff } from '@/server/services/revisionService';
 
-// 型は Service 層から re-export し、呼び出し元の import を維持する
-export type { DiffPart, TagCategoryDiff };
-
 /**
  * 指定されたリビジョンの差分を取得する (Server Action)。
  *

@@ -49,17 +49,6 @@ export const Header = ({ userRole }: HeaderProps) => {
         />
       </div>
 
-      {/* モバイルメニュートグルボタン */}
-      <div className="flex lg:hidden">
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="flex items-center justify-center rounded-2xl border border-stone-200 bg-white px-3 py-2 text-stone-700 shadow-sm transition hover:bg-stone-50"
-          aria-label="メニューを開く"
-        >
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-      </div>
-
       {/* モバイルメニュー */}
       <HeaderMobileMenu
         isOpen={mobileOpen}

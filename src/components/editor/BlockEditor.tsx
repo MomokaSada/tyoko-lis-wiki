@@ -1,18 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-
-type ToastUiEditorInstance = {
-  getMarkdown: () => string;
-  setMarkdown: (value: string, cursorToEnd?: boolean) => void;
-  on: (event: string, handler: () => void) => void;
-  removeHook?: (name: string) => void;
-  addHook?: (
-    name: string,
-    handler: (blob: Blob | File, callback: (url: string, text?: string) => void) => void,
-  ) => void;
-  destroy: () => void;
-};
+import { enhanceTablePopup } from './enhanceTablePopup';
+import type { ToastUiEditorInstance } from '@/types/toastui';
 
 const TOASTUI_SCRIPT_ID = 'toastui-editor-script';
 const TOASTUI_CSS_ID = 'toastui-editor-css';
@@ -83,6 +73,7 @@ export default function BlockEditor({
   const editorRef = useRef<ToastUiEditorInstance | null>(null);
   const initializedRef = useRef(false);
   const initRequestIdRef = useRef(0);
+  const disposeEnhanceRef = useRef<(() => void) | null>(null);
   const [markdown, setMarkdown] = useState(initialMarkdown);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -211,6 +202,11 @@ export default function BlockEditor({
         }
 
         editorRef.current = editor;
+
+        // テーブルサイズ選択ポップアップを拡張（長押し操作 + 決定/キャンセルボタン）
+        const dispose = enhanceTablePopup(mountRef.current, editor);
+        disposeEnhanceRef.current = dispose;
+
         initializedRef.current = true;
         setMarkdown(editor.getMarkdown());
         setStatus('ready');
@@ -229,6 +225,13 @@ export default function BlockEditor({
 
     return () => {
       disposed = true;
+
+      // テーブルポップアップ拡張のクリーンアップ
+      if (disposeEnhanceRef.current) {
+        disposeEnhanceRef.current();
+        disposeEnhanceRef.current = null;
+      }
+
       const editor = editorRef.current;
       editorRef.current = null;
       initializedRef.current = false;

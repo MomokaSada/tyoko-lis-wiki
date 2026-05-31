@@ -13,6 +13,7 @@ import { CopyLinkButton } from '@/components/ui/CopyLinkButton';
 import { SortControls } from '@/components/ui/SortControls';
 import type { SortOption } from '@/components/ui/SortControls';
 import { StatusFilterSelect } from './status-filter';
+import { formatDateTimeJp } from '@/lib/format/formatDateTime';
 import { Pagination } from '@/components/ui/Pagination';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
@@ -223,7 +224,7 @@ export default async function EditLinksPage(props: {
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           {getStatusBadge(link.status)}
                           <span className="text-[10px] sm:text-xs text-stone-400">
-                            {link.startAt.toLocaleDateString('ja-JP')}
+                            {formatDateTimeJp(link.startAt)}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
