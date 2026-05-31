@@ -369,16 +369,16 @@ export default function MarkdownGuidePage() {
             💡 活用のヒント
           </h2>
           <ul className="space-y-3 text-sm text-stone-600">
-            <li className="flex items-start gap-3">
+            {/* <li className="flex items-start gap-3">
               <span className="w-5 h-5 bg-amber-200 rounded-full flex items-center justify-center text-amber-800 text-xs font-bold shrink-0 mt-0.5">1</span>
               <span><strong className="font-bold text-stone-700">画像はドラッグ＆ドロップ</strong>で手軽にアップロード。記事に直接埋め込めます。</span>
-            </li>
+            </li> */}
             <li className="flex items-start gap-3">
-              <span className="w-5 h-5 bg-amber-200 rounded-full flex items-center justify-center text-amber-800 text-xs font-bold shrink-0 mt-0.5">2</span>
+              <span className="w-5 h-5 bg-amber-200 rounded-full flex items-center justify-center text-amber-800 text-xs font-bold shrink-0 mt-0.5">1</span>
               <span><strong className="font-bold text-stone-700">数式（LaTeX）</strong>にも対応。KaTeXを使って美しい数式を記述できます。</span>
             </li>
             <li className="flex items-start gap-3">
-              <span className="w-5 h-5 bg-amber-200 rounded-full flex items-center justify-center text-amber-800 text-xs font-bold shrink-0 mt-0.5">3</span>
+              <span className="w-5 h-5 bg-amber-200 rounded-full flex items-center justify-center text-amber-800 text-xs font-bold shrink-0 mt-0.5">2</span>
               <span><strong className="font-bold text-stone-700">Markdownモード</strong>とWYSIWYGモードはタブで切り替え可能（URLに <code className="text-xs bg-amber-100 px-1.5 py-0.5 rounded font-mono">?coder=true</code> を追加）。</span>
             </li>
           </ul>
