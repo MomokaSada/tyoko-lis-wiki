@@ -41,7 +41,7 @@ export async function findAccountCreateSessions() {
 
 export type AccountCreateSessionRow = {
   uuid: string;
-  authorId: number;
+  authorId: number | null;
   authorName: string | null;
   isActive: boolean;
   startAt: Date;

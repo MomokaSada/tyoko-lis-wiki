@@ -22,7 +22,7 @@ type DbHealthStatus = {
 
 type AccountCreateLink = {
   uuid: string;
-  authorId: number;
+  authorId: number | null;
   authorName: string | null;
   startAt: Date;
   endAt: Date;

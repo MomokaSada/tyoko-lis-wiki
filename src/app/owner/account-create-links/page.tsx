@@ -198,7 +198,7 @@ export default async function AccountCreateLinksPage(props: {
                         <CopyLinkButton uuid={link.uuid} path="/auth/register?session=" />
                       </div>
                       <div className="text-[10px] sm:text-xs text-stone-400 mt-0.5">
-                        <div>作成者: {link.authorName ?? `user:${link.authorId}`}</div>
+                        <div>作成者: {link.authorName ?? (link.authorId != null ? `user:${link.authorId}` : 'システム')}</div>
                         <div>有効期限: {formatDateTimeJp(link.endAt)}</div>
                       </div>
                     </div>
