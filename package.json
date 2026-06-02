@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 next dev --experimental-https --experimental-https-key /home/user/projects/my-system/certs/dev.key --experimental-https-cert /home/user/projects/my-system/certs/dev.pem",
     "typecheck": "tsc --noEmit",
     "build": "bun run typecheck && next build",
     "start": "next start",
@@ -12,6 +12,8 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@simplewebauthn/browser": "13.3.0",
+    "@simplewebauthn/server": "13.3.1",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.97.0",
     "diff": "^9.0.0",

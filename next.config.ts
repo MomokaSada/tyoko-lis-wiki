@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   // 型チェックは build スクリプト内で tsc --noEmit により実行するため、
   // next.config 側の ignoreBuildErrors は削除する。
   // 参照: package.json scripts.build
+  allowedDevOrigins: ["dev-machine.local"],
   images: {
     remotePatterns: [
       {
