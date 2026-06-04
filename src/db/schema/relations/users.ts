@@ -5,6 +5,9 @@ import { editSessions } from '../editSessions';
 import { blockDevices } from '../blockDevices';
 import { contentEditLogs } from '../contentEditLogs';
 import { auditLogs } from '../auditLogs';
+import { appSessions } from '../appSessions';
+import { webauthnChallenges } from '../webauthnChallenges';
+import { passkeys } from '../passkeys';
 
 export const usersRelations = relations(users, ({ one, many }) => ({
     accountCreateSession: one(accountCreateSessions, {
@@ -16,4 +19,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     blockDevicesCreated: many(blockDevices),
     contentEditLogs: many(contentEditLogs),
     auditLogs: many(auditLogs),
+    appSessions: many(appSessions),
+    webauthnChallenges: many(webauthnChallenges),
+    passkeys: many(passkeys),
 }));
