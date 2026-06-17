@@ -3,6 +3,8 @@ export type AuditAction =
     | 'login'
     | 'login_failed'
     | 'register'
+    | 'passkey_register'
+    | 'passkey_login'
     // アカウント管理
     | 'ban_account'
     | 'unban_account'

@@ -1,7 +1,7 @@
 'use server';
 
 import { cleanupOrphanThumbnails, getOrphanThumbnailStats } from '@/server/services/thumbnailService';
-import { requireActor } from '@/server/lib/withAction';
+import { requireActor } from '@/server/actions/modules/withAction';
 import type { BaseActionState } from '@/types/actionState';
 
 /*

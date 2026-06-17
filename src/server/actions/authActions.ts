@@ -6,7 +6,7 @@ import { getCurrentRequestBan } from '@/server/services/ipBanService';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { recordAuditLog } from '@/server/services/auditLogService';
 import { registerAccount, signIn } from '@/server/services/authService';
-import { withAction, parseOrError } from '@/server/lib/withAction';
+import { withAction, parseOrError } from '@/server/actions/modules/withAction';
 import type { BaseActionState } from '@/types/actionState';
 
 export type ActionState = BaseActionState;

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createCategorySchema, deleteCategorySchema, updateCategorySchema } from '@/server/schemas/categorySchemas';
 import { createCategoryAsAdmin, deleteCategoryAsAdmin, updateCategoryAsAdmin } from '@/server/services/taxonomyService';
 import { recordAuditLog } from '@/server/services/auditLogService';
-import { withAction, requireActor, parseOrError } from '@/server/lib/withAction';
+import { withAction, requireActor, parseOrError } from '@/server/actions/modules/withAction';
 import type { BaseActionState } from '@/types/actionState';
 
 export type CategoryActionState = BaseActionState & {

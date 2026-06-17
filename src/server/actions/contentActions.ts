@@ -14,7 +14,7 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { recordCurrentEditDeviceSession } from '@/server/services/deviceService';
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
 import { recordAuditLog } from '@/server/services/auditLogService';
-import { withAction, requireActor } from '@/server/lib/withAction';
+import { withAction, requireActor } from '@/server/actions/modules/withAction';
 import type { BaseActionState } from '@/types/actionState';
 
 export type ContentActionState = BaseActionState & {
