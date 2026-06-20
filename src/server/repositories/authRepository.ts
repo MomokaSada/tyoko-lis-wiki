@@ -41,7 +41,7 @@ export async function findUserByName(name: string) {
 export async function createInvitedUser(data: {
   sessionId: string;
   authUserId: string;
-  username: string;
+  userName: string;
   passwordHash: string;
   type: 'admin' | 'bot';
 }) {
@@ -51,7 +51,7 @@ export async function createInvitedUser(data: {
       .values({
         accountCreateSessionId: data.sessionId,
         authUserId: data.authUserId,
-        name: data.username,
+        name: data.userName,
         password: data.passwordHash,
         type: data.type,
         isActive: true,

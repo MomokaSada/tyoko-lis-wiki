@@ -1,7 +1,7 @@
-export function normalizeUsername(username: string) {
-  return username.trim().toLowerCase();
+export function normalizeUsername(userName: string) {
+  return userName.trim().toLowerCase();
 }
 
-export function buildDummyEmail(username: string) {
-  return `${normalizeUsername(username)}@test.com`;
+export function buildDummyEmail(userName: string) {
+  return `${normalizeUsername(userName)}@test.com`;
 }

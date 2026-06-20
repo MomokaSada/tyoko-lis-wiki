@@ -17,12 +17,12 @@ export function RegisterForm({ sessionToken }: { sessionToken: string }) {
       )}
 
       <div className="space-y-1">
-        <label htmlFor="username" className="text-xs font-bold text-stone-500 uppercase tracking-wider block">
+        <label htmlFor="userName" className="text-xs font-bold text-stone-500 uppercase tracking-wider block">
           User Name
         </label>
         <input
-          id="username"
-          name="username"
+          id="userName"
+          name="userName"
           type="text"
           required
           minLength={3}

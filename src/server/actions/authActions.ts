@@ -20,7 +20,7 @@ export async function loginAction(
   if (preflight) return preflight;
 
   const parsed = parseOrError(loginSchema, {
-    username: formData.get('username'),
+    userName: formData.get('userName'),
     password: formData.get('password'),
   });
   if ('error' in parsed) return parsed;
@@ -35,7 +35,7 @@ export async function loginAction(
     await recordAuditLog({
       actorId: null,
       action: 'login_failed',
-      detail: { username: parsed.parsed.username },
+      detail: { userName: parsed.parsed.userName },
     });
     return { error: result.error };
   }
@@ -60,7 +60,7 @@ export async function registerAction(
 
   const parsed = parseOrError(registerSchema, {
     session: formData.get('session'),
-    username: formData.get('username'),
+    userName: formData.get('userName'),
     password: formData.get('password'),
     confirmPassword: formData.get('confirmPassword'),
   });
@@ -77,7 +77,7 @@ export async function registerAction(
   }
 
   const loginResult = await signIn({
-    username: parsed.parsed.username,
+    userName: parsed.parsed.userName,
     password: parsed.parsed.password,
   });
   if (!loginResult.success) {

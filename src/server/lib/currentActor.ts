@@ -38,9 +38,9 @@ export async function getCurrentActor(): Promise<Actor | null> {
 
     // Fallback for existing accounts created before authUserId was backfilled.
     if (!appUser) {
-        const username = getUsernameFromDummyEmail(data.user.email);
+        const userName = getUsernameFromDummyEmail(data.user.email);
 
-        if (!username) {
+        if (!userName) {
             return null;
         }
 
@@ -51,7 +51,7 @@ export async function getCurrentActor(): Promise<Actor | null> {
                 isActive: users.isActive,
             })
             .from(users)
-            .where(eq(users.name, username))
+            .where(eq(users.name, userName))
             .limit(1);
     }
     

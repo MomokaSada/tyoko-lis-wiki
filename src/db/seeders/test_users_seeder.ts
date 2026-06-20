@@ -35,7 +35,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 // ---------- テストユーザー定義 ----------
 
 interface TestUser {
-  username: string;
+  userName: string;
   password: string;
   role?: 'admin' | 'owner';
   /** public.users に同期する際のレコード情報 */
@@ -46,19 +46,19 @@ interface TestUser {
 
 const TEST_USERS: TestUser[] = [
   {
-    username: 'admin',
+    userName: 'admin',
     password: 'password123',
     role: 'admin',
     publicUser: { type: 'admin' },
   },
   {
-    username: 'owner',
+    userName: 'owner',
     password: 'password123',
     role: 'owner',
     publicUser: { type: 'owner' },
   },
   {
-    username: 'user',
+    userName: 'user',
     password: 'password123',
     // role なし — 一般ユーザー
     // public.users の user_type enum に 'user' が存在しないため同期しない
@@ -76,9 +76,9 @@ async function seed() {
   const existingAuthUsers = listData?.users ?? [];
 
   for (const tu of TEST_USERS) {
-    const dummyEmail = `${tu.username}@test.com`;
+    const dummyEmail = `${tu.userName}@test.com`;
     // ---- 1. auth.users への upsert (既存ならスキップ) ----
-    console.log(`📧 ${tu.username} を処理中...`);
+    console.log(`📧 ${tu.userName} を処理中...`);
 
     const existing = existingAuthUsers.find((u) => u.email === dummyEmail) ?? null;
 
@@ -114,22 +114,22 @@ async function seed() {
       const existing = await db
         .select()
         .from(users)
-        .where(sql`${users.name} = ${tu.username}`)
+        .where(sql`${users.name} = ${tu.userName}`)
         .limit(1);
 
       if (existing.length > 0) {
-        console.log(`  ⏭️  public.users に "${tu.username}" は既に存在`);
+        console.log(`  ⏭️  public.users に "${tu.userName}" は既に存在`);
       } else {
         const hashedPassword = await Bun.password.hash(tu.password);
 
         await db.insert(users).values({
           accountCreateSessionId: null,
-          name: tu.username,
+          name: tu.userName,
           password: hashedPassword,
           type: tu.publicUser.type,
           isActive: true,
         });
-        console.log(`  ✅ public.users に "${tu.username}" を挿入しました`);
+        console.log(`  ✅ public.users に "${tu.userName}" を挿入しました`);
       }
     }
 

@@ -8,7 +8,7 @@ import {
 import { buildDummyEmail, normalizeUsername } from '@/server/lib/dummyEmail';
 import { hashPassword } from '@/server/lib/password';
 import type { LoginInput, RegisterInput } from '@/server/schemas/authSchemas';
-import { isUniqueViolation } from '@/server/services/modules/pgError';
+import { isUniqueViolation } from '@/server/lib/pgError';
 
 /** signIn の結果型 */
 export type SignInResult =
@@ -24,8 +24,8 @@ export type RegisterResult =
  *
  * Supabase Auth はメールベースのため、内部で `username@test.com` のダミーメールに変換する。
  */
-export async function signIn({ username, password }: LoginInput): Promise<SignInResult> {
-  const normalizedUsername = normalizeUsername(username);
+export async function signIn({ userName, password }: LoginInput): Promise<SignInResult> {
+  const normalizedUsername = normalizeUsername(userName);
   const existingUser = await findUserByName(normalizedUsername);
 
   if (existingUser && !existingUser.isActive) {
@@ -57,7 +57,7 @@ export async function registerAccount(input: RegisterInput): Promise<RegisterRes
     return { success: false, error: '招待リンクが無効か期限切れです' };
   }
 
-  const normalizedUsername = normalizeUsername(input.username);
+  const normalizedUsername = normalizeUsername(input.userName);
   const existingUser = await findUserByName(normalizedUsername);
 
   if (existingUser) {
@@ -84,7 +84,7 @@ export async function registerAccount(input: RegisterInput): Promise<RegisterRes
     await createInvitedUser({
       sessionId: input.session,
       authUserId: data.user.id,
-      username: normalizedUsername,
+      userName: normalizedUsername,
       passwordHash: await hashPassword(input.password),
       type: 'admin',
     });

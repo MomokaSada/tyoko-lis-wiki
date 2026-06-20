@@ -2,23 +2,23 @@ import { randomUUID } from 'node:crypto';
 import { findEditSessions, insertEditSession, deactivateEditSession, type StatusFilter } from '@/server/repositories/editLinkRepository';
 import type { CreateEditLinkInput } from '@/server/schemas/editLinkSchemas';
 import type { Actor } from '@/types/actor';
-import { isUniqueViolation } from '@/server/services/modules/pgError';
+import { isUniqueViolation } from '@/server/lib/pgError';
 import type { ListQuery, ListResult } from '@/types/listQuery';
 
 type CreateEditLinkResult =
   | {
-      success: true;
-      data: {
-        uuid: string;
-        url: string;
-        endAt: Date;
-        maxEdits: number;
-      };
-    }
-  | {
-      success: false;
-      error: string;
+    success: true;
+    data: {
+      uuid: string;
+      url: string;
+      endAt: Date;
+      maxEdits: number;
     };
+  }
+  | {
+    success: false;
+    error: string;
+  };
 
 export type EditLinkListItem = {
   uuid: string;
