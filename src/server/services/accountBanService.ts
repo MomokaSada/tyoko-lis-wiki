@@ -2,11 +2,11 @@ import type { BanAccountInput } from '@/server/schemas';
 import {
     activateUserById,
     deactivateUserById,
+    listManageableAccounts,
+    listManageableAccountsPaginated,
 } from '@/server/repositories/accountBanRepository';
 import {
     findUserById,
-    listManageableAccounts,
-    listManageableAccountsPaginated,
 } from '@/server/repositories/userRepository';
 
 import type { Actor } from '@/types/actor';
