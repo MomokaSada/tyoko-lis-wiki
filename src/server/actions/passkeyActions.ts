@@ -340,6 +340,8 @@ export async function finishPasskeyLoginAction(
                 await recordAuditLog({
                     actorId: passkey.userId,
                     action: 'passkey_login',
+                    targetType: 'user',
+                    targetId: String(passkey.userId),
                 });
                 break;
             } catch (error) {
