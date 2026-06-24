@@ -3,6 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
+import { IpBanGate } from "../components/auth/IpBanGate";
+import { AccountBanGate } from "../components/auth/AccountBanGate";
+import { ToastProvider } from "../components/ui/toast";
 
 import { headers } from "next/headers";
 import { HEADER_USER_ROLE } from "@/lib/auth/constants";
@@ -31,9 +34,15 @@ export default async function RootLayout({
         className={`${inter.variable} min-h-screen bg-stone-50 text-stone-900 font-sans antialiased flex flex-col`}
       >
         <Header userRole={userRole} />
-        <main className="flex-1">
-          {children}
-        </main>
+        <ToastProvider>
+          <main className="flex-1">
+            <AccountBanGate>
+              <IpBanGate>
+                {children}
+              </IpBanGate>
+            </AccountBanGate>
+          </main>
+        </ToastProvider>
         <Footer />
       </body>
     </html>

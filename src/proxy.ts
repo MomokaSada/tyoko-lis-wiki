@@ -2,7 +2,7 @@ import { isIP } from 'node:net';
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from './lib/supabase/middleware';
 import { getRequirement } from './lib/auth/routeRules';
-import { ADMIN_ROLES, HEADER_CLIENT_IP, HEADER_USER_ROLE, PATHS } from './lib/auth/constants';
+import { ADMIN_ROLES, HEADER_CLIENT_IP, HEADER_USER_ROLE, HEADER_IS_PROTECTED, PATHS } from './lib/auth/constants';
 
 function normalizeCandidateIp(candidate: string | null | undefined) {
   if (!candidate) {
@@ -72,6 +72,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (clientIp) {
     requestHeaders.set(HEADER_CLIENT_IP, clientIp);
   }
+
+  // ルート種別を Server Component に伝える（IP BAN ゲート用）
+  requestHeaders.set(HEADER_IS_PROTECTED, requirement.kind !== 'public' ? 'true' : 'false');
 
   // updateSession がセットした Cookie（リフレッシュされたトークン等）を継承しつつ、
   // 後続の Server Components へリクエストヘッダーを渡すレスポンスを生成する

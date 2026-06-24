@@ -88,6 +88,7 @@ export default async function AccountBansPage(props: {
     {
       key: 'id',
       label: '操作',
+      isAction: true,
       headerAlign: 'center',
       cellAlign: 'center',
       render: (_, account) => (

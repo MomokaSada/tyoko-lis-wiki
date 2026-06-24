@@ -10,6 +10,8 @@ export type Column<T> = {
   label: string;
   /** ソート可能にするか */
   sortable?: boolean;
+  /** モバイルカード表示でアクション列として扱う（ラベル非表示、右寄せ、区切り線） */
+  isAction?: boolean;
   /** セルの描画。省略時は row[key] を文字列表示 */
   render?: (value: unknown, row: T) => React.ReactNode;
   /** ヘッダーセルに追加するクラス */
@@ -173,7 +175,7 @@ export async function DataTable<T extends Record<string, unknown>>({
                   {columns.map((col) => {
                     const value = (row as Record<string, unknown>)[col.key];
                     return (
-                      <td key={col.key} className={col.cellClassName ?? ''} data-label={col.label} style={col.cellAlign ? { textAlign: col.cellAlign } : undefined}>
+                      <td key={col.key} className={col.cellClassName ?? ''} data-label={col.label} data-card-action={col.isAction ? '' : undefined} style={col.cellAlign ? { textAlign: col.cellAlign } : undefined}>
                         {col.render ? col.render(value, row) : String(value ?? '')}
                       </td>
                     );

@@ -7,11 +7,11 @@ import {
 import { parseListQuery } from '@/types/listQuery';
 import { DataTable } from '@/components/ui/DataTable';
 import type { Column } from '@/components/ui/DataTable';
-import { IpBanForm } from './ip-ban-form';
 import { UnIpBanButton } from './un-ip-ban-button';
 import { DetailModal } from './reason-detail';
 import { IpBansTabs } from './ip-bans-tabs';
 import { CopyableCell } from '@/components/ui/CopyableCell';
+import { BanDeviceModal } from './ban-device-modal';
 import Link from 'next/link';
 import { ShieldBan, AlertTriangle } from 'lucide-react';
 
@@ -118,6 +118,7 @@ export default async function IpBansPage(props: {
     {
       key: 'id',
       label: '操作',
+      isAction: true,
       headerAlign: 'center',
       cellAlign: 'center',
       render: (_, ban) => <UnIpBanButton banId={ban.id} />,
@@ -183,6 +184,21 @@ export default async function IpBansPage(props: {
           <span className="badge badge-stone"><span className="badge-dot" />未BAN</span>
         ),
     },
+    // 5. 操作（アクセス記録から直接BAN、誤入力防止）
+    {
+      key: 'deviceId',
+      label: '操作',
+      isAction: true,
+      headerAlign: 'center',
+      cellAlign: 'center',
+      render: (_, record) => (
+        <BanDeviceModal
+          deviceId={record.deviceId}
+          ip={record.ip}
+          disabled={!!record.isBanned}
+        />
+      ),
+    },
   ];
 
   return (
@@ -211,17 +227,6 @@ export default async function IpBansPage(props: {
         </div>
       ) : (
         <>
-          {/* IP BAN 登録フォーム */}
-          <div className="card">
-            <div className="card-body">
-              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                <div className="w-1 sm:w-1.5 h-6 sm:h-7 bg-amber-500 rounded-full shrink-0" />
-                <h2 className="text-lg sm:text-xl font-black text-stone-800 tracking-tight">IP BAN 登録</h2>
-              </div>
-              <IpBanForm />
-            </div>
-          </div>
-
           {/* タブでテーブルを切り替え */}
           <IpBansTabs
             defaultTab={Object.keys(searchParams).some(k => k.startsWith('r')) && !Object.keys(searchParams).some(k => k.startsWith('b')) ? 'records' : 'bans'}

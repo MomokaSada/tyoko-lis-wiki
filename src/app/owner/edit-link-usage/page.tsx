@@ -109,6 +109,7 @@ export default async function EditLinkUsagePage(props: {
     {
       key: 'recordId',
       label: '',
+      isAction: true,
       headerAlign: 'center',
       cellAlign: 'center',
       render: (_, record) => (

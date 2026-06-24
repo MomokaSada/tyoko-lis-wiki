@@ -1,12 +1,14 @@
-import type { CreateIpBanInput } from '@/server/schemas';
+import type { CreateIpBanInput, CreateDeviceBanInput } from '@/server/schemas';
 import { getCurrentRequestDevice } from '@/server/services/modules/requestDevice';
 import {
     createDevice,
     findDeviceByIp,
+    findDeviceById,
 } from '@/server/repositories/deviceRepository';
 import {
     createBlockDevice,
     deactivateBlockDeviceById,
+    findActiveBlockByDeviceId,
     findActiveBlockByIp,
     listActiveIpBans,
     listActiveIpBansPaginated,
@@ -53,6 +55,51 @@ export async function createIpBan(actor: Actor, input: CreateIpBanInput) {
     success: true as const,
     data: {
       ip: input.ip,
+      reason: input.reason,
+    },
+  };
+}
+
+/**
+ * アクセス記録の deviceId を指定して BAN する。
+ * IP 手入力が不要なため誤BANを防止できる。
+ */
+export async function createDeviceBan(actor: Actor, input: CreateDeviceBanInput) {
+  if (actor.role !== 'owner') {
+    return {
+      success: false as const,
+      error: commonErrors.ipBan.createPermissionDenied,
+    };
+  }
+
+  const device = await findDeviceById(input.deviceId);
+
+  if (!device) {
+    return {
+      success: false as const,
+      error: serviceErrors.ipBan.deviceNotFound,
+    };
+  }
+
+  const existingBan = await findActiveBlockByDeviceId(input.deviceId);
+
+  if (existingBan) {
+    return {
+      success: false as const,
+      error: serviceErrors.ipBan.alreadyBanned,
+    };
+  }
+
+  await createBlockDevice({
+    deviceId: device.id,
+    blockedBy: actor.id,
+    reason: input.reason,
+  });
+
+  return {
+    success: true as const,
+    data: {
+      ip: device.ip,
       reason: input.reason,
     },
   };

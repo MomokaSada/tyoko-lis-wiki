@@ -9,6 +9,7 @@ import {
     deleteCategoryAsAdmin,
     updateCategoryAsAdmin,
 } from '@/server/services/taxonomyService';
+import { getCurrentRequestBan } from '@/server/services/ipBanService';
 
 import {
     withAction,
@@ -27,6 +28,11 @@ export async function createCategoryAction(
 ): Promise<CategoryActionState> {
   const preflight = await withAction({ rateLimit: 'createCategory' });
   if (preflight) return { ...preflight, success: null };
+
+  const activeBan = await getCurrentRequestBan();
+  if (activeBan) {
+    return { error: commonErrors.ip.categoryOperationNotAllowed, success: null };
+  }
 
   const parsed = parseOrError(createCategorySchema, {
     name: formData.get('name'),
@@ -68,6 +74,11 @@ export async function updateCategoryAction(
   const preflight = await withAction({ rateLimit: 'updateCategory' });
   if (preflight) return { ...preflight, success: null };
 
+  const activeBan = await getCurrentRequestBan();
+  if (activeBan) {
+    return { error: commonErrors.ip.categoryOperationNotAllowed, success: null };
+  }
+
   const parsed = parseOrError(updateCategorySchema, {
     id: formData.get('id'),
     name: formData.get('name'),
@@ -108,6 +119,11 @@ export async function deleteCategoryAction(
 ): Promise<CategoryActionState> {
   const preflight = await withAction({ rateLimit: 'deleteCategory' });
   if (preflight) return { ...preflight, success: null };
+
+  const activeBan = await getCurrentRequestBan();
+  if (activeBan) {
+    return { error: commonErrors.ip.categoryOperationNotAllowed, success: null };
+  }
 
   const parsed = parseOrError(deleteCategorySchema, {
     id: formData.get('id'),

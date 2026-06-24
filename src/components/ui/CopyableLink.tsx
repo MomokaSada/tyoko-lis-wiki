@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Check, Copy } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 
 interface CopyableLinkProps {
   url: string;
@@ -10,16 +11,18 @@ interface CopyableLinkProps {
 
 export function CopyableLink({ url, className = '' }: CopyableLinkProps) {
   const [copied, setCopied] = useState(false);
+  const { showToast } = useToast();
 
-  const handleCopy = async () => {
+  const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
+      showToast('URL をクリップボードにコピーしました');
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
     }
-  };
+  }, [url, showToast]);
 
   return (
     <button

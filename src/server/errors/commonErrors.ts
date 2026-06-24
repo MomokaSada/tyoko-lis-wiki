@@ -14,6 +14,10 @@ export const commonErrors = {
     registerNotAllowed: 'このIPアドレスからのアカウント作成は許可されていません',
     contentCreateNotAllowed: 'このIPアドレスからの項目作成は許可されていません',
     contentEditNotAllowed: 'このIPアドレスからの項目編集は許可されていません',
+    contentDeleteNotAllowed: 'このIPアドレスからの項目削除は許可されていません',
+    passkeyOperationNotAllowed: 'このIPアドレスからのパスキー操作は許可されていません',
+    categoryOperationNotAllowed: 'このIPアドレスからのカテゴリ操作は許可されていません',
+    accountBanNotAllowed: 'このIPアドレスからのアカウントBAN操作は許可されていません',
   },
 
   // ─── 認証 (authActions + authService) ───
@@ -38,6 +42,7 @@ export const commonErrors = {
   ipBan: {
     createPermissionDenied: 'IPBAN 権限がありません',
     deactivatePermissionDenied: 'IPBAN 解除権限がありません',
+    actionBlockedByBan: 'BANされているIPアドレスからの操作は許可されていません',
   },
 
   // ─── 編集リンク (editLinkActions + editLinkService) ───

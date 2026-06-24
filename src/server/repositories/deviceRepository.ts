@@ -4,6 +4,20 @@ import { db } from '@/db';
 import { contentEditLogs, contents, deviceSessions, devices, editSessions, users } from '@/db/schema';
 import type { ListQuery, ListResult } from '@/types/listQuery';
 
+export async function findDeviceById(id: number) {
+  const [device] = await db
+    .select({
+      id: devices.id,
+      ip: devices.ip,
+      browser: devices.browser,
+    })
+    .from(devices)
+    .where(eq(devices.id, id))
+    .limit(1);
+
+  return device ?? null;
+}
+
 export async function findDeviceByIp(ip: string) {
   const [device] = await db
     .select({

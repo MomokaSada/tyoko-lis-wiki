@@ -205,6 +205,11 @@ export async function deleteContentAction(
   const preflight = await withAction({ rateLimit: 'deleteContent', device: false });
   if (preflight) return { ...preflight, slug: null, title: null };
 
+  const activeBan = await getCurrentRequestBan();
+  if (activeBan) {
+    return { error: commonErrors.ip.contentDeleteNotAllowed, slug: null, title: null };
+  }
+
   const parsed = deleteContentSchema.safeParse({
     contentId: formData.get('contentId'),
   });

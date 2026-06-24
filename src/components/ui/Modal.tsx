@@ -18,6 +18,14 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md' 
 
   useEffect(() => { setMounted(true); }, []);
 
+  // ESC キーで閉じる
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [isOpen, onClose]);
+
   useScrollLock(isOpen);
 
   if (!mounted || !isOpen) return null;

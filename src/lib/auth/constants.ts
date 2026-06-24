@@ -13,6 +13,9 @@ export const HEADER_USER_ROLE = 'x-user-role';
 /** Proxy → Server 側へ受け渡す正規化済みクライアント IP */
 export const HEADER_CLIENT_IP = 'x-client-ip';
 
+/** Proxy → Server Component へ受け渡す「保護ルートかどうか」のフラグ */
+export const HEADER_IS_PROTECTED = 'x-is-protected';
+
 /** よく使うパス */
 export const PATHS = {
   HOME: '/',

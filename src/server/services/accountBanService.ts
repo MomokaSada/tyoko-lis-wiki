@@ -83,17 +83,25 @@ export async function unbanAccount(actor: Actor, input: BanAccountInput) {
     };
   }
 
-  const updated = await activateUserById(input.userId);
-
-  if (!updated) {
+  const user = await findUserById(input.userId);
+  if (!user) {
     return {
       success: false as const,
       error: serviceErrors.accountBan.userNotFound,
     };
   }
 
+  if (user.isActive) {
+    return {
+      success: false as const,
+      error: serviceErrors.accountBan.notBanned,
+    };
+  }
+
+  const updated = await activateUserById(input.userId);
+
   return {
     success: true as const,
-    data: updated,
+    data: updated!,
   };
 }

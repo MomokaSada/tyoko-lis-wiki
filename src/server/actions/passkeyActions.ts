@@ -71,6 +71,11 @@ export async function startPasskeyRegistrationAction(
     const preflight = await withAction({ rateLimit: 'login' });
     if (preflight) return preflight;
 
+    const activeBan = await getCurrentRequestBan();
+    if (activeBan) {
+        return { error: commonErrors.ip.passkeyOperationNotAllowed };
+    }
+
     const actor = await getCurrentActor();
     if (!actor) {
         return {
@@ -172,6 +177,11 @@ export async function finishPasskeyRegistrationAction(
     });
     if (preflight) return preflight;
 
+    const activeBan = await getCurrentRequestBan();
+    if (activeBan) {
+        return { error: commonErrors.ip.passkeyOperationNotAllowed };
+    }
+
     const actor = await getCurrentActor();
     if (!actor) {
         return {
@@ -261,6 +271,11 @@ export async function finishPasskeyLoginAction(
         rateLimit: 'login'
     });
     if (preflight) return preflight;
+
+    const activeBan = await getCurrentRequestBan();
+    if (activeBan) {
+        return { error: commonErrors.ip.loginNotAllowed };
+    }
 
     const parsed = authenticationResponseSchema.safeParse(formData.get('credential'));
     if (!parsed.success) {
@@ -472,6 +487,11 @@ export async function finishPasskeyLoginAndRegistrationAction(
 ): Promise<PasskeyActionState> {
     const preflight = await withAction({ rateLimit: 'login' });
     if (preflight) return preflight;
+
+    const activeBan = await getCurrentRequestBan();
+    if (activeBan) {
+        return { error: commonErrors.ip.loginNotAllowed };
+    }
 
     // --- credential のパース ---
     const parsed = registrationResponseSchema.safeParse(formData.get('credential'));

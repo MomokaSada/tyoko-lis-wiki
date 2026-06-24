@@ -30,6 +30,7 @@ export const serviceErrors = {
   ipBan: {
     alreadyBanned: 'そのIPはすでにBANされています',
     banNotFound: '対象のIPBANが見つかりません',
+    deviceNotFound: '対象のデバイスが見つかりません',
   },
 
   // ─── 編集リンク (editLinkService) ───
@@ -50,6 +51,7 @@ export const serviceErrors = {
     selfBanNotAllowed: '自分自身はBANできません',
     userNotFound: '対象ユーザーが見つかりません',
     alreadyBanned: 'このアカウントは既にBANされています',
+    notBanned: 'このアカウントはBANされていません',
   },
 
   // ─── サムネイル (thumbnailService) ───
