@@ -5,13 +5,21 @@ import {
     findAccountCreateSessionsPaginated,
     insertAccountCreateSession,
 } from '@/server/repositories/accountCreateLinkRepository';
-import type { AccountCreateSessionRow, AccountStatusFilter } from '@/server/repositories/accountCreateLinkRepository';
+import {
+    AccountCreateSessionRow,
+    AccountStatusFilter,
+} from '@/server/repositories/accountCreateLinkRepository';
+
 import type {
     CreateAccountCreateLinkInput,
     DeactivateAccountCreateLinkInput,
-} from '@/server/schemas/accountCreateLinkSchemas';
+} from '@/server/schemas';
 import type { Actor } from '@/types/actor';
 import type { ListQuery, ListResult } from '@/types/listQuery';
+import {
+    commonErrors,
+    serviceErrors,
+} from '@/server/errors';
 import { isUniqueViolation } from '@/server/lib/pgError';
 
 type CreateAccountCreateLinkResult =
@@ -46,7 +54,7 @@ export async function createAccountCreateLink(
     if (actor.role !== 'owner') {
         return {
             success: false,
-            error: 'Unauthorized'
+            error: commonErrors.unauthorized,
         };
     }
     const startAt = new Date();
@@ -80,7 +88,7 @@ export async function createAccountCreateLink(
     }
     return {
         success: false,
-        error: 'Failed to create account create link'
+        error: serviceErrors.accountCreateLink.createFailed,
     };
 }
 
@@ -125,7 +133,7 @@ export async function deactivateAccountCreateLink(
     if (actor.role !== 'owner') {
         return {
             success: false,
-            error: 'リンク無効化権限がありません',
+            error: commonErrors.accountCreateLink.deactivatePermissionDenied,
         };
     }
 
@@ -134,7 +142,7 @@ export async function deactivateAccountCreateLink(
     if (!updated) {
         return {
             success: false,
-            error: '対象のリンクが見つかりません',
+            error: serviceErrors.accountCreateLink.linkNotFound,
         };
     }
 

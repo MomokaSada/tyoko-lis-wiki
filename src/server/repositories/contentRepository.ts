@@ -561,6 +561,18 @@ export async function getWeeklyPopularContents(limitCount = 6) {
     .limit(limitCount);
 }
 
+/** コンテンツの現在のサムネイルを取得する */
+export async function findCurrentThumbnail(
+  contentId: number,
+): Promise<string | null> {
+  return db
+    .select({ currentThumbnail: contents.currentThumbnail })
+    .from(contents)
+    .where(eq(contents.id, contentId))
+    .limit(1)
+    .then((rows) => rows[0]?.currentThumbnail ?? null);
+}
+
 export async function listReferencedThumbnailUrls() {
   const [contentRows, logRows] = await Promise.all([
     db

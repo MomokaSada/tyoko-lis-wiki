@@ -4,6 +4,20 @@ import { db } from '@/db';
 import { contentEditLogs, contents, deviceSessions, devices, editSessions, users } from '@/db/schema';
 import type { ListQuery, ListResult } from '@/types/listQuery';
 
+export async function findDeviceByIp(ip: string) {
+  const [device] = await db
+    .select({
+      id: devices.id,
+      ip: devices.ip,
+      browser: devices.browser,
+    })
+    .from(devices)
+    .where(eq(devices.ip, ip))
+    .limit(1);
+
+  return device ?? null;
+}
+
 export async function findDeviceByIpAndBrowser(ip: string, browser: string) {
   const [device] = await db
     .select({
@@ -16,6 +30,24 @@ export async function findDeviceByIpAndBrowser(ip: string, browser: string) {
   return device ?? null;
 }
 
+/** デバイスを作成し、id/ip/browser を返す */
+export async function createDevice(input: { ip: string; browser: string }) {
+  const [device] = await db
+    .insert(devices)
+    .values({
+      ip: input.ip,
+      browser: input.browser,
+    })
+    .returning({
+      id: devices.id,
+      ip: devices.ip,
+      browser: devices.browser,
+    });
+
+  return device;
+}
+
+/** デバイスを作成し、id のみ返す（deviceService 用） */
 export async function createDeviceRecord(input: { ip: string; browser: string }) {
   const [device] = await db
     .insert(devices)

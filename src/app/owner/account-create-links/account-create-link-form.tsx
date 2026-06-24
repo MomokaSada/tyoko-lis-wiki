@@ -1,10 +1,8 @@
 'use client';
 
 import { useActionState } from 'react';
-import {
-  createAccountCreateLinkAction,
-  type CreateAccountCreateLinkActionState,
-} from '@/server/actions/accountCreateLinkActions';
+import { createAccountCreateLinkAction } from '@/server/actions/accountCreateLinkActions';
+import type { CreateAccountCreateLinkActionState } from '@/server/actions/accountCreateLinkActions';
 import { CopyableLink } from '@/components/ui/CopyableLink';
 import { formatDateTimeJp } from '@/lib/format/formatDateTime';
 

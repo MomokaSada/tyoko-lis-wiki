@@ -1,20 +1,33 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { getCurrentActor } from '@/server/lib/currentActor';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
-import { getFirstZodErrorMessage, getZodFieldErrors } from '@/server/lib/zodError';
+import {
+    getFirstZodErrorMessage,
+    getZodFieldErrors,
+} from '@/server/lib/zodError';
+
 import {
   createContentSchema,
   deleteContentSchema,
   normalizeCreateContentInput,
   updateContentSchema,
-} from '@/server/schemas/contentSchemas';
-import { createContent, deleteContent, updateContent } from '@/server/services/contentService';
-import { getCurrentActor } from '@/server/lib/currentActor';
+} from '@/server/schemas';
+import { commonErrors } from '@/server/errors';
+import { recordAuditLog } from '@/server/services/auditLogService';
+import {
+    createContent,
+    deleteContent,
+    updateContent,
+} from '@/server/services/contentService';
 import { recordCurrentEditDeviceSession } from '@/server/services/deviceService';
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
-import { recordAuditLog } from '@/server/services/auditLogService';
-import { withAction, requireActor } from '@/server/actions/modules/withAction';
+
+import {
+    withAction,
+    requireActor,
+} from '@/server/actions/modules/withAction';
 import type { BaseActionState } from '@/types/actionState';
 
 export type ContentActionState = BaseActionState & {
@@ -56,7 +69,7 @@ export async function createContentAction(
   const activeBan = await getCurrentRequestBan();
   if (activeBan) {
     return {
-      error: 'このIPアドレスからの項目作成は許可されていません',
+      error: commonErrors.ip.contentCreateNotAllowed,
       slug: null,
       title: null,
     };
@@ -67,7 +80,7 @@ export async function createContentAction(
 
   if (!editor) {
     return {
-      error: '項目作成権限がありません',
+      error: commonErrors.content.createPermissionDenied,
       slug: null,
       title: null,
     };
@@ -138,7 +151,7 @@ export async function updateContentAction(
   const activeBan = await getCurrentRequestBan();
   if (activeBan) {
     return {
-      error: 'このIPアドレスからの項目編集は許可されていません',
+      error: commonErrors.ip.contentEditNotAllowed,
       slug: null,
       title: null,
     };
@@ -148,7 +161,7 @@ export async function updateContentAction(
 
   if (!editor) {
     return {
-      error: '項目編集権限がありません',
+      error: commonErrors.content.editPermissionDenied,
       slug: null,
       title: null,
     };
@@ -206,7 +219,7 @@ export async function deleteContentAction(
 
   const actor = await requireActor();
   if ('error' in actor) {
-    return { error: '項目削除権限がありません', slug: null, title: null };
+    return { error: commonErrors.content.deletePermissionDenied, slug: null, title: null };
   }
 
   const result = await deleteContent(

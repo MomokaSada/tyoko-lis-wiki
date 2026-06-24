@@ -1,10 +1,8 @@
 'use client';
 
 import { useActionState } from 'react';
-import {
-  createEditLinkAction,
-  type CreateEditLinkActionState,
-} from '@/server/actions/editLinkActions';
+import { createEditLinkAction } from '@/server/actions/editLinkActions';
+import type { CreateEditLinkActionState } from '@/server/actions/editLinkActions';
 import { formatDateTimeJp } from '@/lib/format/formatDateTime';
 
 const initialState: CreateEditLinkActionState = {

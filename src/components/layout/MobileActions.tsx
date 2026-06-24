@@ -7,8 +7,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useScrollLock } from '@/lib/useScrollLock';
-import { useWithSession } from '@/lib/useWithSession';
+import { useScrollLock } from '@/client/lib/useScrollLock';
+import { useWithSession } from '@/client/lib/useWithSession';
 
 interface MobileActionsProps {
   postTitle?: string;

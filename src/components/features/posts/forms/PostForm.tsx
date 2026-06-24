@@ -2,10 +2,10 @@
 
 import { useActionState, useState, useEffect, useMemo, useRef } from 'react';
 import {
-  createContentAction,
-  updateContentAction,
-  type ContentActionState,
+    createContentAction,
+    updateContentAction,
 } from '@/server/actions/contentActions';
+import type { ContentActionState } from '@/server/actions/contentActions';
 import {
   ImagePlus, RefreshCw, Heading1, Link2, PenLine,
   Image, Tag, Folder, Clock, Rocket, Globe, Trash2,

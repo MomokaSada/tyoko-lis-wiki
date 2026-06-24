@@ -1,11 +1,16 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { searchVisibleContentList } from '@/server/services/contentService';
 import { type Metadata } from 'next';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
-import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { MobileActions } from '@/components/layout/MobileActions';
-import type { ContentSortKey, SortOrder } from '@/server/repositories/contentRepository';
+import {
+    ContentSortKey,
+    SortOrder,
+} from '@/server/repositories/contentRepository';
 import { PostsHeroSection } from './_sections/PostsHeroSection';
 import { PostsStatusBar } from './_sections/PostsStatusBar';
 import { PostsEmptyState } from './_sections/PostsEmptyState';

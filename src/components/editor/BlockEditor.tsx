@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { enhanceTablePopup } from './enhanceTablePopup';
+import { enhanceTablePopup } from '@/client/lib/enhanceTablePopup';
 import type { ToastUiEditorInstance } from '@/types/toastui';
 
 const TOASTUI_SCRIPT_ID = 'toastui-editor-script';

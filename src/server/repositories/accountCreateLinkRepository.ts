@@ -4,6 +4,29 @@ import { db } from '@/db';
 import { accountCreateSessions, users } from '@/db/schema';
 import type { ListQuery, ListResult } from '@/types/listQuery';
 
+/** 有効なアカウント作成セッションを UUID で検索する */
+export async function findActiveAccountCreateSession(uuid: string) {
+  const now = new Date();
+
+  const [session] = await db
+    .select({
+      uuid: accountCreateSessions.uuid,
+      isActive: accountCreateSessions.isActive,
+      endAt: accountCreateSessions.endAt,
+    })
+    .from(accountCreateSessions)
+    .where(
+      and(
+        eq(accountCreateSessions.uuid, uuid),
+        eq(accountCreateSessions.isActive, true),
+        gt(accountCreateSessions.endAt, now),
+      ),
+    )
+    .limit(1);
+
+  return session ?? null;
+}
+
 export async function insertAccountCreateSession(data: {
     uuid: string;
     authId: number;

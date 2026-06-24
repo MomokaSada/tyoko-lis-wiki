@@ -8,6 +8,7 @@ import type {
     PublicKeyCredentialCreationOptionsJSON,
     PublicKeyCredentialRequestOptionsJSON,
 } from "@simplewebauthn/browser";
+import { clientErrors } from '@/client/errors';
 
 export async function registerPasskey(): Promise<{
     error?: string
@@ -19,8 +20,8 @@ export async function registerPasskey(): Promise<{
     const startResult = await startPasskeyRegistrationAction();
 
     if (startResult.error) return { error: startResult.error };
-    if (!startResult.options) return { error: '登録オプションの生成に失敗しました' };
-    if (!startResult.challengeId) return { error: 'チャレンジ情報の生成に失敗しました' };
+    if (!startResult.options) return { error: clientErrors.passkey.registrationOptionsFailed };
+    if (!startResult.challengeId) return { error: clientErrors.passkey.challengeFailed };
 
     let regResponse;
     try {
@@ -30,7 +31,7 @@ export async function registerPasskey(): Promise<{
     } catch (err) {
         const message = err instanceof Error ? err.message : '不明なエラー';
         return {
-            error: `パスキーの作成に失敗しました: ${message}`
+            error: clientErrors.passkey.passkeyCreationFailed(message),
         };
     }
 
@@ -92,10 +93,10 @@ export async function loginWithPasskey(
         error: startResult.error
     };
     if (!startResult.options) return {
-        error: '認証オプションの生成に失敗しました'
+        error: clientErrors.passkey.authenticationOptionsFailed,
     };
     if (!startResult.challengeId) return {
-        error: 'チャレンジ情報の生成に失敗しました'
+        error: clientErrors.passkey.challengeFailed,
     };
 
     let authResponse;
@@ -106,7 +107,7 @@ export async function loginWithPasskey(
     } catch (err) {
         const message = err instanceof Error ? err.message : '不明なエラー';
         return {
-            error: `パスキー認証に失敗しました: ${message}`
+            error: clientErrors.passkey.passkeyAuthFailed(message),
         };
     }
 
@@ -161,8 +162,8 @@ export async function loginAndRegisterPasskey(
         formData,
     );
     if (startResult.error) return { error: startResult.error };
-    if (!startResult.options) return { error: '登録オプションの生成に失敗しました' };
-    if (!startResult.challengeId) return { error: 'チャレンジ情報の生成に失敗しました' };
+    if (!startResult.options) return { error: clientErrors.passkey.registrationOptionsFailed };
+    if (!startResult.challengeId) return { error: clientErrors.passkey.challengeFailed };
 
     // Step 2: ブラウザでパスキー作成
     let regResponse;
@@ -172,7 +173,7 @@ export async function loginAndRegisterPasskey(
         });
     } catch (err) {
         const message = err instanceof Error ? err.message : '不明なエラー';
-        return { error: `パスキーの作成に失敗しました: ${message}` };
+        return { error: clientErrors.passkey.passkeyCreationFailed(message) };
     }
 
     // Step 3: パスキー保存 + セッション作成（パスキー保存が成功してから signIn）
@@ -187,7 +188,7 @@ export async function loginAndRegisterPasskey(
         finishForm,
     );
     if (finishResult.error) {
-        return { error: `パスキーの登録に失敗しました: ${finishResult.error}` };
+        return { error: clientErrors.passkey.passkeyRegistrationFailed(finishResult.error) };
     }
 
     return {};

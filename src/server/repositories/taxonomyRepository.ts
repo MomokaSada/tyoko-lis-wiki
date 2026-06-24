@@ -4,6 +4,8 @@ import { db } from '@/db';
 import {
   categories,
   contentCategories,
+  contentEditLogCategories,
+  contentEditLogTags,
   contentTags,
   tags,
 } from '@/db/schema';
@@ -77,24 +79,6 @@ export async function findCategoryIdsBySearchQuery(searchQuery: string): Promise
     .from(categories)
     .where(ilike(categories.name, `%${escaped}%`));
   return rows.map((r) => r.id);
-}
-
-export async function deleteCategoryById(id: number) {
-  return db.transaction(async (tx) => {
-    // 先に子カテゴリの親を null に更新
-    await tx
-      .update(categories)
-      .set({ parentId: null })
-      .where(eq(categories.parentId, id));
-
-    // カテゴリを削除
-    const [deleted] = await tx
-      .delete(categories)
-      .where(eq(categories.id, id))
-      .returning({ id: categories.id });
-
-    return deleted ?? null;
-  });
 }
 
 export async function findTagsByNames(names: string[]) {
@@ -186,6 +170,28 @@ export async function listContentTagIds(contentId: number) {
     .where(eq(contentTags.contentId, contentId));
 
   return rows.map((row) => row.tagId);
+}
+
+/** 編集ログに紐づくタグ名一覧を取得する */
+export async function findTagNames(
+  editLogId: number,
+): Promise<{ id: number; name: string }[]> {
+  return db
+    .select({ id: tags.id, name: tags.name })
+    .from(contentEditLogTags)
+    .innerJoin(tags, eq(contentEditLogTags.tagId, tags.id))
+    .where(eq(contentEditLogTags.editLogId, editLogId));
+}
+
+/** 編集ログに紐づくカテゴリ名一覧を取得する */
+export async function findCategoryNames(
+  editLogId: number,
+): Promise<{ id: number; name: string }[]> {
+  return db
+    .select({ id: categories.id, name: categories.name })
+    .from(contentEditLogCategories)
+    .innerJoin(categories, eq(contentEditLogCategories.categoryId, categories.id))
+    .where(eq(contentEditLogCategories.editLogId, editLogId));
 }
 
 export async function deleteCategory(id: number) {

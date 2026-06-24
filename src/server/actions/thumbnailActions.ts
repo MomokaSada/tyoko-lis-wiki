@@ -1,7 +1,11 @@
 'use server';
 
-import { cleanupOrphanThumbnails, getOrphanThumbnailStats } from '@/server/services/thumbnailService';
+import {
+    cleanupOrphanThumbnails,
+    getOrphanThumbnailStats,
+} from '@/server/services/thumbnailService';
 import { requireActor } from '@/server/actions/modules/withAction';
+import { commonErrors } from '@/server/errors';
 import type { BaseActionState } from '@/types/actionState';
 
 /*
@@ -29,12 +33,12 @@ export type ThumbnailCleanupActionState = BaseActionState & {
 export async function scanThumbnailsAction(): Promise<ThumbnailScanResult | { error: string }> {
   const actor = await requireActor();
   if ('error' in actor) {
-    return { error: '権限がありません' };
+    return { error: commonErrors.permissionDenied };
   }
 
   const stats = await getOrphanThumbnailStats(actor);
   if (!stats.scannedAt) {
-    return { error: '権限がありません' };
+    return { error: commonErrors.permissionDenied };
   }
 
   return {
@@ -52,7 +56,7 @@ export async function cleanupOrphanThumbnailsAction(
   const actor = await requireActor();
   if ('error' in actor) {
     return {
-      error: '未使用サムネイルの掃除権限がありません',
+      error: commonErrors.permissionDenied,
       deletedCount: 0,
       scannedCount: 0,
       referencedCount: 0,

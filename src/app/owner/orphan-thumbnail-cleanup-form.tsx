@@ -1,10 +1,8 @@
 'use client';
 
 import { useActionState } from 'react';
-import {
-  cleanupOrphanThumbnailsAction,
-  type ThumbnailCleanupActionState,
-} from '@/server/actions/thumbnailActions';
+import { cleanupOrphanThumbnailsAction } from '@/server/actions/thumbnailActions';
+import type { ThumbnailCleanupActionState } from '@/server/actions/thumbnailActions';
 
 const initialState: ThumbnailCleanupActionState = {
   error: null,

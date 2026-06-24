@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Search, FilePlus, Settings, Shield } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { useWithSession } from '@/lib/useWithSession';
+import { useWithSession } from '@/client/lib/useWithSession';
 
 interface HeaderMobileMenuProps {
   isOpen: boolean;

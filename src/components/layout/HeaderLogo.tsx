@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
-import { useWithSession } from '@/lib/useWithSession';
+import { useWithSession } from '@/client/lib/useWithSession';
 
 /**
  * ヘッダーのロゴ + サイトタイトル部分

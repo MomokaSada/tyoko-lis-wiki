@@ -1,28 +1,6 @@
-import { and, eq, gt } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db } from '@/db';
-import { accountCreateSessions, users } from '@/db/schema';
-
-export async function findActiveAccountCreateSession(uuid: string) {
-  const now = new Date();
-
-  const [session] = await db
-    .select({
-      uuid: accountCreateSessions.uuid,
-      isActive: accountCreateSessions.isActive,
-      endAt: accountCreateSessions.endAt,
-    })
-    .from(accountCreateSessions)
-    .where(
-      and(
-        eq(accountCreateSessions.uuid, uuid),
-        eq(accountCreateSessions.isActive, true),
-        gt(accountCreateSessions.endAt, now),
-      ),
-    )
-    .limit(1);
-
-  return session ?? null;
-}
+import { users } from '@/db/schema';
 
 export async function findUserByName(name: string) {
   const [user] = await db
@@ -61,31 +39,21 @@ export async function createInvitedUser(data: {
   passwordHash: string;
   type: 'admin' | 'bot';
 }) {
-  return db.transaction(async (tx) => {
-    const [createdUser] = await tx
-      .insert(users)
-      .values({
-        accountCreateSessionId: data.sessionId,
-        authUserId: data.authUserId,
-        name: data.userName,
-        password: data.passwordHash,
-        type: data.type,
-        isActive: true,
-      })
-      .returning({
-        id: users.id,
-        name: users.name,
-        type: users.type,
-      });
+  const [createdUser] = await db
+    .insert(users)
+    .values({
+      accountCreateSessionId: data.sessionId,
+      authUserId: data.authUserId,
+      name: data.userName,
+      password: data.passwordHash,
+      type: data.type,
+      isActive: true,
+    })
+    .returning({
+      id: users.id,
+      name: users.name,
+      type: users.type,
+    });
 
-    await tx
-      .update(accountCreateSessions)
-      .set({
-        isActive: false,
-        updatedAt: new Date(),
-      })
-      .where(eq(accountCreateSessions.uuid, data.sessionId));
-
-    return createdUser;
-  });
+  return createdUser;
 }

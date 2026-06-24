@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { auditLogs } from '@/db/schema';
-import type { AuditAction } from '@/server/types/AuditAction';
+import type { AuditAction } from '@/server/types';
 import type { JsonObject } from '@/types/json';
 
 export type InsertAuditLogInput = {

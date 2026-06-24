@@ -1,19 +1,20 @@
 import { headers } from 'next/headers';
 import { type Metadata } from 'next';
 import Link from 'next/link';
-import { and, sql, gte, lt } from 'drizzle-orm';
 import {
   Plus,
 } from 'lucide-react';
-import { db } from '@/db';
-import { contents, contentViewStats } from '@/db/schema';
-import { searchVisibleContentList, countVisibleContents, getTaxonomyOptions } from '@/server/services/contentService';
-import { findEditSessions } from '@/server/repositories/editLinkRepository';
+import { countVisibleContents, searchVisibleContentList } from '@/server/services/contentService';
 import { getEditLinks } from '@/server/services/editLinkService';
+import { getAdminDashboardStats } from '@/server/services/statisticsService';
+import { getTaxonomyOptions } from '@/server/services/taxonomyService';
+
 import { getCurrentActor } from '@/server/lib/currentActor';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { AdminFormsClient } from './admin-forms-client';
 import { MobileActions } from '@/components/layout/MobileActions';
-import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { AdminHeroSection } from './_sections/AdminHeroSection';
 import { AdminStatsSection } from './_sections/AdminStatsSection';
@@ -37,71 +38,17 @@ export default async function AdminPage() {
   const totalPosts = await countVisibleContents('', true);
   const publishedCount = await countVisibleContents('', false);
 
-  // 編集リンクの取得
-  const editSessions = await findEditSessions();
-
   // カテゴリと編集リンク詳細の取得
   const taxonomy = await getTaxonomyOptions();
   const actor = await getCurrentActor();
   const editLinksResult = actor ? await getEditLinks(actor) : { items: [], totalCount: 0 };
 
   // アクティブなリンク数
-  const activeEditLinks = editSessions.items.filter(session => session.isActive).length;
-  const editSessionsCount = editSessions.totalCount;
+  const activeEditLinks = editLinksResult.items.filter(link => link.isActive).length;
+  const editSessionsCount = editLinksResult.totalCount;
 
-  // ── 今月の投稿数 ──
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
-  const lastMonthStart = new Date(monthStart);
-  lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
-
-  const [thisMonthPosts, lastMonthPosts] = await Promise.all([
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(contents)
-      .where(gte(contents.createdAt, monthStart)),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(contents)
-      .where(and(gte(contents.createdAt, lastMonthStart), lt(contents.createdAt, monthStart))),
-  ]);
-
-  const thisMonthCount = Number(thisMonthPosts[0]?.count ?? 0);
-  const lastMonthCount = Number(lastMonthPosts[0]?.count ?? 0);
-
-  // ── ビュー統計（実トレンド + 週間チャート） ──
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
-  const sixtyDaysAgo = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
-
-  const [last30Rows, prev30Rows, last7Rows] = await Promise.all([
-    db
-      .select({ total: sql<number>`coalesce(sum(${contentViewStats.viewCount}),0)` })
-      .from(contentViewStats)
-      .where(gte(contentViewStats.date, thirtyDaysAgo)),
-    db
-      .select({ total: sql<number>`coalesce(sum(${contentViewStats.viewCount}),0)` })
-      .from(contentViewStats)
-      .where(and(gte(contentViewStats.date, sixtyDaysAgo), lt(contentViewStats.date, thirtyDaysAgo))),
-    db
-      .select({ date: contentViewStats.date, total: sql<number>`coalesce(sum(${contentViewStats.viewCount}),0)` })
-      .from(contentViewStats)
-      .where(gte(contentViewStats.date, new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10)))
-      .groupBy(contentViewStats.date)
-      .orderBy(contentViewStats.date),
-  ]);
-
-  const last30Total = last30Rows[0]?.total ?? 0;
-  const prev30Total = prev30Rows[0]?.total ?? 0;
-  const viewTrend = prev30Total > 0 ? ((last30Total - prev30Total) / prev30Total) * 100 : 0;
-
-  // 7日間の日別ビューを配列に（データがない日は0）
-  const last7Chart: number[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
-    const row = last7Rows.find((r) => r.date === d);
-    last7Chart.push(row?.total ?? 0);
-  }
+  // 統計情報（月間投稿数・ビュー統計）
+  const stats = await getAdminDashboardStats();
 
   // 本日の日付
   const today = new Date().toLocaleDateString('ja-JP');
@@ -117,11 +64,11 @@ export default async function AdminPage() {
         publishedCount={publishedCount}
         activeEditLinks={activeEditLinks}
         editSessionsCount={editSessionsCount}
-        thisMonthCount={thisMonthCount}
-        lastMonthCount={lastMonthCount}
+        thisMonthCount={stats.thisMonthPosts}
+        lastMonthCount={stats.lastMonthPosts}
         publishedPostsViewCount={publishedPosts.reduce((sum, post) => sum + (post.viewCount || 0), 0).toLocaleString()}
-        viewTrend={viewTrend}
-        last7Chart={last7Chart}
+        viewTrend={stats.viewTrend}
+        last7Chart={stats.last7Chart}
       />
 
       {/* ═══ Admin メイン グリッドカード ═══ */}

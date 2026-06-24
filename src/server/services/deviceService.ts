@@ -1,15 +1,15 @@
 import { getCurrentRequestDevice } from '@/server/lib/requestDevice';
 import {
-  createDeviceSessionRecord,
-  createDeviceRecord,
-  findDeviceSessionRecord,
-  findDeviceByIpAndBrowser,
-  getDeviceSessionUsageRecord,
-  getDeviceSessionEditLogs,
-  listDeviceSessionUsageRecords,
-  listDeviceSessionUsageRecordsPaginated,
-  touchDeviceSessionRecord,
-  touchDeviceRecord,
+    createDeviceSessionRecord,
+    createDeviceRecord,
+    findDeviceSessionRecord,
+    findDeviceByIpAndBrowser,
+    getDeviceSessionUsageRecord,
+    getDeviceSessionEditLogs,
+    listDeviceSessionUsageRecords,
+    listDeviceSessionUsageRecordsPaginated,
+    touchDeviceSessionRecord,
+    touchDeviceRecord,
 } from '@/server/repositories/deviceRepository';
 import type { Actor } from '@/types/actor';
 import type { ListQuery, ListResult } from '@/types/listQuery';

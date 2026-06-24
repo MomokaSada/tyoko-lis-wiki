@@ -1,7 +1,11 @@
 'use client';
 
 import { useActionState } from 'react';
-import { banAccountAction, unbanAccountAction, type BanAccountActionState } from '@/server/actions/accountBanActions';
+import {
+    banAccountAction,
+    unbanAccountAction,
+} from '@/server/actions/accountBanActions';
+import type { BanAccountActionState } from '@/server/actions/accountBanActions';
 
 const initialState: BanAccountActionState = {
   error: null,

@@ -1,24 +1,31 @@
-import type { CreateIpBanInput } from '@/server/schemas/ipBanSchemas';
+import type { CreateIpBanInput } from '@/server/schemas';
 import { getCurrentRequestDevice } from '@/server/lib/requestDevice';
 import {
-  createBlockDevice,
-  createDevice,
-  deactivateBlockDeviceById,
-  findActiveBlockByIp,
-  findDeviceByIp,
-  listActiveIpBans,
-  listActiveIpBansPaginated,
-  listIpDeviceRecords,
-  listIpDeviceRecordsPaginated,
+    createDevice,
+    findDeviceByIp,
+} from '@/server/repositories/deviceRepository';
+import {
+    createBlockDevice,
+    deactivateBlockDeviceById,
+    findActiveBlockByIp,
+    listActiveIpBans,
+    listActiveIpBansPaginated,
+    listIpDeviceRecords,
+    listIpDeviceRecordsPaginated,
 } from '@/server/repositories/ipBanRepository';
+
 import type { PrivilegedActor as Actor } from '@/types/actor';
 import type { ListQuery, ListResult } from '@/types/listQuery';
+import {
+    commonErrors,
+    serviceErrors,
+} from '@/server/errors';
 
 export async function createIpBan(actor: Actor, input: CreateIpBanInput) {
   if (actor.role !== 'owner') {
     return {
       success: false as const,
-      error: 'IPBAN 権限がありません',
+      error: commonErrors.ipBan.createPermissionDenied,
     };
   }
 
@@ -32,7 +39,7 @@ export async function createIpBan(actor: Actor, input: CreateIpBanInput) {
   if (existingBan) {
     return {
       success: false as const,
-      error: 'そのIPはすでにBANされています',
+      error: serviceErrors.ipBan.alreadyBanned,
     };
   }
 
@@ -83,7 +90,7 @@ export async function deactivateIpBan(actor: Actor, banId: number) {
   if (actor.role !== 'owner') {
     return {
       success: false as const,
-      error: 'IPBAN 解除権限がありません',
+      error: commonErrors.ipBan.deactivatePermissionDenied,
     };
   }
 
@@ -92,7 +99,7 @@ export async function deactivateIpBan(actor: Actor, banId: number) {
   if (!updated) {
     return {
       success: false as const,
-      error: '対象のIPBANが見つかりません',
+      error: serviceErrors.ipBan.banNotFound,
     };
   }
 

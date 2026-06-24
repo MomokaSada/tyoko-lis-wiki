@@ -1,12 +1,14 @@
 import { EditLinkForm } from './edit-link-form';
 import { DeactivateEditLinkButton } from './deactivate-button';
 import { getCurrentActor } from '@/server/lib/currentActor';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { getEditLinks } from '@/server/services/editLinkService';
-import type { StatusFilter } from '@/server/repositories/editLinkRepository';
+import { StatusFilter } from '@/server/repositories/editLinkRepository';
 import { MobileActions } from '@/components/layout/MobileActions';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
-import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { parseListQuery } from '@/types/listQuery';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { CopyLinkButton } from '@/components/ui/CopyLinkButton';

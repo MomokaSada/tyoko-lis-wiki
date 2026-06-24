@@ -1,15 +1,30 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import {
-  createInvitedUser,
-  findActiveAccountCreateSession,
-  findUserByName,
-  findUserByNameWithPassword,
+    findActiveAccountCreateSession,
+    deactivateAccountCreateSession,
+} from '@/server/repositories/accountCreateLinkRepository';
+import {
+    createInvitedUser,
+    findUserByName,
+    findUserByNameWithPassword,
 } from '@/server/repositories/authRepository';
-import { buildDummyEmail, normalizeUsername } from '@/server/lib/dummyEmail';
-import { hashPassword, verifyPassword } from '@/server/lib/password';
-import type { LoginInput, RegisterInput } from '@/server/schemas/authSchemas';
+
+import {
+    buildDummyEmail,
+    normalizeUsername,
+} from '@/server/lib/dummyEmail';
+import {
+    hashPassword,
+    verifyPassword,
+} from '@/server/lib/password';
 import { isUniqueViolation } from '@/server/lib/pgError';
+
+import type { LoginInput, RegisterInput } from '@/server/schemas';
+import {
+    commonErrors,
+    serviceErrors,
+} from '@/server/errors';
 
 /** signIn の結果型 */
 export type SignInResult =
@@ -37,7 +52,7 @@ export async function signIn({ userName, password }: LoginInput): Promise<SignIn
   if (existingUser && !existingUser.isActive) {
     return {
       success: false,
-      error: 'このアカウントはBANされています',
+      error: commonErrors.auth.accountBanned,
     };
   }
 
@@ -65,16 +80,16 @@ export async function verifyCredentials({ userName, password }: LoginInput): Pro
   const user = await findUserByNameWithPassword(normalizedUsername);
 
   if (!user) {
-    return { success: false, error: 'ユーザー名またはパスワードが正しくありません' };
+    return { success: false, error: commonErrors.auth.invalidCredentials };
   }
 
   if (!user.isActive) {
-    return { success: false, error: 'このアカウントはBANされています' };
+    return { success: false, error: commonErrors.auth.accountBanned };
   }
 
   const valid = await verifyPassword(password, user.password);
   if (!valid) {
-    return { success: false, error: 'ユーザー名またはパスワードが正しくありません' };
+    return { success: false, error: commonErrors.auth.invalidCredentials };
   }
 
   return { success: true, userId: user.id };
@@ -84,14 +99,14 @@ export async function registerAccount(input: RegisterInput): Promise<RegisterRes
   const session = await findActiveAccountCreateSession(input.session);
 
   if (!session) {
-    return { success: false, error: '招待リンクが無効か期限切れです' };
+    return { success: false, error: serviceErrors.auth.invalidInvitationLink };
   }
 
   const normalizedUsername = normalizeUsername(input.userName);
   const existingUser = await findUserByName(normalizedUsername);
 
   if (existingUser) {
-    return { success: false, error: 'そのユーザー名はすでに使われています' };
+    return { success: false, error: serviceErrors.auth.userNameTaken };
   }
 
   const supabaseAdmin = createAdminClient();
@@ -106,7 +121,7 @@ export async function registerAccount(input: RegisterInput): Promise<RegisterRes
   if (error || !data.user) {
     return {
       success: false,
-      error: error?.message ?? '認証ユーザーの作成に失敗しました',
+      error: error?.message ?? serviceErrors.auth.authUserCreateFailed,
     };
   }
 
@@ -118,11 +133,13 @@ export async function registerAccount(input: RegisterInput): Promise<RegisterRes
       passwordHash: await hashPassword(input.password),
       type: 'admin',
     });
+
+    await deactivateAccountCreateSession(input.session);
   } catch (dbError) {
     await supabaseAdmin.auth.admin.deleteUser(data.user.id);
 
     if (isUniqueViolation(dbError)) {
-      return { success: false, error: 'そのユーザー名はすでに使われています' };
+      return { success: false, error: serviceErrors.auth.userNameTaken };
     }
 
     throw dbError;

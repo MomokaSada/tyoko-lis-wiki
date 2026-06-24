@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import { useScrollLock } from '@/lib/useScrollLock';
+import { useScrollLock } from '@/client/lib/useScrollLock';
 
 interface ModalProps {
   isOpen: boolean;

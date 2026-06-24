@@ -2,12 +2,18 @@
 
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
-import { createEditLinkSchema, deactivateEditLinkSchema } from '@/server/schemas/editLinkSchemas';
-import { createEditLink, deactivateEditLink } from '@/server/services/editLinkService';
-import type { BaseActionState } from '@/types/actionState';
-import { checkRateLimit } from '@/server/services/rateLimitService';
-import { recordCurrentRequestDevice } from '@/server/services/deviceService';
+
+import { createEditLinkSchema, deactivateEditLinkSchema } from '@/server/schemas';
+import { commonErrors } from '@/server/errors';
 import { recordAuditLog } from '@/server/services/auditLogService';
+import {
+    createEditLink,
+    deactivateEditLink,
+} from '@/server/services/editLinkService';
+
+import { withAction } from '@/server/actions/modules/withAction';
+import type { BaseActionState } from '@/types/actionState';
+
 import { revalidatePath } from 'next/cache';
 
 export type CreateEditLinkActionState = BaseActionState & {
@@ -22,17 +28,8 @@ export async function createEditLinkAction(
   _prevState: CreateEditLinkActionState,
   formData: FormData,
 ): Promise<CreateEditLinkActionState> {
-  await recordCurrentRequestDevice();
-
-  const rateLimitResult = await checkRateLimit('createEditLink');
-  if (!rateLimitResult.allowed) {
-    return {
-      error: '編集リンク作成試行が多すぎます。しばらくしてから再度お試しください。',
-      generatedUrl: null,
-      expiresAt: null,
-      maxEdits: null,
-    };
-  }
+  const preflight = await withAction({ rateLimit: 'createEditLink' });
+  if (preflight) return { ...preflight, generatedUrl: null, expiresAt: null, maxEdits: null };
 
   const parsed = createEditLinkSchema.safeParse({
     expiresInMinutes: formData.get('expiresInMinutes'),
@@ -52,7 +49,7 @@ export async function createEditLinkAction(
 
   if (!actor) {
     return {
-      error: 'リンク発行権限がありません',
+      error: commonErrors.editLink.createPermissionDenied,
       generatedUrl: null,
       expiresAt: null,
       maxEdits: null,
@@ -89,14 +86,8 @@ export async function deactivateEditLinkAction(
   _prevState: DeactivateEditLinkActionState,
   formData: FormData,
 ): Promise<DeactivateEditLinkActionState> {
-  await recordCurrentRequestDevice();
-
-  const rateLimitResult = await checkRateLimit('deactivateEditLink');
-  if (!rateLimitResult.allowed) {
-    return {
-      error: '操作が多すぎます。しばらくしてから再度お試しください。',
-    };
-  }
+  const preflight = await withAction({ rateLimit: 'deactivateEditLink' });
+  if (preflight) return preflight;
 
   const parsed = deactivateEditLinkSchema.safeParse({
     uuid: formData.get('uuid'),
@@ -112,7 +103,7 @@ export async function deactivateEditLinkAction(
 
   if (!actor) {
     return {
-      error: '権限がありません',
+      error: commonErrors.permissionDenied,
     };
   }
 

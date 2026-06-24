@@ -1,19 +1,23 @@
 import { headers } from 'next/headers';
 import { type Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { gte, sql, eq, and } from 'drizzle-orm';
-import { db } from '@/db';
-import { users, contents } from '@/db/schema';
 import { getCurrentActor } from '@/server/lib/currentActor';
-import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { getManageableAccounts } from '@/server/services/accountBanService';
-import { getActiveIpBans, getIpDeviceRecords } from '@/server/services/ipBanService';
-import { getDeviceSessionUsageRecords } from '@/server/services/deviceService';
+import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
 import { checkDbHealth } from '@/server/services/dbHealthService';
-import type { DbHealthStatus } from '@/server/services/dbHealthService';
+import { getDeviceSessionUsageRecords } from '@/server/services/deviceService';
+import {
+    getActiveIpBans,
+    getIpDeviceRecords,
+} from '@/server/services/ipBanService';
+import { getOwnerDashboardStats } from '@/server/services/statisticsService';
+import { DbHealthStatus } from '@/server/services/dbHealthService';
+
 import { OwnerDashboardClient } from './owner-dashboard-client';
 import { MobileActions } from '@/components/layout/MobileActions';
-import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { OwnerHeroSection } from './_sections/OwnerHeroSection';
 
@@ -58,35 +62,12 @@ export default async function OwnerPage() {
   const deviceSessionUsageRecords = deviceSessionUsageRecordsResult.items;
 
   // ── システム概要の実データ ──
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
-
-  const [todayUsersRows, totalUsersRows, totalContentsRows, publishedContentsRows] = await Promise.all([
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(users)
-      .where(gte(users.createdAt, todayStart)),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(users),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(contents),
-    db
-      .select({ count: sql<number>`count(*)` })
-      .from(contents)
-      .where(eq(contents.isPublished, true)),
-  ]);
-
-  const todayUsers = Number(todayUsersRows[0]?.count ?? 0);
-  const totalUsers = Number(totalUsersRows[0]?.count ?? 0);
-  const totalContents = Number(totalContentsRows[0]?.count ?? 0);
-  const publishedContents = Number(publishedContentsRows[0]?.count ?? 0);
+  const stats = await getOwnerDashboardStats();
 
   const totalEditsUsed = deviceSessionUsageRecords.reduce((sum, r) => sum + r.editsUsed, 0);
   const totalMaxEdits = deviceSessionUsageRecords.reduce((sum, r) => sum + r.maxEdits, 0);
   const editUtilization = totalMaxEdits > 0 ? Math.round((totalEditsUsed / totalMaxEdits) * 100) : 0;
-  const publishRate = totalContents > 0 ? Math.round((publishedContents / totalContents) * 100) : 0;
+  const publishRate = stats.totalContents > 0 ? Math.round((stats.publishedContents / stats.totalContents) * 100) : 0;
 
   return (
     <>
@@ -102,8 +83,8 @@ export default async function OwnerPage() {
           manageableAccounts={manageableAccounts}
           activeIpBans={activeIpBans}
           deviceSessionUsageRecords={deviceSessionUsageRecords}
-          todayUsers={todayUsers}
-          totalUsers={totalUsers}
+          todayUsers={stats.todayUsers}
+          totalUsers={stats.totalUsers}
           editUtilization={editUtilization}
           publishRate={publishRate}
         />

@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
-import { useWithSession } from '@/lib/useWithSession';
+import { useWithSession } from '@/client/lib/useWithSession';
 
 interface HeaderSearchProps {
   searchQuery: string;

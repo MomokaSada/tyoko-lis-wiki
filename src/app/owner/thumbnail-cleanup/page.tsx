@@ -1,14 +1,16 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { getOrphanThumbnailStats } from '@/server/services/thumbnailService';
 import { OrphanThumbnailCleanupForm } from '../orphan-thumbnail-cleanup-form';
 import { ThumbnailStatsCard } from './thumbnail-stats-card';
 import { MobileActions } from '@/components/layout/MobileActions';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
-import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import Link from 'next/link';
 import { ImageMinus, AlertTriangle } from 'lucide-react';
-import type { ThumbnailScanResult } from '@/server/actions/thumbnailActions';
+import { ThumbnailScanResult } from '@/server/actions/thumbnailActions';
 
 export default async function ThumbnailCleanupPage() {
   const actor = await getCurrentActor();

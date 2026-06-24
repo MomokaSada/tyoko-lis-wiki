@@ -6,6 +6,11 @@ import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { cache } from 'react';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { getAccessibleContentDetail } from '@/server/services/contentService';
+import {
+    getFullContentTaxonomy,
+    resolveCategoryPath,
+} from '@/server/services/taxonomyService';
+
 import Link from 'next/link';
 import {
   Edit3,
@@ -23,7 +28,7 @@ import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
 import TableOfContents from './_sections/TableOfContents';
 import { BlockViewerDynamic } from '@/components/editor/BlockViewerDynamic';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
-import { getFullContentTaxonomy, resolveCategoryPath } from '@/server/services/taxonomyService';
+
 import { PostShareActions } from './_sections/PostShareActions';
 import { ArticleProfile } from './_sections/ArticleProfile';
 import { createHeadingIdBase, createUniqueHeadingId, normalizeHeadingText } from '@/lib/heading';

@@ -1,11 +1,10 @@
 import { diffWords, diffLines } from 'diff';
+import { findCurrentThumbnail } from '@/server/repositories/contentRepository';
+import { findEditLog } from '@/server/repositories/revisionRepository';
 import {
-  findEditLog,
-  findCurrentThumbnail,
-  findTagNames,
-  findCategoryNames,
-} from '@/server/repositories/revisionRepository';
-
+    findTagNames,
+    findCategoryNames,
+} from '@/server/repositories/taxonomyRepository';
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------

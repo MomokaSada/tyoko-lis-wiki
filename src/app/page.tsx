@@ -1,5 +1,8 @@
 import React from 'react';
-import { searchVisibleContentList, getWeeklyPopularContentList } from '@/server/services/contentService';
+import {
+    searchVisibleContentList,
+    getWeeklyPopularContentList,
+} from '@/server/services/contentService';
 import { PopularRankingBoard } from '@/components/features/home/PopularRankingBoard';
 import { MobileActions } from '@/components/layout/MobileActions';
 import { headers } from 'next/headers';

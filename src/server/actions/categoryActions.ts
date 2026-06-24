@@ -1,10 +1,20 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createCategorySchema, deleteCategorySchema, updateCategorySchema } from '@/server/schemas/categorySchemas';
-import { createCategoryAsAdmin, deleteCategoryAsAdmin, updateCategoryAsAdmin } from '@/server/services/taxonomyService';
+import { createCategorySchema, deleteCategorySchema, updateCategorySchema } from '@/server/schemas';
+import { commonErrors } from '@/server/errors';
 import { recordAuditLog } from '@/server/services/auditLogService';
-import { withAction, requireActor, parseOrError } from '@/server/actions/modules/withAction';
+import {
+    createCategoryAsAdmin,
+    deleteCategoryAsAdmin,
+    updateCategoryAsAdmin,
+} from '@/server/services/taxonomyService';
+
+import {
+    withAction,
+    requireActor,
+    parseOrError,
+} from '@/server/actions/modules/withAction';
 import type { BaseActionState } from '@/types/actionState';
 
 export type CategoryActionState = BaseActionState & {
@@ -25,7 +35,7 @@ export async function createCategoryAction(
   if ('error' in parsed) return { ...parsed, success: null };
 
   const actor = await requireActor();
-  if ('error' in actor) return { error: 'カテゴリ管理権限がありません', success: null };
+  if ('error' in actor) return { error: commonErrors.category.adminPermissionDenied, success: null };
 
   const result = await createCategoryAsAdmin(actor, parsed.parsed);
   if (!result.success) {
@@ -66,7 +76,7 @@ export async function updateCategoryAction(
   if ('error' in parsed) return { ...parsed, success: null };
 
   const actor = await requireActor();
-  if ('error' in actor) return { error: 'カテゴリ管理権限がありません', success: null };
+  if ('error' in actor) return { error: commonErrors.category.adminPermissionDenied, success: null };
 
   const result = await updateCategoryAsAdmin(actor, parsed.parsed);
   if (!result.success) {
@@ -105,7 +115,7 @@ export async function deleteCategoryAction(
   if ('error' in parsed) return { ...parsed, success: null };
 
   const actor = await requireActor();
-  if ('error' in actor) return { error: 'カテゴリ管理権限がありません', success: null };
+  if ('error' in actor) return { error: commonErrors.category.adminPermissionDenied, success: null };
 
   const result = await deleteCategoryAsAdmin(actor, parsed.parsed.id);
   if (!result.success) {

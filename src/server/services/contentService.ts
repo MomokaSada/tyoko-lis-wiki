@@ -1,28 +1,41 @@
-import type { CreateContentInput } from '@/server/schemas/contentSchemas';
+import type {
+    CreateContentInput,
+    DeleteContentInput,
+    UpdateContentInput,
+} from '@/server/schemas';
+
 import {
-  createContentWithInitialRevision,
-  deleteContentById,
-  findContentSummaryById,
-  findPublishedContentBySlug,
-  findEditableContentBySlug,
-  findContentBySlug,
-  incrementContentViewCount,
-  listVisibleContents,
-  listPublishedContents,
-  searchVisibleContents,
-  searchPublishedContents,
-  updateContentWithRevision,
-  countVisibleContents,
-  getWeeklyPopularContents,
+    createContentWithInitialRevision,
+    deleteContentById,
+    findContentSummaryById,
+    findPublishedContentBySlug,
+    findEditableContentBySlug,
+    findContentBySlug,
+    incrementContentViewCount,
+    listVisibleContents,
+    listPublishedContents,
+    searchVisibleContents,
+    searchPublishedContents,
+    updateContentWithRevision,
+    countVisibleContents,
+    getWeeklyPopularContents,
 } from '@/server/repositories/contentRepository';
-import type { ContentSortKey, SortOrder } from '@/server/repositories/contentRepository';
-import type { EditorContext } from '@/server/lib/currentEditor';
-import type { DeleteContentInput, UpdateContentInput } from '@/server/schemas/contentSchemas';
 import {
-  detectTaxonomyChanges,
-  getContentTaxonomyState,
-  getTaxonomyOptions,
-  resolveTaxonomySelection,
+    ContentSortKey,
+    SortOrder,
+} from '@/server/repositories/contentRepository';
+
+import { EditorContext } from '@/server/lib/currentEditor';
+
+import {
+    commonErrors,
+    serviceErrors,
+} from '@/server/errors';
+import {
+    detectTaxonomyChanges,
+    getContentTaxonomyState,
+    getTaxonomyOptions,
+    resolveTaxonomySelection,
 } from '@/server/services/taxonomyService';
 
 export type CreateContentResult =
@@ -49,7 +62,7 @@ export async function createContent(
   if (!input.slug) {
     return {
       success: false,
-      error: 'スラッグを生成できませんでした',
+      error: serviceErrors.content.slugGenerateFailed,
     };
   }
 
@@ -58,7 +71,7 @@ export async function createContent(
   if (existing) {
     return {
       success: false,
-      error: 'そのスラッグはすでに使われています',
+      error: serviceErrors.content.slugAlreadyUsed,
     };
   }
 
@@ -238,7 +251,7 @@ export async function updateContent(
   if (!current) {
     return {
       success: false,
-      error: '対象の項目が見つかりません',
+      error: serviceErrors.content.contentNotFound,
     };
   }
 
@@ -247,7 +260,7 @@ export async function updateContent(
   if (existing && existing.id !== input.contentId) {
     return {
       success: false,
-      error: 'そのスラッグはすでに使われています',
+      error: serviceErrors.content.slugAlreadyUsed,
     };
   }
 
@@ -316,7 +329,7 @@ export async function deleteContent(
   if (editor.role !== 'owner' && editor.role !== 'admin') {
     return {
       success: false,
-      error: '項目削除権限がありません',
+      error: commonErrors.content.deletePermissionDenied,
     };
   }
 
@@ -325,7 +338,7 @@ export async function deleteContent(
   if (!deleted) {
     return {
       success: false,
-      error: '対象の項目が見つかりません',
+      error: serviceErrors.content.contentNotFound,
     };
   }
 

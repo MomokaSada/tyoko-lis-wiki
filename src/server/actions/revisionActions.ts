@@ -2,7 +2,10 @@
 
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getRevisionDiffData } from '@/server/services/revisionService';
-import type { DiffPart, TagCategoryDiff } from '@/server/services/revisionService';
+import {
+    DiffPart,
+    TagCategoryDiff,
+} from '@/server/services/revisionService';
 
 /**
  * 指定されたリビジョンの差分を取得する (Server Action)。

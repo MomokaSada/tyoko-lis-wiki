@@ -24,9 +24,13 @@
 
 import { recordCurrentRequestDevice } from '@/server/services/deviceService';
 import { checkRateLimit } from '@/server/services/rateLimitService';
+
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
-import type { RateLimitAction } from '@/server/lib/rateLimit';
+import { RateLimitAction } from '@/server/lib/rateLimit';
+
+import { commonErrors } from '@/server/errors';
+
 import type { PrivilegedActor } from '@/types/actor';
 import type { BaseActionState } from '@/types/actionState';
 import type { z } from 'zod';
@@ -104,7 +108,7 @@ export async function requireActor(): Promise<
   PrivilegedActor | { error: string }
 > {
   const actor = await getCurrentActor();
-  if (!actor) return { error: '権限がありません' };
+  if (!actor) return { error: commonErrors.permissionDenied };
   return actor;
 }
 

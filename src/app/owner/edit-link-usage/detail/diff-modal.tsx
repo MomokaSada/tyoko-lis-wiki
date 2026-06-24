@@ -6,7 +6,10 @@ import Image from 'next/image';
 import { GitCompare, X, Loader2, Tag, FolderTree, Plus, Minus } from 'lucide-react';
 import { getRevisionDiff } from '@/server/actions/revisionActions';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
-import type { DiffPart, TagCategoryDiff } from '@/server/services/revisionService';
+import {
+    DiffPart,
+    TagCategoryDiff,
+} from '@/server/services/revisionService';
 
 type DiffLine = {
   kind: 'add' | 'del' | 'normal';

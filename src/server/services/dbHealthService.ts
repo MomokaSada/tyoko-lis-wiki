@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { db } from '@/db';
+import { commonErrors } from '@/server/errors';
 
 export type DbHealthStatus = {
   isConnected: boolean;
@@ -34,7 +35,7 @@ export async function checkDbHealth(): Promise<DbHealthStatus> {
     return {
       isConnected: false,
       latencyMs: null,
-      error: e instanceof Error ? e.message : 'Unknown error',
+      error: e instanceof Error ? e.message : commonErrors.unknownError,
       dbName: null,
     };
   }

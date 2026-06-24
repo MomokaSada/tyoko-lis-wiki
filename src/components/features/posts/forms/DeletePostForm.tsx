@@ -1,10 +1,8 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import {
-  deleteContentAction,
-  type ContentActionState,
-} from '@/server/actions/contentActions';
+import { deleteContentAction } from '@/server/actions/contentActions';
+import type { ContentActionState } from '@/server/actions/contentActions';
 import { Trash2 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 

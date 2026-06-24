@@ -8,43 +8,58 @@ import {
 } from '@simplewebauthn/server';
 import type { AuthenticatorTransportFuture } from '@simplewebauthn/server';
 import { createAppSession } from '@/server/repositories/appSessionRepository';
-import { findUserByName } from '@/server/repositories/authRepository';
-import {
-    createChallenge,
-    getValidChallenge,
-    markChallengeConsumed,
-} from '@/server/repositories/webauthnChallengeRepository'
 import {
     createPasskey,
     getPasskeysByUserId,
     getPasskeyByCredentialId,
     updatePasskeyCounter,
 } from '@/server/repositories/passkeyRepository';
-import { getUserProfile } from '@/server/repositories/userRepository';
+import { findUserByName } from '@/server/repositories/authRepository';
+import {
+    getUserProfile,
+} from '@/server/repositories/userRepository';
+import {
+    createChallenge,
+    getValidChallenge,
+    markChallengeConsumed,
+} from '@/server/repositories/webauthnChallengeRepository';
 import {
     RP_NAME,
     RP_ID,
     RP_ORIGIN,
     parseTransports
 } from './modules/webauthn';
+import { setSessionCookie } from '@/server/lib/appSessionCookie';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { generateToken } from '@/server/lib/generateToken';
-import { setSessionCookie } from '@/server/lib/appSessionCookie';
+import { isUniqueViolation } from '@/server/lib/pgError';
+
 import { recordAuditLog } from '@/server/services/auditLogService';
+import {
+    signIn,
+    verifyCredentials,
+} from '@/server/services/authService';
 import { getCurrentRequestBan } from '@/server/services/ipBanService';
-import { withAction, parseOrError } from '@/server/actions/modules/withAction';
+
+import {
+    withAction,
+    parseOrError,
+} from '@/server/actions/modules/withAction';
 import {
     authenticationResponseSchema,
     challengeIdSchema,
     registrationResponseSchema,
-} from '@/server/schemas/passkeySchemas';
-import { loginSchema } from '@/server/schemas/authSchemas';
+    loginSchema,
+} from '@/server/schemas';
+
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { signIn, verifyCredentials } from '@/server/services/authService';
 
+import {
+    actionErrors,
+    commonErrors,
+} from '@/server/errors';
 import type { BaseActionState } from '@/types/actionState';
-import { isUniqueViolation } from '@/server/lib/pgError';
 
 export type PasskeyActionState = BaseActionState & {
     options?: unknown;
@@ -59,7 +74,7 @@ export async function startPasskeyRegistrationAction(
     const actor = await getCurrentActor();
     if (!actor) {
         return {
-            error: 'ログインが必須です'
+            error: actionErrors.passkey.loginRequired
         };
     }
 
@@ -67,7 +82,7 @@ export async function startPasskeyRegistrationAction(
     const userProfile = await getUserProfile(actor.id);
 
     if (!userProfile) return {
-        error: 'ユーザー情報が見つかりません'
+        error: actionErrors.passkey.userNotFound
     };
 
     const options = await generateRegistrationOptions({
@@ -109,7 +124,7 @@ export async function startPasskeyLoginAction(
     const activeBan = await getCurrentRequestBan();
     if (activeBan) {
         return {
-            error: 'このIPアドレスからのログインは許可されていません'
+            error: commonErrors.ip.loginNotAllowed
         };
     }
     const userName = formData.get('userName') as string | null;
@@ -160,14 +175,14 @@ export async function finishPasskeyRegistrationAction(
     const actor = await getCurrentActor();
     if (!actor) {
         return {
-            error: 'ログインが必須です'
+            error: actionErrors.passkey.loginRequired
         };
     }
 
     const parsed = registrationResponseSchema.safeParse(formData.get('credential'));
     if (!parsed.success) {
         return {
-            error: '認証情報のパースに失敗しました'
+            error: actionErrors.passkey.credentialParseFailed
         };
     }
     const credential = parsed.data;
@@ -175,7 +190,7 @@ export async function finishPasskeyRegistrationAction(
     const parsedId = challengeIdSchema.safeParse(formData.get('challengeId'));
     if (!parsedId.success) {
         return {
-            error: 'チャレンジ情報が見つかりません。もう一度やり直してください'
+            error: actionErrors.passkey.challengeNotFound
         };
     }
     const challengeId = parsedId.data;
@@ -183,7 +198,7 @@ export async function finishPasskeyRegistrationAction(
     const challengeRecord = await getValidChallenge(challengeId, 'register', actor.id);
     if (!challengeRecord) {
         return {
-            error: 'チャレンジが見つかりません。もう一度やり直してください'
+            error: actionErrors.passkey.challengeExpired
         }
     }
 
@@ -197,7 +212,7 @@ export async function finishPasskeyRegistrationAction(
 
         if (!verification.verified || !verification.registrationInfo) {
             return {
-                error: '認証に失敗しました'
+                error: actionErrors.passkey.verificationFailed
             };
         }
 
@@ -229,7 +244,7 @@ export async function finishPasskeyRegistrationAction(
     } catch (error) {
         console.error('[passkey] Registration verification error:', error);
         return {
-            error: '認証中にエラーが発生しました'
+            error: actionErrors.passkey.verificationError
         };
     }
 
@@ -250,7 +265,7 @@ export async function finishPasskeyLoginAction(
     const parsed = authenticationResponseSchema.safeParse(formData.get('credential'));
     if (!parsed.success) {
         return {
-            error: '認証情報のパーズに失敗しました'
+            error: actionErrors.passkey.credentialParseFailedAlt
         }
     }
     const credential = parsed.data;
@@ -265,14 +280,14 @@ export async function finishPasskeyLoginAction(
             },
         });
         return {
-            error: '認証情報が見つかりません'
+            error: actionErrors.passkey.credentialNotFound
         };
     }
 
     const parsedId = challengeIdSchema.safeParse(formData.get('challengeId'));
     if (!parsedId.success) {
         return {
-            error: 'チャレンジ情報が見つかりません。もう一度やり直してください。'
+            error: actionErrors.passkey.challengeNotFoundWithPeriod
         }
     }
     const challengeId = parsedId.data;
@@ -280,7 +295,7 @@ export async function finishPasskeyLoginAction(
     const challengeRecord = await getValidChallenge(challengeId, 'login');
     if (!challengeRecord) {
         return {
-            error: 'チャレンジが見つかりません。もう一度やり直してください。'
+            error: actionErrors.passkey.challengeExpired
         }
     }
 
@@ -309,7 +324,7 @@ export async function finishPasskeyLoginAction(
                 },
             });
             return {
-                error: '認証に失敗しました'
+                error: actionErrors.passkey.verificationFailed
             };
         }
 
@@ -319,7 +334,6 @@ export async function finishPasskeyLoginAction(
         );
 
         await markChallengeConsumed(challengeRecord.id);
-
 
         const headersList = await headers();
         const clientIp = headersList.get('x-client-ip') ?? undefined;
@@ -351,13 +365,13 @@ export async function finishPasskeyLoginAction(
         }
         if (!sessionToken) {
             return {
-                error: 'セッション作成に失敗しました'
+                error: actionErrors.passkey.sessionCreateFailed
             };
         }
     } catch (error) {
         console.error('[passkey] Login verification error:', error);
         return {
-            error: '認証処理中にエラーが発生しました'
+            error: actionErrors.passkey.verificationProcessError
         };
     }
 
@@ -392,7 +406,7 @@ export async function loginAndStartPasskeyRegistrationAction(
 
     const activeBan = await getCurrentRequestBan();
     if (activeBan) {
-        return { error: 'このIPアドレスからのログインは許可されていません' };
+        return { error: commonErrors.ip.loginNotAllowed };
     }
 
     // パスワードハッシュを検証（セッションは作成しない）
@@ -408,7 +422,7 @@ export async function loginAndStartPasskeyRegistrationAction(
 
     const userProfile = await getUserProfile(credResult.userId);
     if (!userProfile) {
-        return { error: 'ユーザー情報が見つかりません' };
+        return { error: actionErrors.passkey.userNotFound };
     }
 
     const existingPasskeys = await getPasskeysByUserId(credResult.userId);
@@ -462,31 +476,31 @@ export async function finishPasskeyLoginAndRegistrationAction(
     // --- credential のパース ---
     const parsed = registrationResponseSchema.safeParse(formData.get('credential'));
     if (!parsed.success) {
-        return { error: '認証情報のパースに失敗しました' };
+        return { error: actionErrors.passkey.credentialParseFailed };
     }
     const credential = parsed.data;
 
     // --- challengeId のパース ---
     const parsedId = challengeIdSchema.safeParse(formData.get('challengeId'));
     if (!parsedId.success) {
-        return { error: 'チャレンジ情報が見つかりません。もう一度やり直してください' };
+        return { error: actionErrors.passkey.challengeNotFound };
     }
     const challengeId = parsedId.data;
 
     // --- userName の取得 ---
     const userName = formData.get('userName') as string | null;
     if (!userName) {
-        return { error: 'ユーザー名が見つかりません' };
+        return { error: actionErrors.passkey.userNameNotFound };
     }
     const password = formData.get('password') as string | null;
     if (!password) {
-        return { error: 'パスワードが見つかりません' };
+        return { error: actionErrors.passkey.passwordNotFound };
     }
 
     // --- challenge の検証（userId フィルターなし：セッションが未作成のため） ---
     const challengeRecord = await getValidChallenge(challengeId, 'register');
     if (!challengeRecord || challengeRecord.userId == null) {
-        return { error: 'チャレンジが見つかりません。もう一度やり直してください' };
+        return { error: actionErrors.passkey.challengeExpired };
     }
     const userId = challengeRecord.userId;
 
@@ -500,7 +514,7 @@ export async function finishPasskeyLoginAndRegistrationAction(
         });
 
         if (!verification.verified || !verification.registrationInfo) {
-            return { error: '認証に失敗しました' };
+            return { error: actionErrors.passkey.verificationFailed };
         }
 
         const {
@@ -535,7 +549,7 @@ export async function finishPasskeyLoginAndRegistrationAction(
         if (!signInResult.success) {
             // ここでエラーになるのは異常系（パスワードは step1 で確認済み）
             console.error('[passkey] signIn after registration failed unexpectedly:', signInResult.error);
-            return { error: 'セッションの作成に失敗しました。再度ログインしてください' };
+            return { error: actionErrors.passkey.sessionCreateFailedLong };
         }
 
         // アプリケーションセッションを作成
@@ -561,7 +575,7 @@ export async function finishPasskeyLoginAndRegistrationAction(
             }
         }
         if (!sessionToken) {
-            return { error: 'セッション作成に失敗しました' };
+            return { error: actionErrors.passkey.sessionCreateFailed };
         }
 
         await recordAuditLog({
@@ -572,7 +586,7 @@ export async function finishPasskeyLoginAndRegistrationAction(
         });
     } catch (error) {
         console.error('[passkey] Registration + login error:', error);
-        return { error: '認証中にエラーが発生しました' };
+        return { error: actionErrors.passkey.verificationError };
     }
 
     return { error: null };

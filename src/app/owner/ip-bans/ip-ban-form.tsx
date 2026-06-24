@@ -1,10 +1,8 @@
 'use client';
 
 import { useActionState } from 'react';
-import {
-  createIpBanAction,
-  type CreateIpBanActionState,
-} from '@/server/actions/ipBanActions';
+import { createIpBanAction } from '@/server/actions/ipBanActions';
+import type { CreateIpBanActionState } from '@/server/actions/ipBanActions';
 
 const initialState: CreateIpBanActionState = {
   error: null,

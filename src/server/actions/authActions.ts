@@ -1,15 +1,28 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { loginSchema, registerSchema } from '@/server/schemas/authSchemas';
-import { getCurrentRequestBan } from '@/server/services/ipBanService';
-import { getCurrentActor } from '@/server/lib/currentActor';
+import { loginSchema, registerSchema } from '@/server/schemas';
 import { recordAuditLog } from '@/server/services/auditLogService';
-import { registerAccount, signIn } from '@/server/services/authService';
-import { withAction, parseOrError } from '@/server/actions/modules/withAction';
+import {
+    registerAccount,
+    signIn,
+} from '@/server/services/authService';
+import { getCurrentRequestBan } from '@/server/services/ipBanService';
+
+import {
+    getSessionTokenFromCookie,
+    deleteSessionCookie,
+} from '@/server/lib/appSessionCookie';
+import { getCurrentActor } from '@/server/lib/currentActor';
+
+import {
+    withAction,
+    parseOrError,
+} from '@/server/actions/modules/withAction';
 import { createClient } from '@/lib/supabase/server';
-import { getSessionTokenFromCookie, deleteSessionCookie } from '@/server/lib/appSessionCookie';
+
 import { revokeSession } from '@/server/repositories/appSessionRepository';
+import { commonErrors } from '@/server/errors';
 import type { BaseActionState } from '@/types/actionState';
 
 export type ActionState = BaseActionState;
@@ -46,7 +59,7 @@ export async function loginAction(
 
   const activeBan = await getCurrentRequestBan();
   if (activeBan) {
-    return { error: 'このIPアドレスからのログインは許可されていません' };
+    return { error: commonErrors.ip.loginNotAllowed };
   }
 
   const result = await signIn(parsed.parsed);
@@ -87,7 +100,7 @@ export async function registerAction(
 
   const activeBan = await getCurrentRequestBan();
   if (activeBan) {
-    return { error: 'このIPアドレスからのアカウント作成は許可されていません' };
+    return { error: commonErrors.ip.registerNotAllowed };
   }
 
   const result = await registerAccount(parsed.parsed);

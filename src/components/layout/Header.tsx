@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useWithSession } from '@/lib/useWithSession';
+import { useWithSession } from '@/client/lib/useWithSession';
 import { HeaderLogo } from './HeaderLogo';
 import { HeaderNav } from './HeaderNav';
 import { HeaderSearch } from './HeaderSearch';

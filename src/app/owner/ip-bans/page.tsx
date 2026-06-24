@@ -1,6 +1,9 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { formatDateTimeJst } from '@/lib/format/formatDateTime';
-import { getActiveIpBans, getIpDeviceRecords } from '@/server/services/ipBanService';
+import {
+    getActiveIpBans,
+    getIpDeviceRecords,
+} from '@/server/services/ipBanService';
 import { parseListQuery } from '@/types/listQuery';
 import { DataTable } from '@/components/ui/DataTable';
 import type { Column } from '@/components/ui/DataTable';

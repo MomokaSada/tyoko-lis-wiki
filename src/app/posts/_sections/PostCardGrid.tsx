@@ -5,7 +5,10 @@ import { Eye, Calendar, ArrowRight } from 'lucide-react';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 import { PostPagination } from './PostPagination';
-import type { ContentSortKey, SortOrder } from '@/server/repositories/contentRepository';
+import {
+    ContentSortKey,
+    SortOrder,
+} from '@/server/repositories/contentRepository';
 
 interface PostSummary {
   id: number;

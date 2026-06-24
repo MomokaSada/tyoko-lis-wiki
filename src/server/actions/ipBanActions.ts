@@ -3,13 +3,16 @@
 import { revalidatePath } from 'next/cache';
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
-import { createIpBanSchema, deactivateIpBanSchema } from '@/server/schemas/ipBanSchemas';
-import { createIpBan, deactivateIpBan } from '@/server/services/ipBanService';
-import type { BaseActionState } from '@/types/actionState';
-import { checkRateLimit } from '@/server/services/rateLimitService';
-import { recordCurrentRequestDevice } from '@/server/services/deviceService';
-import { recordAuditLog } from "@/server/services/auditLogService";
 
+import { createIpBanSchema, deactivateIpBanSchema } from '@/server/schemas';
+import { commonErrors } from '@/server/errors';
+import {
+    createIpBan,
+    deactivateIpBan,
+} from '@/server/services/ipBanService';
+import { withAction } from '@/server/actions/modules/withAction';
+import type { BaseActionState } from '@/types/actionState';
+import { recordAuditLog } from "@/server/services/auditLogService";
 
 export type CreateIpBanActionState = BaseActionState & {
   bannedIp: string | null;
@@ -24,16 +27,8 @@ export async function createIpBanAction(
   _prevState: CreateIpBanActionState,
   formData: FormData,
 ): Promise<CreateIpBanActionState> {
-  await recordCurrentRequestDevice();
-
-  const rateLimitResult = await checkRateLimit('createIpBan');
-  if (!rateLimitResult.allowed) {
-    return {
-      error: 'IPBAN作成試行が多すぎます。しばらくしてから再度お試しください。',
-      bannedIp: null,
-      reason: null,
-    };
-  }
+  const preflight = await withAction({ rateLimit: 'createIpBan' });
+  if (preflight) return { ...preflight, bannedIp: null, reason: null };
 
   const parsed = createIpBanSchema.safeParse({
     ip: formData.get('ip'),
@@ -53,7 +48,7 @@ export async function createIpBanAction(
 
   if (!actor) {
     return {
-      error: 'IPBAN 権限がありません',
+      error: commonErrors.ipBan.createPermissionDenied,
       bannedIp: null,
       reason: null,
     };
@@ -87,6 +82,9 @@ export async function deactivateIpBanAction(
   _prevState: DeactivateIpBanActionState,
   formData: FormData,
 ): Promise<DeactivateIpBanActionState> {
+  const preflight = await withAction({ device: false });
+  if (preflight) return preflight;
+
   const parsed = deactivateIpBanSchema.safeParse({
     banId: formData.get('banId'),
   });
@@ -101,7 +99,7 @@ export async function deactivateIpBanAction(
 
   if (!actor) {
     return {
-      error: 'IPBAN 解除権限がありません',
+      error: commonErrors.ipBan.deactivatePermissionDenied,
     };
   }
 
