@@ -3,7 +3,7 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 
 import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
-import { AccountStatusFilter } from '@/server/repositories/accountCreateLinkRepository';
+import type { AccountStatusFilter } from '@/server/types/repositoryTypes';
 import { MobileActions } from '@/components/layout/MobileActions';
 import { InvalidButton } from './invalid-button';
 import { headers } from 'next/headers';

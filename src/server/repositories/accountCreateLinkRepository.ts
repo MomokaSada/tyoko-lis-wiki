@@ -3,6 +3,7 @@ import { escapeLikePattern } from './modules/escapeLike';
 import { db } from '@/db';
 import { accountCreateSessions, users } from '@/db/schema';
 import type { ListQuery, ListResult } from '@/types/listQuery';
+import type { AccountStatusFilter } from '@/server/types/repositoryTypes';
 
 /** 有効なアカウント作成セッションを UUID で検索する */
 export async function findActiveAccountCreateSession(uuid: string) {
@@ -71,8 +72,6 @@ export type AccountCreateSessionRow = {
   endAt: Date;
   createdAt: Date;
 };
-
-export type AccountStatusFilter = 'active' | 'expired' | 'inactive';
 
 export async function findAccountCreateSessionsPaginated(
   query?: ListQuery<'createdAt' | 'endAt'>,

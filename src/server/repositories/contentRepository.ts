@@ -2,9 +2,7 @@ import { and, eq, ilike, isNotNull, or, sql, asc, desc as dsc, gte } from 'drizz
 import { db } from '@/db';
 import { contents, tags, categories, contentTags, contentCategories, contentEditLogs, contentEditLogTags, contentEditLogCategories, editSessions, contentViewStats } from '@/db/schema';
 import { escapeLikePattern } from './modules/escapeLike';
-
-export type ContentSortKey = 'updatedAt' | 'createdAt' | 'viewCount' | 'title';
-export type SortOrder = 'asc' | 'desc';
+import type { ContentSortKey, SortOrder } from '@/server/types/repositoryTypes';
 
 function getOrderBy(sort: ContentSortKey = 'updatedAt', order: SortOrder = 'desc') {
   const column = (() => {

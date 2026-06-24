@@ -4,7 +4,7 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 
 import { getEditLinks } from '@/server/services/editLinkService';
-import { StatusFilter } from '@/server/repositories/editLinkRepository';
+import type { StatusFilter } from '@/server/types/repositoryTypes';
 import { MobileActions } from '@/components/layout/MobileActions';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';

@@ -4,7 +4,7 @@ import {
     insertEditSession,
     deactivateEditSession,
 } from '@/server/repositories/editLinkRepository';
-import type { StatusFilter } from '@/server/repositories/editLinkRepository';
+import type { StatusFilter } from '@/server/types/repositoryTypes';
 import type { CreateEditLinkInput } from '@/server/schemas';
 import type { Actor } from '@/types/actor';
 import {

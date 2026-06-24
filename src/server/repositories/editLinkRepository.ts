@@ -3,6 +3,7 @@ import { escapeLikePattern } from './modules/escapeLike';
 import { db } from '@/db';
 import { editSessions, users } from '@/db/schema';
 import type { ListQuery, ListResult } from '@/types/listQuery';
+import type { StatusFilter } from '@/server/types/repositoryTypes';
 
 export async function insertEditSession(data: {
   uuid: string;
@@ -38,8 +39,6 @@ export type EditSessionRow = {
   endAt: Date;
   createdAt: Date;
 };
-
-export type StatusFilter = 'active' | 'expired' | 'inactive' | 'limit-reached';
 
 export async function findEditSessions(
   query?: ListQuery<'createdAt' | 'endAt' | 'editsUsed'>,

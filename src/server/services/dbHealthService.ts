@@ -1,5 +1,4 @@
-import { sql } from 'drizzle-orm';
-import { db } from '@/db';
+import { checkConnection } from '@/server/repositories/healthRepository';
 import { commonErrors } from '@/server/errors';
 
 export type DbHealthStatus = {
@@ -17,7 +16,10 @@ export type DbHealthStatus = {
 export async function checkDbHealth(): Promise<DbHealthStatus> {
   const start = Date.now();
   try {
-    const result = await db.execute(sql`SELECT 1 AS ok`);
+    const connected = await checkConnection();
+    if (!connected) {
+      throw new Error('DB connection failed');
+    }
     const latencyMs = Date.now() - start;
 
     const dbName =

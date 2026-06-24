@@ -3,10 +3,10 @@
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, Loader2, ListFilter, ArrowDownWideNarrow, ArrowUpNarrowWide, Eye, Clock, Calendar, Type } from 'lucide-react';
-import {
+import type {
     ContentSortKey,
     SortOrder,
-} from '@/server/repositories/contentRepository';
+} from '@/server/types/repositoryTypes';
 
 interface PostSearchControlProps {
   initialQuery: string;

@@ -20,10 +20,10 @@ import {
     countVisibleContents,
     getWeeklyPopularContents,
 } from '@/server/repositories/contentRepository';
-import {
+import type {
     ContentSortKey,
     SortOrder,
-} from '@/server/repositories/contentRepository';
+} from '@/server/types/repositoryTypes';
 
 import { EditorContext } from '@/server/lib/currentEditor';
 

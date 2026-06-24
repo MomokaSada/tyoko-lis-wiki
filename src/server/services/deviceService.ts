@@ -1,4 +1,4 @@
-import { getCurrentRequestDevice } from '@/server/lib/requestDevice';
+import { getCurrentRequestDevice } from '@/server/services/modules/requestDevice';
 import {
     createDeviceSessionRecord,
     createDeviceRecord,

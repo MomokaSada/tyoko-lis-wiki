@@ -3,10 +3,10 @@ import { Library } from 'lucide-react';
 import { DeleteNotification } from './DeleteNotification';
 import { PostSearchControl } from './PostSearchControl';
 import { PrivacyToggle } from './PrivacyToggle';
-import {
+import type {
     ContentSortKey,
     SortOrder,
-} from '@/server/repositories/contentRepository';
+} from '@/server/types/repositoryTypes';
 
 interface PostsHeroSectionProps {
   canViewPrivate: boolean;

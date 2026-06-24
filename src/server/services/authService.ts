@@ -17,7 +17,7 @@ import {
 import {
     hashPassword,
     verifyPassword,
-} from '@/server/lib/password';
+} from '@/server/services/modules/password';
 import { isUniqueViolation } from '@/server/lib/pgError';
 
 import type { LoginInput, RegisterInput } from '@/server/schemas';

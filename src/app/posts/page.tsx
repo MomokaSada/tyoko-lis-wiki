@@ -7,10 +7,10 @@ import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 
 import { MobileActions } from '@/components/layout/MobileActions';
-import {
+import type {
     ContentSortKey,
     SortOrder,
-} from '@/server/repositories/contentRepository';
+} from '@/server/types/repositoryTypes';
 import { PostsHeroSection } from './_sections/PostsHeroSection';
 import { PostsStatusBar } from './_sections/PostsStatusBar';
 import { PostsEmptyState } from './_sections/PostsEmptyState';

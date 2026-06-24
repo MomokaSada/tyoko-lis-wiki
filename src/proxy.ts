@@ -44,11 +44,16 @@ function getClientIpFromHeaders(headers: Headers) {
     .find((candidate): candidate is string => Boolean(candidate));
 }
 
+const APP_SESSION_COOKIE_NAME = process.env.APP_SESSION_COOKIE_NAME ?? 'app_session';
+
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { response, user } = await updateSession(request);
   const requirement = getRequirement(request.nextUrl.pathname);
 
   const requestRole = user?.app_metadata?.role;
+
+  // app_session Cookie の存在確認（パスキー認証ユーザーの判定用）
+  const appSessionToken = request.cookies.get(APP_SESSION_COOKIE_NAME)?.value;
 
   // 新たなリクエストヘッダーを作成する
   const requestHeaders = new Headers(request.headers);
@@ -98,11 +103,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // ログイン済みだがロール不足 → UNAUTHORIZED
     // ----------------------------------------------------------------
     case 'login': {
-      if (!user) {
+      // Supabase Auth セッション または パスキー(app_session) Cookie のいずれかがあれば許可
+      if (!user && !appSessionToken) {
         return NextResponse.redirect(new URL(PATHS.HOME, request.url));
       }
 
-      if (requirement.role) {
+      // Supabase ユーザーがいる場合のみロールチェック
+      // （パスキーユーザーはページコンポーネントの getCurrentActor() で権限検証）
+      if (user && requirement.role) {
         if (requirement.role === 'admin' && !ADMIN_ROLES.includes(requestRole)) {
           return NextResponse.redirect(new URL(PATHS.UNAUTHORIZED, request.url));
         }
@@ -122,6 +130,11 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // ----------------------------------------------------------------
     case 'createAndEditPost': {
       if (user && ADMIN_ROLES.includes(requestRole)) {
+        return createForwardResponse(response);
+      }
+
+      // パスキー認証済みユーザー（app_session Cookie）も許可
+      if (appSessionToken) {
         return createForwardResponse(response);
       }
 

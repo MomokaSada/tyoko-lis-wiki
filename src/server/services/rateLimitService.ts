@@ -1,4 +1,4 @@
-import { getCurrentRequestDevice } from "@/server/lib/requestDevice";
+import { getCurrentRequestDevice } from "@/server/services/modules/requestDevice";
 import { countRateLimitRecords, insertRateLimitRecord } from "@/server/repositories/rateLimitRepository";
 import { RATE_LIMIT_RULES, type RateLimitAction } from "@/server/lib/rateLimit";
 

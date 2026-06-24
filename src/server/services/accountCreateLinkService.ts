@@ -5,9 +5,9 @@ import {
     findAccountCreateSessionsPaginated,
     insertAccountCreateSession,
 } from '@/server/repositories/accountCreateLinkRepository';
+import type { AccountStatusFilter } from '@/server/types/repositoryTypes';
 import {
     AccountCreateSessionRow,
-    AccountStatusFilter,
 } from '@/server/repositories/accountCreateLinkRepository';
 
 import type {
