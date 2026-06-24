@@ -38,6 +38,22 @@ export async function findUserByName(name: string) {
   return user ?? null;
 }
 
+/** パスワードハッシュ付きでユーザーを検索（認証検証用） */
+export async function findUserByNameWithPassword(name: string) {
+  const [user] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      password: users.password,
+      isActive: users.isActive,
+    })
+    .from(users)
+    .where(eq(users.name, name))
+    .limit(1);
+
+  return user ?? null;
+}
+
 export async function createInvitedUser(data: {
   sessionId: string;
   authUserId: string;

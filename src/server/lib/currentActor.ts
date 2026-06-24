@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { getValidSessionByToken } from '@/server/repositories/appSessionRepository';
+import { getSessionTokenFromCookie } from '@/server/lib/appSessionCookie';
 import type { PrivilegedActor as Actor } from '@/types/actor';
 
 function getUsernameFromDummyEmail(email: string | undefined) {
@@ -13,6 +15,31 @@ function getUsernameFromDummyEmail(email: string | undefined) {
 }
 
 export async function getCurrentActor(): Promise<Actor | null> {
+    const sessionToken = await getSessionTokenFromCookie();
+    const appSession = sessionToken ? await getValidSessionByToken(sessionToken) : null;
+    if (appSession) {
+        const [appUser] = await db
+            .select({
+                id: users.id,
+                role: users.type,
+                isActive: users.isActive
+            })
+            .from(users)
+            .where(
+                eq(users.id, appSession.userId)
+            )
+            .limit(1);
+        
+        if (appUser && appUser.isActive && (
+            appUser.role == 'owner' || appUser.role === 'admin'
+        )) {
+            return {
+                id: appUser.id,
+                role: appUser.role
+            };
+        }
+    }
+
     const supabase = await createClient();
     const { data, error } = await supabase.auth.getUser();
     

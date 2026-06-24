@@ -4,15 +4,21 @@ import {
   createInvitedUser,
   findActiveAccountCreateSession,
   findUserByName,
+  findUserByNameWithPassword,
 } from '@/server/repositories/authRepository';
 import { buildDummyEmail, normalizeUsername } from '@/server/lib/dummyEmail';
-import { hashPassword } from '@/server/lib/password';
+import { hashPassword, verifyPassword } from '@/server/lib/password';
 import type { LoginInput, RegisterInput } from '@/server/schemas/authSchemas';
 import { isUniqueViolation } from '@/server/lib/pgError';
 
 /** signIn の結果型 */
 export type SignInResult =
   | { success: true }
+  | { success: false; error: string };
+
+/** verifyCredentials の結果型 */
+export type VerifyCredentialsResult =
+  | { success: true; userId: number }
   | { success: false; error: string };
 
 export type RegisterResult =
@@ -48,6 +54,30 @@ export async function signIn({ userName, password }: LoginInput): Promise<SignIn
   }
 
   return { success: true };
+}
+
+/**
+ * ユーザー名 + パスワードの組み合わせを検証する（セッションは作成しない）。
+ * 認証に成功した場合は userId を返す。
+ */
+export async function verifyCredentials({ userName, password }: LoginInput): Promise<VerifyCredentialsResult> {
+  const normalizedUsername = normalizeUsername(userName);
+  const user = await findUserByNameWithPassword(normalizedUsername);
+
+  if (!user) {
+    return { success: false, error: 'ユーザー名またはパスワードが正しくありません' };
+  }
+
+  if (!user.isActive) {
+    return { success: false, error: 'このアカウントはBANされています' };
+  }
+
+  const valid = await verifyPassword(password, user.password);
+  if (!valid) {
+    return { success: false, error: 'ユーザー名またはパスワードが正しくありません' };
+  }
+
+  return { success: true, userId: user.id };
 }
 
 export async function registerAccount(input: RegisterInput): Promise<RegisterResult> {

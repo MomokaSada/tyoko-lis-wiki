@@ -8,6 +8,7 @@ import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { WelcomeBannerSection } from './_sections/WelcomeBannerSection';
 import { RecentPostsSection } from './_sections/RecentPostsSection';
 import { FeaturedPostSection } from './_sections/FeaturedPostSection';
+import { PendingPasskeyRegistration } from '@/components/features/home/PendingPasskeyRegistration';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +53,9 @@ export default async function HomePage() {
         hasEditSession={hasEditSession}
         hideShare={true}
       />
+
+      {/* 登録後のパスキー登録試行（sessionStorage フラグがあれば1回だけ実行） */}
+      <PendingPasskeyRegistration />
     </>
   );
 }

@@ -131,3 +131,64 @@ export async function loginWithPasskey(
 
     return {};
 }
+
+/**
+ * ユーザー名 + パスワードで認証し、そのままパスキーを登録する（方式E）。
+ *
+ * 内部で loginAndStartPasskeyRegistrationAction → startRegistration
+ * → finishPasskeyLoginAndRegistrationAction を直列に実行する。
+ *
+ * 重要な違い: セッションは finishPasskeyLoginAndRegistrationAction の中で
+ * パスキー保存 ＜後に＞ 作成される。そのためパスキー作成に失敗した場合は
+ * セッションが一切作られず、ログアウト処理が不要。
+ */
+export async function loginAndRegisterPasskey(
+    userName: string,
+    password: string,
+): Promise<{ error?: string }> {
+    const {
+        loginAndStartPasskeyRegistrationAction,
+        finishPasskeyLoginAndRegistrationAction,
+    } = await import('@/server/actions/passkeyActions');
+
+    // Step 1: 認証検証 + 登録 options 取得（セッションは作成しない）
+    const formData = new FormData();
+    formData.append('userName', userName);
+    formData.append('password', password);
+
+    const startResult = await loginAndStartPasskeyRegistrationAction(
+        { error: null },
+        formData,
+    );
+    if (startResult.error) return { error: startResult.error };
+    if (!startResult.options) return { error: '登録オプションの生成に失敗しました' };
+    if (!startResult.challengeId) return { error: 'チャレンジ情報の生成に失敗しました' };
+
+    // Step 2: ブラウザでパスキー作成
+    let regResponse;
+    try {
+        regResponse = await startRegistration({
+            optionsJSON: startResult.options as PublicKeyCredentialCreationOptionsJSON,
+        });
+    } catch (err) {
+        const message = err instanceof Error ? err.message : '不明なエラー';
+        return { error: `パスキーの作成に失敗しました: ${message}` };
+    }
+
+    // Step 3: パスキー保存 + セッション作成（パスキー保存が成功してから signIn）
+    const finishForm = new FormData();
+    finishForm.append('credential', JSON.stringify(regResponse));
+    finishForm.append('challengeId', String(startResult.challengeId));
+    finishForm.append('userName', userName);
+    finishForm.append('password', password);
+
+    const finishResult = await finishPasskeyLoginAndRegistrationAction(
+        { error: null },
+        finishForm,
+    );
+    if (finishResult.error) {
+        return { error: `パスキーの登録に失敗しました: ${finishResult.error}` };
+    }
+
+    return {};
+}

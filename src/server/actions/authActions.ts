@@ -7,9 +7,28 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { recordAuditLog } from '@/server/services/auditLogService';
 import { registerAccount, signIn } from '@/server/services/authService';
 import { withAction, parseOrError } from '@/server/actions/modules/withAction';
+import { createClient } from '@/lib/supabase/server';
+import { getSessionTokenFromCookie, deleteSessionCookie } from '@/server/lib/appSessionCookie';
+import { revokeSession } from '@/server/repositories/appSessionRepository';
 import type { BaseActionState } from '@/types/actionState';
 
 export type ActionState = BaseActionState;
+
+/**
+ * Server Action: ログアウト処理。
+ * Supabase Auth のセッションとアプリケーションセッションの両方を破棄する。
+ */
+export async function logoutAction(): Promise<void> {
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+
+    const sessionToken = await getSessionTokenFromCookie();
+    if (sessionToken) {
+        await revokeSession(sessionToken);
+    }
+
+    await deleteSessionCookie();
+}
 
 /** Server Action: ログインフォームの送信を処理する */
 export async function loginAction(
