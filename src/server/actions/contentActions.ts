@@ -130,7 +130,9 @@ export async function updateContentAction(
     title: formData.get('title'),
     slug: formData.get('slug'),
     content: formData.get('content'),
-    thumbnail: formData.get('removeThumbnail') === 'on' ? null : formData.get('thumbnail'),
+    thumbnail: formData.get('thumbnail'),
+    // Zod thumbnailUrlSchema が空文字を null に変換するので、
+    // 削除は空文字送信で表現される。removeThumbnail フィールドは不要。
     isPublished: formData.get('isPublished') === 'on',
     tagIds: formData.getAll('tagIds'),
     newTags: formData.get('newTags'),

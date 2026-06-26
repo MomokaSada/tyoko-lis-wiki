@@ -410,8 +410,9 @@ export async function updateContentWithRevision(data: {
 
   return db.transaction(async (tx) => {
 
-    // サムネイルが送信されなかった（null）場合は現在の値を維持する
-    const resolvedThumbnail = data.thumbnail ?? current?.currentThumbnail ?? null;
+    // data.thumbnail は常に明示的に指定される（string or null）
+    // null は「削除」を意味するため、現在値をフォールバックしない
+    const resolvedThumbnail = data.thumbnail ?? null;
 
     const [updatedContent] = await tx
       .update(contents)
