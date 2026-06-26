@@ -218,7 +218,7 @@ export async function listDeviceSessionUsageRecordsPaginated(
   if (query?.searchQuery) {
     const escaped = escapeLikePattern(query.searchQuery);
     conditions.push(
-      ilike(deviceSessions.sessionId, `%${escaped}%`),
+      ilike(sql`${deviceSessions.sessionId}::text`, `%${escaped}%`),
     );
   }
 

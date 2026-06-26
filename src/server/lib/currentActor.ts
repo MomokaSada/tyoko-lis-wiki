@@ -1,7 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { db } from '@/db';
-import { users } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { getUserProfile, findUserByAuthUserId, findActorByName } from '@/server/repositories/userRepository';
 import { getValidSessionByToken } from '@/server/repositories/appSessionRepository';
 import { getSessionTokenFromCookie } from '@/server/lib/appSessionCookie';
 import type { PrivilegedActor as Actor } from '@/types/actor';
@@ -18,18 +16,8 @@ export async function getCurrentActor(): Promise<Actor | null> {
     const sessionToken = await getSessionTokenFromCookie();
     const appSession = sessionToken ? await getValidSessionByToken(sessionToken) : null;
     if (appSession) {
-        const [appUser] = await db
-            .select({
-                id: users.id,
-                role: users.type,
-                isActive: users.isActive
-            })
-            .from(users)
-            .where(
-                eq(users.id, appSession.userId)
-            )
-            .limit(1);
-        
+        const appUser = await getUserProfile(appSession.userId);
+
         if (appUser && appUser.isActive && (
             appUser.role == 'owner' || appUser.role === 'admin'
         )) {
@@ -42,26 +30,18 @@ export async function getCurrentActor(): Promise<Actor | null> {
 
     const supabase = await createClient();
     const { data, error } = await supabase.auth.getUser();
-    
+
     if (error || !data.user) {
         return null;
     }
-    
+
     const role = data.user.app_metadata?.role;
-    
+
     if (role !== 'owner' && role !== 'admin') {
         return null;
     }
-    
-    let [appUser] = await db
-        .select({
-            id: users.id,
-            role: users.type,
-            isActive: users.isActive,
-        })
-        .from(users)
-        .where(eq(users.authUserId, data.user.id))
-        .limit(1);
+
+    let appUser = await findUserByAuthUserId(data.user.id);
 
     // Fallback for existing accounts created before authUserId was backfilled.
     if (!appUser) {
@@ -71,17 +51,9 @@ export async function getCurrentActor(): Promise<Actor | null> {
             return null;
         }
 
-        [appUser] = await db
-            .select({
-                id: users.id,
-                role: users.type,
-                isActive: users.isActive,
-            })
-            .from(users)
-            .where(eq(users.name, userName))
-            .limit(1);
+        appUser = await findActorByName(userName);
     }
-    
+
     if (
         !appUser ||
         !appUser.isActive ||
@@ -89,7 +61,7 @@ export async function getCurrentActor(): Promise<Actor | null> {
     ) {
         return null;
     }
-    
+
     return {
         id: appUser.id,
         role: appUser.role,

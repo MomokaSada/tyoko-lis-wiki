@@ -40,6 +40,22 @@ export async function findUserByName(name: string) {
   return user ?? null;
 }
 
+/** authUserId（SupabaseのID）からユーザーを検索する（owner含む） */
+export async function findUserByAuthUserId(authUserId: string) {
+  const [user] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      role: users.type,
+      isActive: users.isActive,
+    })
+    .from(users)
+    .where(eq(users.authUserId, authUserId))
+    .limit(1);
+
+  return user ?? null;
+}
+
 export async function findUserById(userId: number) {
   const [user] = await db
     .select({
@@ -49,6 +65,25 @@ export async function findUserById(userId: number) {
     })
     .from(users)
     .where(and(eq(users.id, userId), ne(users.type, 'owner')))
+    .limit(1);
+
+  return user ?? null;
+}
+
+/**
+ * ユーザー名からユーザーを検索（owner含む）。
+ * currentActor.ts のフォールバック用。
+ */
+export async function findActorByName(name: string) {
+  const [user] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      role: users.type,
+      isActive: users.isActive,
+    })
+    .from(users)
+    .where(eq(users.name, name))
     .limit(1);
 
   return user ?? null;

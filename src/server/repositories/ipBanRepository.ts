@@ -116,7 +116,7 @@ export async function listActiveIpBansPaginated(
 
   const baseWhere = [eq(blockDevices.isActive, true)];
   if (query?.searchQuery) {
-    baseWhere.push(ilike(devices.ip, `%${query.searchQuery}%`));
+    baseWhere.push(ilike(sql`${devices.ip}::text`, `%${query.searchQuery}%`));
   }
 
   const rows = await db
@@ -208,7 +208,7 @@ export async function listIpDeviceRecordsPaginated(
 
   const baseWhere = query?.searchQuery
     ? or(
-        ilike(devices.ip, `%${query.searchQuery}%`),
+        ilike(sql`${devices.ip}::text`, `%${query.searchQuery}%`),
         ilike(devices.browser, `%${query.searchQuery}%`)
       )
     : undefined;

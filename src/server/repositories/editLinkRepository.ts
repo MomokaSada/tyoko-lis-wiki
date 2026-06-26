@@ -124,6 +124,25 @@ export async function findEditSessions(
   };
 }
 
+/** 有効な編集セッションを UUID で検索する（guards.ts / currentEditor.ts 用） */
+export async function findActiveEditSession(uuid: string) {
+  const now = new Date();
+  const [session] = await db
+    .select({ uuid: editSessions.uuid })
+    .from(editSessions)
+    .where(
+      and(
+        eq(editSessions.uuid, uuid),
+        eq(editSessions.isActive, true),
+        gt(editSessions.endAt, now),
+        lt(editSessions.editsUsed, editSessions.maxEdits),
+      ),
+    )
+    .limit(1);
+
+  return session ?? null;
+}
+
 export async function deactivateEditSession(uuid: string) {
   const [updated] = await db
     .update(editSessions)

@@ -1,8 +1,6 @@
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
-import { db } from '@/db';
-import { users } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { findUserByAuthUserId, getUserProfile } from '@/server/repositories/userRepository';
 import { getSessionTokenFromCookie } from '@/server/lib/appSessionCookie';
 import { getValidSessionByToken } from '@/server/repositories/appSessionRepository';
 import { createClient } from '@/lib/supabase/server';
@@ -32,12 +30,7 @@ export async function AccountBanGate({ children }: { children: React.ReactNode }
       const supabase = await createClient();
       const { data } = await supabase.auth.getUser();
       if (data?.user) {
-        const [appUser] = await db
-          .select({ isActive: users.isActive })
-          .from(users)
-          .where(eq(users.authUserId, data.user.id))
-          .limit(1);
-
+        const appUser = await findUserByAuthUserId(data.user.id);
         if (appUser && !appUser.isActive) {
           return <BannedNotice />;
         }
@@ -48,12 +41,7 @@ export async function AccountBanGate({ children }: { children: React.ReactNode }
     if (appSessionToken) {
       const session = await getValidSessionByToken(appSessionToken);
       if (session) {
-        const [appUser] = await db
-          .select({ isActive: users.isActive })
-          .from(users)
-          .where(eq(users.id, session.userId))
-          .limit(1);
-
+        const appUser = await getUserProfile(session.userId);
         if (appUser && !appUser.isActive) {
           return <BannedNotice />;
         }
