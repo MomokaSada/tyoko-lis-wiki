@@ -2,6 +2,7 @@ import { and, eq, ilike, isNotNull, or, sql, asc, desc as dsc, gte } from 'drizz
 import { db } from '@/db';
 import { contents, tags, categories, contentTags, contentCategories, contentEditLogs, contentEditLogTags, contentEditLogCategories, editSessions, contentViewStats } from '@/db/schema';
 import { escapeLikePattern } from './modules/escapeLike';
+import { determineNextLogType } from './contentEditLogRepository';
 import type { ContentSortKey, SortOrder } from '@/server/types/repositoryTypes';
 
 function getOrderBy(sort: ContentSortKey = 'updatedAt', order: SortOrder = 'desc') {
@@ -76,12 +77,14 @@ export async function createContentWithInitialRevision(data: {
         currentTitle: contents.currentTitle,
       });
 
+    const logType = await determineNextLogType(createdContent.id, 1);
+
     const [createdLog] = await tx.insert(contentEditLogs).values({
       contentId: createdContent.id,
       deviceSessionId: data.deviceSessionId,
       userId: data.userId,
       revisionNumber: 1,
-      type: 'snapshot',
+      type: logType,
       title: data.title,
       data: data.content,
       thumbnail: data.thumbnail,
@@ -390,17 +393,22 @@ export async function updateContentWithRevision(data: {
   tagChanged: boolean;
   categoryChanged: boolean;
 }) {
-  return db.transaction(async (tx) => {
-    const [current] = await tx
-      .select({
-        latestRevision: contents.latestRevision,
-        currentThumbnail: contents.currentThumbnail,
-      })
-      .from(contents)
-      .where(eq(contents.id, data.contentId))
-      .limit(1);
+  // トランザクションの外で type を事前判定（postgres-js の接続管理の都合）
+  const [current] = await db
+    .select({
+      latestRevision: contents.latestRevision,
+      currentThumbnail: contents.currentThumbnail,
+    })
+    .from(contents)
+    .where(eq(contents.id, data.contentId))
+    .limit(1);
 
-    const nextRevision = (current?.latestRevision ?? 0) + 1;
+  const nextRevision = (current?.latestRevision ?? 0) + 1;
+
+  // スナップショット間隔に基づいて type を判定（diff10 → snapshot）
+  const logType = await determineNextLogType(data.contentId, nextRevision);
+
+  return db.transaction(async (tx) => {
 
     // サムネイルが送信されなかった（null）場合は現在の値を維持する
     const resolvedThumbnail = data.thumbnail ?? current?.currentThumbnail ?? null;
@@ -429,7 +437,7 @@ export async function updateContentWithRevision(data: {
       deviceSessionId: data.deviceSessionId,
       userId: data.userId,
       revisionNumber: nextRevision,
-      type: 'snapshot',
+      type: logType,
       title: data.title,
       data: data.content,
       thumbnail: resolvedThumbnail,

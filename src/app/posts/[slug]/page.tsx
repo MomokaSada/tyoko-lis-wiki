@@ -272,6 +272,12 @@ export default async function PostDetailPage({
                   <Edit3 size={18} /> 項目を編集
                 </Link>
               )}
+              <Link
+                href={`/posts/${encodeURIComponent(post.slug)}/history`}
+                className="px-5 py-2.5 bg-stone-800/60 text-stone-300 text-sm font-black rounded-2xl hover:bg-stone-700/60 transition-all active:scale-95 flex items-center gap-2"
+              >
+                <History size={18} /> 編集履歴
+              </Link>
             </div>
           </div>
         </div>
@@ -351,6 +357,7 @@ export default async function PostDetailPage({
       {/* モバイル限定アクションボタン (FAB) */}
       <MobileActions
         postTitle={post.title}
+        postSlug={post.slug}
         userRole={userRole}
         hasEditSession={hasEditSession}
         tocSlot={toc.length > 0 ? <TableOfContents toc={toc} isMobile /> : undefined}

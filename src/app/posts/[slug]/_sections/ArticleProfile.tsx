@@ -84,9 +84,16 @@ export function ArticleProfile({
           </div>
           <div className="flex gap-3">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1.5" />
-            <div className="space-y-1">
+            <div className="space-y-2">
               <p className="text-xs font-bold text-stone-800">{formattedDate} <span className="text-[10px] text-stone-400 font-normal">第#{latestRevision}版</span></p>
               <p className="text-[10px] text-stone-500 leading-snug">最新のスナップショットが正常に保存されています。</p>
+              <Link
+                href={`/posts/${encodeURIComponent(postSlug)}/history`}
+                className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                <History className="w-3 h-3" />
+                編集履歴を見る
+              </Link>
             </div>
           </div>
         </div>

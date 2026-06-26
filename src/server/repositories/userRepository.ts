@@ -1,4 +1,4 @@
-import { eq, ne, and } from 'drizzle-orm';
+import { eq, ne, and, inArray } from 'drizzle-orm';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import type { User } from '@/types/user';
@@ -52,4 +52,15 @@ export async function findUserById(userId: number) {
     .limit(1);
 
   return user ?? null;
+}
+
+/** 複数のユーザーIDから一括取得（owner を含む全ユーザー対象） */
+export async function findUsersByIds(
+  userIds: number[],
+): Promise<{ id: number; name: string }[]> {
+  if (userIds.length === 0) return [];
+  return db
+    .select({ id: users.id, name: users.name })
+    .from(users)
+    .where(inArray(users.id, userIds));
 }

@@ -1,6 +1,5 @@
 'use server';
 
-import { getCurrentActor } from '@/server/lib/currentActor';
 import { getRevisionDiffData } from '@/server/services/revisionService';
 import {
     DiffPart,
@@ -10,8 +9,7 @@ import {
 /**
  * 指定されたリビジョンの差分を取得する (Server Action)。
  *
- * この Action は認可 (owner のみ) と Service 層への委譲のみを行い、
- * DB クエリや diff 計算は Service / Repository 層に分離している。
+ * 記事の内容は公開情報であり、差分表示も公開とする。
  */
 export async function getRevisionDiff(
   contentId: number,
@@ -27,8 +25,5 @@ export async function getRevisionDiff(
   tagDiff: TagCategoryDiff;
   categoryDiff: TagCategoryDiff;
 } | null> {
-  const actor = await getCurrentActor();
-  if (actor?.role !== 'owner') return null;
-
   return getRevisionDiffData(contentId, revisionNumber);
 }

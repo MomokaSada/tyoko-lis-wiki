@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, sql } from 'drizzle-orm';
 import { escapeLikePattern } from './modules/escapeLike';
 import { db } from '@/db';
 import { contentEditLogs, contents, deviceSessions, devices, editSessions, users } from '@/db/schema';
@@ -275,6 +275,17 @@ export async function getDeviceSessionUsageRecord(id: number) {
     .limit(1);
 
   return record ?? null;
+}
+
+/** 複数の deviceSession ID から sessionId（編集リンクUUID）を一括取得 */
+export async function findDeviceSessionsByIds(
+  ids: number[],
+): Promise<{ id: number; sessionId: string }[]> {
+  if (ids.length === 0) return [];
+  return db
+    .select({ id: deviceSessions.id, sessionId: deviceSessions.sessionId })
+    .from(deviceSessions)
+    .where(inArray(deviceSessions.id, ids));
 }
 
 export async function getDeviceSessionEditLogs(deviceSessionId: number) {

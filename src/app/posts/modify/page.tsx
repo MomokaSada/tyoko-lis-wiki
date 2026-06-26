@@ -3,7 +3,7 @@ import { getEditableContentDetail } from '@/server/services/contentService';
 import { getTaxonomyOptions } from '@/server/services/taxonomyService';
 import { PostForm } from '@/components/features/posts/forms/PostForm';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, History } from 'lucide-react';
 
 export default async function ModifyPostPage({
   searchParams,
@@ -53,6 +53,19 @@ export default async function ModifyPostPage({
             <ChevronLeft size={12} />
             {content?.title ?? '記事一覧'}に戻る
           </Link>
+          {content && (
+            <Link
+              href={
+                sessionToken
+                  ? `/posts/${encodeURIComponent(content.slug)}/history?session=${encodeURIComponent(sessionToken)}`
+                  : `/posts/${encodeURIComponent(content.slug)}/history`
+              }
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold text-stone-400 hover:text-stone-800 hover:bg-stone-100 transition-all uppercase tracking-widest"
+            >
+              <History size={12} />
+              編集履歴
+            </Link>
+          )}
         </div>
       </header>
 

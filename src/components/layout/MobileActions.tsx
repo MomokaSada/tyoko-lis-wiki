@@ -2,7 +2,7 @@
 
 import React, { type ReactNode, useState } from 'react';
 import {
-  Menu, X, BookOpen, User, Share2, Home, List,
+  Menu, X, BookOpen, User, Share2, Home, List, History,
   FilePlus, Settings, Shield, Compass, Check, ChevronLeft
 } from 'lucide-react';
 import Link from 'next/link';
@@ -12,6 +12,7 @@ import { useWithSession } from '@/client/lib/useWithSession';
 
 interface MobileActionsProps {
   postTitle?: string;
+  postSlug?: string;
   userRole?: string | null;
   hasEditSession?: boolean;
   hideShare?: boolean;
@@ -23,6 +24,7 @@ interface MobileActionsProps {
 
 export function MobileActions({
   postTitle,
+  postSlug,
   userRole,
   hasEditSession,
   hideShare = false,
@@ -190,6 +192,22 @@ export function MobileActions({
                             <div className="text-[10px] text-stone-400 font-normal">項目情報</div>
                           </div>
                         </button>
+                      )}
+
+                      {postSlug && (
+                        <Link
+                          href={withSession(`/posts/${encodeURIComponent(postSlug)}/history`)}
+                          onClick={closeAll}
+                          className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-700 hover:bg-stone-100 transition text-left"
+                        >
+                          <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center">
+                            <History size={20} className="text-stone-500" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="text-sm">編集履歴</div>
+                            <div className="text-[10px] text-stone-400 font-normal">リビジョン一覧</div>
+                          </div>
+                        </Link>
                       )}
 
                       {!hideShare && (
