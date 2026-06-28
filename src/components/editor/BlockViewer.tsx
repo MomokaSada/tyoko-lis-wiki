@@ -71,7 +71,9 @@ function normalizeMarkdownForViewer(markdown: string) {
   return normalized.join('\n');
 }
 
-function wrapTables(container: HTMLElement) {
+function wrapTables(container: HTMLElement): () => void {
+  const cleanups: Array<() => void> = [];
+
   container.querySelectorAll('table').forEach((table) => {
     // 既にラップ済みの場合はスキップ
     if (table.parentElement?.classList.contains('table-scroll-wrapper')) return;
@@ -80,7 +82,57 @@ function wrapTables(container: HTMLElement) {
     wrapper.className = 'table-scroll-wrapper';
     table.parentElement?.insertBefore(wrapper, table);
     wrapper.appendChild(table);
+
+    // スクロール位置に応じて左/右のフェードシャドウを切り替え、
+    // ユーザーに「横にスクロールできる」ことを視覚的に伝える
+    const updateShadows = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = wrapper;
+      const maxScroll = scrollWidth - clientWidth;
+
+      // 横スクロールが不要なときは hint クラス自体を外す (フェードなし)
+      if (maxScroll <= 0) {
+        wrapper.classList.remove('is-scrollable');
+        wrapper.classList.remove('is-scrolled-left');
+        wrapper.classList.remove('is-scrolled-right');
+        return;
+      }
+
+      wrapper.classList.add('is-scrollable');
+
+      if (scrollLeft <= 4) {
+        wrapper.classList.remove('is-scrolled-left');
+      } else {
+        wrapper.classList.add('is-scrolled-left');
+      }
+
+      if (scrollLeft >= maxScroll - 4) {
+        wrapper.classList.remove('is-scrolled-right');
+      } else {
+        wrapper.classList.add('is-scrolled-right');
+      }
+    };
+
+    // 初期反映
+    updateShadows();
+
+    wrapper.addEventListener('scroll', updateShadows, { passive: true });
+
+    const onResize = () => updateShadows();
+    window.addEventListener('resize', onResize, { passive: true });
+
+    cleanups.push(() => {
+      wrapper.removeEventListener('scroll', updateShadows);
+      window.removeEventListener('resize', onResize);
+    });
+
+    // 画像の遅延読み込みや KaTeX などの非同期レンダリングで
+    // テーブル内のコンテンツ幅が変動しうるため、念のため再計算を 1 回行う
+    requestAnimationFrame(updateShadows);
   });
+
+  return () => {
+    cleanups.forEach((fn) => fn());
+  };
 }
 
 function normalizeRenderedContent(container: HTMLElement) {
@@ -174,6 +226,7 @@ export default function BlockViewer({ markdown }: { markdown: string }) {
   useEffect(() => {
     let cancelled = false;
     let viewerInstance: { destroy?: () => void } | null = null;
+    let releaseTableWrappers: (() => void) | null = null;
 
     const initializeViewer = async () => {
       ensureStylesheet(TOASTUI_STYLE_ID, TOASTUI_STYLE_HREF);
@@ -197,7 +250,7 @@ export default function BlockViewer({ markdown }: { markdown: string }) {
         }
 
         normalizeRenderedContent(mountRef.current);
-        wrapTables(mountRef.current);
+        releaseTableWrappers = wrapTables(mountRef.current);
         await renderMath(mountRef.current);
 
         if (cancelled) {
@@ -222,6 +275,12 @@ export default function BlockViewer({ markdown }: { markdown: string }) {
 
     return () => {
       cancelled = true;
+
+      try {
+        releaseTableWrappers?.();
+      } catch (error) {
+        console.error(error);
+      }
 
       try {
         viewerInstance?.destroy?.();

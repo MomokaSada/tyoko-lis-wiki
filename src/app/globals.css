@@ -197,6 +197,22 @@ h6 {
   font-size: 1rem;
   line-height: 1.82;
   padding: 0;
+  /* テーブルが article-viewer を超えて伸びないように、子要素への拡張を許可せずこちらで確定 */
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* BlockViewer ルート要素 (.article-viewer)
+   - 中身の長いテーブル/コードブロックがらみで記事表示エリアが伸びないよう、
+     コンテナ自体を親 (flex-1, max-w-...) の幅に張り付かせる */
+.article-viewer {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  /* 横スクロールは内部 (.table-scroll-wrapper) で行う。
+     コンテナ自体は横方向にはみ出さない */
+  overflow: visible;
 }
 
 .article-viewer .toastui-editor-contents> :first-child {
@@ -285,21 +301,135 @@ h6 {
 .article-viewer .toastui-editor-contents table {
   border-collapse: separate !important;
   border-spacing: 0 !important;
-  display: block !important;
-  width: fit-content !important;
+  /* テーブルはネイティブ表示させ、外側のスクロールラッパー側で
+     内容が大きいときのみ横スクロールする。
+     - display は変更しない (table, table-cell 等を尊重)
+     - width: auto + max-width: 100% で、親の幅を超えない
+     - コンテンツ幅 > 親幅 のときは wrapper の overflow-x: auto が自動で効く
+     - table-layout: auto を維持 (fixed にすると長いセルの文字列が省略される) */
+  display: table !important;
+  width: auto !important;
   max-width: 100% !important;
+  table-layout: auto !important;
   border-radius: 0.85rem !important;
   border: none !important;
   background: #ffffff;
 }
 
-/* テーブルスクロール用ラッパー（overflow-x を table から分離） */
+/* テーブルスクロール用ラッパー（overflow-x を table から分離）
+   - 親 (.article-viewer) の幅に張り付き、内部の table が幅広でも
+     overflow-x: auto で横スクロール表示する
+   - モバイルでのスワイプスクロールを滑らかにする               */
 .article-viewer .table-scroll-wrapper {
   overflow-x: auto !important;
+  overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  /* 親カラムの幅に張り付かせて、テーブルが記事表示エリアを伸ばせないようにする */
   max-width: 100% !important;
-  border-radius: 0.85rem !important;
-  margin-bottom: 1.5rem;
+  width: 100%;
+  /* テーブルのコンテンツがスクロール見切れしているとき、視認性を上げるための影。
+     スクロールたびにスクロール位置に応じて JS でクラス付与する想定もあるが、
+     まずは container の四周に淡い枠をつけることで、ラッパー化を視覚化する。*/
+  /* タッチデバイスで水平方向にスワイプが反応するように x 軸方向のジェスチャを優先 */
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+  /* スクロールヒントのフェードシャドウを表示するため擬似要素を使う */
+  position: relative;
+}
+
+/* スクロールバー (Webkit) のチューニング - モバイルでスワイプ可能と分かるようにする */
+.article-viewer .table-scroll-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.article-viewer .table-scroll-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.article-viewer .table-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(120, 113, 108, 0.45);
+  border-radius: 9999px;
+}
+
+.article-viewer .table-scroll-wrapper::-webkit-scrollbar-thumb:hover,
+.article-viewer .table-scroll-wrapper:hover::-webkit-scrollbar-thumb {
+  background: rgba(120, 113, 108, 0.7);
+}
+
+/* スクロール可能な状態: 左右両端にフェードシャドウ (視覚的ヒント) */
+.article-viewer .table-scroll-wrapper.is-scrollable::before,
+.article-viewer .table-scroll-wrapper.is-scrollable::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  pointer-events: none;
+  border-radius: 0.85rem;
+  z-index: 1;
+}
+
+.article-viewer .table-scroll-wrapper.is-scrollable::before {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0)
+  );
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.article-viewer .table-scroll-wrapper.is-scrollable::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0)
+  );
+  opacity: 1;
+  transition: opacity 0.18s ease;
+}
+
+/* 一番左までスクロールしたら左フェードを完全に消す */
+.article-viewer .table-scroll-wrapper.is-scrollable.is-scrolled-left::before {
+  opacity: 1;
+}
+
+.article-viewer .table-scroll-wrapper.is-scrollable.is-scrolled-right::after {
+  opacity: 0;
+}
+
+/* スクロール可能なラップ内でテーブルが常に最前面になるよう、
+   フェードより上に表示する (デフォルトでは position: relative だけ付与)*/
+.article-viewer .table-scroll-wrapper > table {
+  position: relative;
+  z-index: 2;
+}
+
+/* モバイルでのスクロールヒントのヒント強度を上げる */
+@media (max-width: 640px) {
+  .article-viewer .table-scroll-wrapper.is-scrollable::before,
+  .article-viewer .table-scroll-wrapper.is-scrollable::after {
+    width: 24px;
+  }
+}
+
+/* Tailwind Typography (`prose`) が table に対して当てる
+     `table-layout: auto; width: 100%` および
+     子要素 (th/td) への padding/margin を記事詳細ページの内側で無効化する */
+/* Tailwind Typography (`prose`) が table 配下 (th/td) に当てる
+   標準的なテーブルスタイル (border-collapse, padding, vertical-align)を
+   記事詳細ページの内側で上書きする場合のフォールバックフック。
+   現状は上記 (.article-viewer .toastui-editor-contents table) で
+   table-layout / width / overflow をカバーしているので、
+   ここでは th/td の vertical-align のみ統一する                 */
+.prose .article-viewer .toastui-editor-contents th,
+.prose .article-viewer .toastui-editor-contents td,
+.article-viewer .toastui-editor-contents th,
+.article-viewer .toastui-editor-contents td {
+  vertical-align: top;
 }
 
 .article-viewer .toastui-editor-contents th {
@@ -1313,16 +1443,25 @@ min-height: calc(100% - 36px);
 }
 } /* ← @media (max-width: 640px) 閉じ */
 
-/* ── テーブルポップアップ専用: はみ出し防止 ── */
+/* ── テーブルポップアップ専用: はみ出し防止 —— 10x10 グリッド全体を表示できるよう width 制限を解除 ── */
 .toastui-host .toastui-editor-popup-add-table {
 overflow: visible !important;
+min-width: max-content !important;
 }
 
-/* ── テーブルポップアップ body: オーバーレイとボタンの基準 ── */
+/* ── デスクトップ表示時に右側がはみ出さないよう左にオフセット ── */
+@media (min-width: 641px) {
+  .toastui-host .toastui-editor-popup-add-table {
+    margin-left: -120px !important;
+  }
+}
+
+/* ── テーブルポップアップ body: グリッド幅に合わせて伸縮 ── */
 .toastui-host .toastui-editor-popup-add-table .toastui-editor-popup-body {
-padding: 20px 8px 16px !important;
+padding: 20px 12px 16px !important;
 overflow: visible !important;
 position: relative !important;
+min-width: max-content !important;
 }
 
 /* ── テーブルグリッド全体: scale を廃止し実サイズで拡大 ── */
@@ -1357,8 +1496,13 @@ pointer-events: none !important;
 background: #f5f5f4 !important;
 }
 
-/* ── サイズ表示: アンバーグラデーションの大きなバッジ ── */
+/* ── 元のエディタサイズ表示を非表示にする ── */
 .toastui-host .toastui-editor-popup-add-table .toastui-editor-table-description {
+display: none !important;
+}
+
+/* ── 独自サイズ表示: アンバーグラデーションの大きなバッジ ── */
+.toastui-host .toastui-editor-popup-add-table .tk-table-description {
 font-size: 1.15rem !important;
 font-weight: 900 !important;
 color: #1c1917 !important;
@@ -1412,10 +1556,11 @@ z-index: 60 !important;
 display: inline-flex !important;
 align-items: center !important;
 justify-content: center !important;
-min-width: 100px !important;
-padding: 11px 28px !important;
-font-size: 0.95rem !important;
+min-width: 80px !important;
+padding: 8px 16px !important;
+font-size: 0.9rem !important;
 font-weight: 700 !important;
+white-space: nowrap !important;
 cursor: pointer !important;
 -webkit-tap-highlight-color: transparent !important;
 transition: background 0.15s ease, transform 0.1s ease !important;

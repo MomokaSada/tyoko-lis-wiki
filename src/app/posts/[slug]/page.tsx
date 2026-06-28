@@ -287,8 +287,13 @@ export default async function PostDetailPage({
       <div className="max-w-[72rem] mx-auto px-4 sm:px-6 -mt-40 md:-mt-[280px] relative z-5">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
 
-          {/* 左側：メインコンテンツエリア */}
-          <div className="flex-1 order-1 lg:order-1 pb-32 sm:pb-0 pt-0">
+          {/* 左側：メインコンテンツエリア
+              - flex-1 + min-w-0 を併用することで、Markdown内のテーブルや
+                pre ブロックなど大きい子要素に押し出されて
+                メインカラムの幅が想定外に広がるのを防ぐ
+              - min-w-0 を入れると、この flex アイテムは min-content: 0 になり、
+                親の flex コンテナ幅に厳密に張り付く */}
+          <div className="flex-1 min-w-0 order-1 lg:order-1 pb-32 sm:pb-0 pt-0">
             <div className="bg-white border border-stone-200 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden animate-in slide-in-from-bottom-4 duration-500 delay-200">
               <div className="p-4 sm:p-6 md:p-8 lg:p-10">
 

@@ -112,15 +112,37 @@ function setupTablePopup(
 
   // 内部関数で使うため非 null を確定させる
   const $grid: HTMLElement = grid;
-  const $table: HTMLElement = table;
   const $body: HTMLElement = body;
 
-  // グリッド次元を計算
-  const rows = Array.from($grid.querySelectorAll<HTMLElement>('.toastui-editor-table-row'));
-  const totalRows = rows.length;
-  const totalCols = rows[0]
+  // グリッド次元を計算し、10x10 未満であれば 10x10 に拡張する
+  let rows = Array.from($grid.querySelectorAll<HTMLElement>('.toastui-editor-table-row'));
+  let totalRows = rows.length;
+  let totalCols = rows[0]
     ? rows[0].querySelectorAll<HTMLElement>('.toastui-editor-table-cell').length
     : 0;
+
+  const TARGET_SIZE = 10;
+  if (totalRows > 0 && totalCols > 0 && (totalRows < TARGET_SIZE || totalCols < TARGET_SIZE)) {
+    const tbody = table.querySelector('tbody') || table;
+    tbody.innerHTML = '';
+    for (let r = 0; r < TARGET_SIZE; r++) {
+      const tr = document.createElement('tr');
+      tr.className = 'toastui-editor-table-row';
+      for (let c = 0; c < TARGET_SIZE; c++) {
+        const td = document.createElement('td');
+        td.className = 'toastui-editor-table-cell';
+        if (r === 0) {
+          td.classList.add('header');
+        }
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+    rows = Array.from($grid.querySelectorAll<HTMLElement>('.toastui-editor-table-row'));
+    totalRows = rows.length;
+    totalCols = TARGET_SIZE;
+  }
+
   if (totalRows === 0 || totalCols === 0) return;
 
   /* ---- state ---- */
@@ -128,22 +150,61 @@ function setupTablePopup(
   let startCol = -1;
   let endRow = -1;
   let endCol = -1;
-  let hasSelection = false;
+  let hasSelection = false;        // mousedown で確定した選択
+  let hoverRow = -1;               // ホバー中のプレビュー行
+  let hoverCol = -1;               // ホバー中のプレビュー列
   let isLongPressing = false;
   let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // 独自バッジを作成し、エディタ標準のバッジ（上書きされる）の直後に挿入
+  const myDesc = document.createElement('div');
+  myDesc.className = 'tk-table-description';
+  myDesc.textContent = '0 x 0';
+
+  if (desc && desc.parentNode) {
+    desc.parentNode.insertBefore(myDesc, desc.nextSibling);
+    // 標準バッジは非表示にする
+    desc.style.setProperty('display', 'none', 'important');
+  } else {
+    $body.appendChild(myDesc);
+  }
+
+  function updateDescText(rows: number, cols: number) {
+    myDesc.textContent = `${rows} x ${cols}`;
+  }
+
   /* ---- セル検出: タッチ座標 → 行/列 ---- */
   function getCellAtPoint(clientX: number, clientY: number): { row: number; col: number } | null {
-    const tableRect = $table.getBoundingClientRect();
-    const relX = clientX - tableRect.left;
-    const relY = clientY - tableRect.top;
-
-    // 最初のセルから実セルサイズを取得（border-collapse を考慮）
-    const firstCell = $table.querySelector<HTMLElement>('.toastui-editor-table-cell');
+    // 最初のセルを起点に相対座標を求める。
+    // $table.getBoundingClientRect() を使うと border-collapse の影響で
+    // セル実サイズとテーブル端の関係が不安定になるため、セル同士の位置関係で計算する。
+    const firstCell = rows[0]?.querySelector<HTMLElement>('.toastui-editor-table-cell');
     if (!firstCell) return null;
-    const cellRect = firstCell.getBoundingClientRect();
-    const cellW = cellRect.width;
-    const cellH = cellRect.height;
+    const firstRect = firstCell.getBoundingClientRect();
+    const relX = clientX - firstRect.left;
+    const relY = clientY - firstRect.top;
+    if (relX < 0 || relY < 0) return null;
+
+    // border-collapse: collapse ではセル間の境界線が共有されるため、
+    // 1セルの getBoundingClientRect().width は「隣のセルまでの移動幅」より大きい。
+    // 例: width:30px + border:1px → 1セルの幅は 30px だが隣接セルまでの距離は 29px。
+    // この差異が累積してカーソル位置と選択範囲がズレる原因となる。
+    // そこで、隣接セル間の実際の距離（ストライド）を計算して除数に使う。
+    const cellsInRow = rows[0].querySelectorAll<HTMLElement>('.toastui-editor-table-cell');
+    let cellW = firstRect.width;
+    let cellH = firstRect.height;
+
+    if (cellsInRow.length > 1) {
+      const secondRect = cellsInRow[1].getBoundingClientRect();
+      cellW = secondRect.left - firstRect.left;
+    }
+    if (rows.length > 1) {
+      const secondRowCell = rows[1].querySelector<HTMLElement>('.toastui-editor-table-cell');
+      if (secondRowCell) {
+        cellH = secondRowCell.getBoundingClientRect().top - firstRect.top;
+      }
+    }
+
     if (cellW <= 0 || cellH <= 0) return null;
 
     const col = Math.floor(relX / cellW);
@@ -172,13 +233,15 @@ function setupTablePopup(
     const lastCellEl = rows[Mr]?.querySelectorAll<HTMLElement>('.toastui-editor-table-cell')[Mc2];
     if (!firstCellEl || !lastCellEl) return;
 
-    const gridRect = $grid.getBoundingClientRect();
     const fRect = firstCellEl.getBoundingClientRect();
     const lRect = lastCellEl.getBoundingClientRect();
 
     layer.style.display = 'block';
-    layer.style.top = `${fRect.top - gridRect.top}px`;
-    layer.style.left = `${fRect.left - gridRect.left}px`;
+    const offsetParent = layer.offsetParent || $grid;
+    const parentRect = offsetParent.getBoundingClientRect();
+
+    layer.style.top = `${fRect.top - parentRect.top}px`;
+    layer.style.left = `${fRect.left - parentRect.left}px`;
     layer.style.width = `${lRect.right - fRect.left}px`;
     layer.style.height = `${lRect.bottom - fRect.top}px`;
 
@@ -189,9 +252,17 @@ function setupTablePopup(
     endCol = Mc2;
 
     // 説明テキスト更新
-    if (desc) {
-      desc.textContent = `${Mr - mr + 1} 行 × ${Mc2 - Mc + 1} 列`;
-    }
+    updateDescText(Mr - mr + 1, Mc2 - Mc + 1);
+  }
+
+  /** ホバープレビュー専用: hasSelection は変えず視覚だけ更新 */
+  function updateHoverLayer(r2: number, c2: number) {
+    hoverRow = r2;
+    hoverCol = c2;
+    updateSelectionLayer(0, 0, r2, c2);
+    // hasSelection をリセット（mousedown で上書きされるまで未確定扱い）
+    hasSelection = false;
+    startRow = startCol = endRow = endCol = -1;
   }
 
   function clearSelectionLayer() {
@@ -202,10 +273,9 @@ function setupTablePopup(
       layer.style.height = '0';
     }
     hasSelection = false;
+    hoverRow = hoverCol = -1;
     startRow = startCol = endRow = endCol = -1;
-    if (desc) {
-      desc.textContent = '0 行 × 0 列';
-    }
+    updateDescText(0, 0);
   }
 
   /* ================================================================ */
@@ -302,40 +372,44 @@ function setupTablePopup(
   }
 
   /* ---- デスクトップ用 mouse handlers ---- */
-  let mouseDownRow = -1;
-  let mouseDownCol = -1;
-  let mouseIsDown = false;
+  let isLocked = false;
 
-  overlay.addEventListener('mousedown', (e: MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (hasSelection) clearSelectionLayer();
-    const pos = getCellAtPoint(e.clientX, e.clientY);
-    if (pos) {
-      mouseDownRow = pos.row;
-      mouseDownCol = pos.col;
-      mouseIsDown = true;
-      updateSelectionLayer(pos.row, pos.col, pos.row, pos.col);
-    }
-  }, { capture: true });
-
+  // ホバー中のプレビュー（未ロック時のみ追従）
   overlay.addEventListener('mousemove', (e: MouseEvent) => {
-    if (!mouseIsDown) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isLocked) return;
+
+    const pos = getCellAtPoint(e.clientX, e.clientY);
+    if (!pos) return;
+
+    updateHoverLayer(pos.row, pos.col);
+  }, { capture: true });
+
+  overlay.addEventListener('mouseleave', () => {
+    if (!isLocked) {
+      clearSelectionLayer();
+    }
+  }, { capture: true });
+
+  // クリックでロック/アンロックをトグル
+  overlay.addEventListener('click', (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     const pos = getCellAtPoint(e.clientX, e.clientY);
-    if (pos && hasSelection) {
-      updateSelectionLayer(mouseDownRow, mouseDownCol, pos.row, pos.col);
-    }
-  }, { capture: true });
+    if (!pos) return;
 
-  overlay.addEventListener('mouseup', (e: MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    mouseIsDown = false;
-    // 閉じない — 決定/キャンセルボタンを待つ
+    if (isLocked) {
+      // ロック解除 -> ホバープレビューに戻す
+      isLocked = false;
+      updateHoverLayer(pos.row, pos.col);
+    } else {
+      // ロック確定 -> 選択状態にする
+      isLocked = true;
+      updateSelectionLayer(0, 0, pos.row, pos.col);
+    }
   }, { capture: true });
 
   /* ================================================================ */
@@ -395,6 +469,10 @@ function setupTablePopup(
   });
 
   function closePopup() {
+    // 独自バッジ要素を削除
+    const myDescEl = $body.querySelector('.tk-table-description');
+    if (myDescEl) myDescEl.remove();
+
     // data-tk-enhanced を外して、次回表示時に再セットアップできるようにする
     delete popup.dataset.tkEnhanced;
 
