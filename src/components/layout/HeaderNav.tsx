@@ -27,10 +27,10 @@ export function HeaderNav({ userRole, onNavClick }: HeaderNavProps) {
 
   return (
     <nav className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-stone-100 p-1.5 rounded-2xl gap-1 border border-stone-200/50 items-center whitespace-nowrap">
-      <Link href={withSession('/')} className="px-5 py-2 text-sm font-black rounded-xl transition-all text-stone-500 hover:text-stone-800 focus:bg-white focus:text-stone-900 focus:shadow-sm" onClick={onNavClick}>
+      <Link href={withSession('/')} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-white rounded-xl transition-all" onClick={onNavClick}>
         メインページ
       </Link>
-      <Link href={withSession('/posts')} className="px-5 py-2 text-sm font-black rounded-xl transition-all text-stone-500 hover:text-stone-800 focus:bg-white focus:text-stone-900 focus:shadow-sm" onClick={onNavClick}>
+      <Link href={withSession('/posts')} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-white rounded-xl transition-all" onClick={onNavClick}>
         項目一覧
       </Link>
 
