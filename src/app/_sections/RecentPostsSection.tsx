@@ -1,6 +1,5 @@
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { TrendingUp } from 'lucide-react';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 
@@ -17,6 +16,7 @@ interface PostSummary {
 /**
  * トップページの最新項目リストセクション
  * 最新の3件をランキング形式で表示する
+ * カード全体にサムネイル背景 + ぼかし + 暗いオーバーレイ
  */
 export function RecentPostsSection({ posts }: { posts: PostSummary[] }) {
   return (
@@ -32,54 +32,72 @@ export function RecentPostsSection({ posts }: { posts: PostSummary[] }) {
         ) : (
           posts.map((article, index) => {
             const config = [
-              { color: 'text-amber-500', glow: 'bg-amber-100/50' },
-              { color: 'text-pink-500', glow: 'bg-pink-100/50' },
-              { color: 'text-indigo-500', glow: 'bg-indigo-100/50' },
-            ][index] || { color: 'text-stone-500', glow: 'bg-stone-100/50' };
+              { color: 'text-orange-500/80', glow: 'bg-orange-400/20' },
+              { color: 'text-blue-500/80', glow: 'bg-blue-400/15' },
+              { color: 'text-rose-500/80', glow: 'bg-rose-400/15' },
+            ][index] || { color: 'text-stone-500', glow: 'bg-stone-400/20' };
+
+            const thumbnailUrl = getPublicThumbnailUrl(article.thumbnail);
 
             return (
               <Link
                 href={`/posts/${article.slug}`}
                 key={article.id}
-                className="relative overflow-hidden bg-white/80 backdrop-blur-sm border border-stone-100 rounded-[2rem] p-3 md:p-4 flex items-center gap-4 md:gap-6 hover:shadow-2xl hover:shadow-stone-200/50 hover:-translate-y-1 transition-all duration-500 cursor-pointer group"
+                className="relative flex items-stretch rounded-[2rem] overflow-hidden border border-white/10 hover:shadow-2xl hover:shadow-stone-200/50 hover:-translate-y-1 transition-all duration-500 cursor-pointer group"
               >
-                <div className={`absolute -left-10 top-1/2 h-32 w-32 rounded-full ${config.glow} blur-3xl opacity-80 transform -translate-y-1/2 group-hover:scale-150 transition-transform duration-700`} />
+                {/* カード全体の背景画像 */}
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{
+                    backgroundImage: `url(${thumbnailUrl || '/images/no-image.png'})`,
+                  }}
+                />
+                {/* カード全体の暗いオーバーレイ + ぼかし */}
+                <div className="absolute inset-0 backdrop-blur-[10px] bg-black/30" />
 
-                <div className="relative flex flex-col items-center justify-center min-w-10 md:min-w-12">
-                  <span className={`text-2xl md:text-4xl font-black italic tabular-nums transition-colors duration-300 ${config.color.replace('500', '400')} group-hover:${config.color}`}>
+                {/* 左: 順位エリア（透明背景・番号はオーバーレイの上に） */}
+                <div className="relative flex items-center justify-center w-[100px] shrink-0 z-10">
+                  <div
+                    className={`absolute left-1/2 top-1/2 h-32 w-32 rounded-full ${config.glow} blur-3xl opacity-60 -translate-x-1/2 -translate-y-1/2 group-hover:scale-150 transition-transform duration-700`}
+                  />
+                  <span
+                    className={`text-2xl md:text-4xl font-black italic tabular-nums transition-colors duration-300 ${config.color}`}
+                    style={{ textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}
+                  >
                     {(index + 1).toString().padStart(2, '0')}
                   </span>
                 </div>
 
-                <div className="relative w-14 h-14 md:w-20 md:h-20 rounded-2xl overflow-hidden shrink-0 border-2 border-white shadow-sm group-hover:scale-105 transition-transform duration-500 z-10">
-                  <Image
-                    src={getPublicThumbnailUrl(article.thumbnail) || '/images/no-image.png'}
-                    alt=""
-                    fill
-                    sizes="80px"
-                    className="object-cover"
-                    unoptimized
-                  />
-                  <div className={`absolute inset-0 ${config.color.replace('text-', 'bg-')}/10 opacity-0 group-hover:opacity-100 transition-opacity`} />
-                </div>
+                {/* 縦の区切り線（白半透明でやわらかく） */}
+                <div className="relative w-px bg-white/15 z-10 my-8 md:my-12 shrink-0" />
 
-                <div className="flex-1 min-w-0 z-10">
-                  <h3 className="font-bold text-stone-800 text-base md:text-lg group-hover:text-blue-600 transition-colors mb-1 truncate">
+                {/* 右: コンテンツエリア */}
+                <div className="relative flex-1 min-w-0 px-6 py-9 md:px-8 md:py-14 z-10">
+                  <h3
+                    className="font-bold text-white text-base md:text-lg mb-2 truncate"
+                    style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}
+                  >
                     {article.title}
                   </h3>
-                  <div className="flex gap-2">
-                    <span className="text-[10px] text-stone-400 font-bold uppercase p-1 bg-stone-50 rounded">#{article.slug}</span>
+                  <div className="flex gap-2 mb-3">
+                    <span className="text-[10px] text-white/80 font-bold uppercase px-2 py-1 bg-white/15 rounded backdrop-blur-sm">
+                      #{article.slug}
+                    </span>
                   </div>
-                </div>
-
-                <div className="flex flex-col items-end gap-1 px-2 z-10 text-right">
-                  <span className="text-xs text-stone-500 font-bold flex items-center gap-1">
-                    <TrendingUp size={14} className={config.color} />
-                    {article.viewCount} views
-                  </span>
-                  <span className="text-[10px] text-stone-500 font-bold">
-                    {article.updatedAt instanceof Date ? article.updatedAt.toISOString().split('T')[0] : String(article.updatedAt).split('T')[0]}
-                  </span>
+                  <div
+                    className="flex items-center gap-4 text-xs font-bold"
+                    style={{ color: 'rgba(255,255,255,0.7)', textShadow: '0 1px 4px rgba(0,0,0,0.4)' }}
+                  >
+                    <span className="flex items-center gap-1">
+                      <TrendingUp size={14} className={config.color} />
+                      {article.viewCount} views
+                    </span>
+                    <span>
+                      {article.updatedAt instanceof Date
+                        ? article.updatedAt.toISOString().split('T')[0]
+                        : String(article.updatedAt).split('T')[0]}
+                    </span>
+                  </div>
                 </div>
               </Link>
             );
