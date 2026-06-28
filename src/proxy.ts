@@ -47,8 +47,23 @@ function getClientIpFromHeaders(headers: Headers) {
 const APP_SESSION_COOKIE_NAME = process.env.APP_SESSION_COOKIE_NAME ?? 'app_session';
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
-  const { response, user } = await updateSession(request);
+  let response = NextResponse.next({ request: { headers: request.headers } });
+
+  // ルート要件を先に判定し、public ルートは Auth を完全スキップする
   const requirement = getRequirement(request.nextUrl.pathname);
+
+  let user = null;
+
+  // public ページの Auth 呼び出しは不要（〜100ms 節約）
+  if (requirement.kind !== 'public') {
+    try {
+      const result = await updateSession(request);
+      response = result.response;
+      user = result.user;
+    } catch (error) {
+      console.warn('[proxy] Supabase unavailable, running without authentication');
+    }
+  }
 
   const requestRole = user?.app_metadata?.role;
 
@@ -102,23 +117,23 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
     // ----------------------------------------------------------------
     // ログイン必須ページ
-    // 未ログイン → HOME へリダイレクト
-    // ログイン済みだがロール不足 → UNAUTHORIZED
+    // 未ログイン → NOT_FOUND
+    // ログイン済みだがロール不足 → NOT_FOUND
     // ----------------------------------------------------------------
     case 'login': {
       // Supabase Auth セッション または パスキー(app_session) Cookie のいずれかがあれば許可
       if (!user && !appSessionToken) {
-        return NextResponse.redirect(new URL(PATHS.HOME, request.url));
+        return NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url));
       }
 
       // Supabase ユーザーがいる場合のみロールチェック
       // （パスキーユーザーはページコンポーネントの getCurrentActor() で権限検証）
       if (user && requirement.role) {
         if (requirement.role === 'admin' && !ADMIN_ROLES.includes(requestRole)) {
-          return NextResponse.redirect(new URL(PATHS.UNAUTHORIZED, request.url));
+          return NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url));
         }
         if (requirement.role === 'owner' && requestRole !== 'owner') {
-          return NextResponse.redirect(new URL(PATHS.UNAUTHORIZED, request.url));
+          return NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url));
         }
       }
       return createForwardResponse(response);
@@ -128,7 +143,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // 記事作成・編集ページ
     // 管理者/owner ロール → 許可
     // 編集セッショントークン保持者 → 許可
-    // 上記以外 → UNAUTHORIZED
+    // 上記以外 → NOT_FOUND
     // 注: Server Action 内部の認可は contentActions.ts で行う
     // ----------------------------------------------------------------
     case 'createAndEditPost': {
@@ -146,14 +161,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
         return createForwardResponse(response);
       }
 
-      return NextResponse.redirect(new URL(PATHS.UNAUTHORIZED, request.url));
+      return NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url));
     }
 
     // ----------------------------------------------------------------
     // アカウント作成セッションページ
     // 既にログイン済み → HOME へリダイレクト
     // 有効なセッショントークン保持者 → 許可
-    // 上記以外 → UNAUTHORIZED
+    // 上記以外 → NOT_FOUND
     // ----------------------------------------------------------------
     case 'accountCreateSession': {
       if (user) {
@@ -165,7 +180,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
         return createForwardResponse(response);
       }
 
-      return NextResponse.redirect(new URL(PATHS.UNAUTHORIZED, request.url));
+      return NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url));
+    }
+
+    // ----------------------------------------------------------------
+    // 存在しないページ
+    // ----------------------------------------------------------------
+    case 'notFound': {
+      return NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url));
     }
 
     // ----------------------------------------------------------------

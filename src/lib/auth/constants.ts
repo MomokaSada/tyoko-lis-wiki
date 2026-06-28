@@ -19,5 +19,6 @@ export const HEADER_IS_PROTECTED = 'x-is-protected';
 /** よく使うパス */
 export const PATHS = {
   HOME: '/',
-  UNAUTHORIZED: '/error-pages/unauthorized',
+  /** 存在しないパス → Next.js が not-found.tsx を表示する */
+  NOT_FOUND: '/_errors/not-found',
 } as const;

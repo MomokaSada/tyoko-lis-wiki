@@ -1,19 +1,19 @@
 import Link from 'next/link';
-import { ShieldAlert, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileQuestion } from 'lucide-react';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
 
-export default function UnauthorizedPage() {
+export default function NotFoundPage() {
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
       <div className="max-w-md w-full text-center space-y-8">
-        <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto border border-red-100">
-          <ShieldAlert className="w-10 h-10 text-red-500" />
+        <div className="w-20 h-20 bg-amber-50 rounded-3xl flex items-center justify-center mx-auto border border-amber-100">
+          <FileQuestion className="w-10 h-10 text-amber-500" />
         </div>
         <div className="space-y-3">
-          <h1 className="text-4xl font-black text-stone-900 tracking-tighter">403</h1>
-          <p className="text-stone-500 font-bold text-sm uppercase tracking-widest">Forbidden</p>
+          <h1 className="text-4xl font-black text-stone-900 tracking-tighter">404</h1>
+          <p className="text-stone-500 font-bold text-sm uppercase tracking-widest">Not Found</p>
           <p className="text-stone-600 font-medium leading-relaxed">
-            アクセスする権限がないか、セッションが無効です。
+            お探しのページは見つかりませんでした。
           </p>
         </div>
         <Link
