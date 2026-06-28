@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getUserProfile, findUserByAuthUserId, findActorByName } from '@/server/repositories/userRepository';
 import { getValidSessionByToken } from '@/server/repositories/appSessionRepository';
 import { getSessionTokenFromCookie } from '@/server/lib/appSessionCookie';
+import { withAuthTimeout } from '@/lib/supabaseAuthTimeout';
 import type { PrivilegedActor as Actor } from '@/types/actor';
 
 function getUsernameFromDummyEmail(email: string | undefined) {
@@ -28,8 +29,16 @@ export async function getCurrentActor(): Promise<Actor | null> {
         }
     }
 
-    const supabase = await createClient();
-    const { data, error } = await supabase.auth.getUser();
+    let data: { user: { id: string; email?: string; app_metadata?: { role?: string }; user_metadata?: Record<string, unknown> } | null };
+    let error: unknown;
+    try {
+      const supabase = await createClient();
+      const result = await withAuthTimeout(supabase.auth.getUser());
+      data = result.data as typeof data;
+      error = result.error;
+    } catch {
+      return null;
+    }
 
     if (error || !data.user) {
         return null;
