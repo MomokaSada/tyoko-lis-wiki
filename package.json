@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 next dev --experimental-https --experimental-https-key /path/to/certs/dev.key --experimental-https-cert /path/to/certs/dev.pem",
+    "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 next dev --experimental-https --experimental-https-key /home/user/projects/my-system/certs/dev.key --experimental-https-cert /home/user/projects/my-system/certs/dev.pem",
     "typecheck": "tsc --noEmit",
     "build": "bun run typecheck && next build",
     "start": "next start",
