@@ -21,15 +21,15 @@ interface PostSummary {
  */
 export function FeaturedPostSection({ post }: { post: PostSummary | null }) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2 text-stone-800 font-black text-xl px-2">
+    <div className="lg:col-span-2 space-y-4 h-full flex flex-col">
+      <div className="flex items-center gap-2 text-stone-800 font-black text-xl px-2 shrink-0">
         <Award size={24} className="text-amber-500" /> 注目の項目
       </div>
 
       {post ? (
-        <div className="relative overflow-visible">
+        <div className="relative overflow-visible flex-1">
           <div className="absolute -top-8 left-0 right-0 md:-left-4 md:-right-4 -bottom-4 bg-linear-to-tr from-amber-100/40 to-orange-50/30 rounded-[2rem] -z-10 transform -rotate-4 -translate-y-4" />
-          <Link href={`/posts/${post.slug}`} className="relative z-10 bg-stone-900 rounded-[2.25rem] p-6 md:p-8 text-white overflow-hidden aspect-4/5 flex flex-col justify-end group cursor-pointer shadow-xl shadow-stone-200/20 hover:-translate-y-1 transition-transform duration-500">
+          <Link href={`/posts/${post.slug}`} className="relative z-10 bg-stone-900 rounded-[2.25rem] p-6 md:p-8 text-white overflow-hidden h-full flex flex-col justify-end group cursor-pointer shadow-xl shadow-stone-200/20 hover:-translate-y-1 transition-transform duration-500">
             <div className="absolute top-6 left-6 md:top-8 md:left-8 bg-amber-400 text-stone-900 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest z-20 shadow-sm shadow-amber-400/25">
               Featured
             </div>
@@ -52,7 +52,7 @@ export function FeaturedPostSection({ post }: { post: PostSummary | null }) {
           </Link>
         </div>
       ) : (
-        <div className="bg-stone-100 rounded-3xl p-8 aspect-4/5 flex items-center justify-center text-stone-400">
+        <div className="bg-stone-100 rounded-3xl p-8 h-full flex items-center justify-center text-stone-400">
           項目がありません
         </div>
       )}

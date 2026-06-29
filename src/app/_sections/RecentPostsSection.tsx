@@ -20,7 +20,7 @@ interface PostSummary {
  */
 export function RecentPostsSection({ posts }: { posts: PostSummary[] }) {
   return (
-    <div className="lg:col-span-2 space-y-4">
+    <div className="lg:col-span-3 space-y-4">
       <div className="flex items-center gap-2 text-stone-800 font-black text-xl px-2">
         <TrendingUp size={24} className="text-orange-500" /> 最新の項目
       </div>
