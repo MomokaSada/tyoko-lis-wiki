@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import { scanThumbnailsAction } from '@/server/actions/thumbnailActions';
-import type { ThumbnailScanResult } from '@/server/actions/thumbnailActions';
+import { ThumbnailScanResult } from '@/server/actions/thumbnailActions';
 
 function formatSize(bytes: number): string {
   if (bytes === 0) return '0 B';

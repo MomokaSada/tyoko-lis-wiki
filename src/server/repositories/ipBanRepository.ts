@@ -3,36 +3,6 @@ import { db } from '@/db';
 import { blockDevices, devices, users } from '@/db/schema';
 import type { ListQuery, ListResult } from '@/types/listQuery';
 
-export async function findDeviceByIp(ip: string) {
-  const [device] = await db
-    .select({
-      id: devices.id,
-      ip: devices.ip,
-      browser: devices.browser,
-    })
-    .from(devices)
-    .where(eq(devices.ip, ip))
-    .limit(1);
-
-  return device ?? null;
-}
-
-export async function createDevice(input: { ip: string; browser: string }) {
-  const [device] = await db
-    .insert(devices)
-    .values({
-      ip: input.ip,
-      browser: input.browser,
-    })
-    .returning({
-      id: devices.id,
-      ip: devices.ip,
-      browser: devices.browser,
-    });
-
-  return device;
-}
-
 export async function findActiveBlockByDeviceId(deviceId: number) {
   const [ban] = await db
     .select({
@@ -146,7 +116,7 @@ export async function listActiveIpBansPaginated(
 
   const baseWhere = [eq(blockDevices.isActive, true)];
   if (query?.searchQuery) {
-    baseWhere.push(ilike(devices.ip, `%${query.searchQuery}%`));
+    baseWhere.push(ilike(sql`${devices.ip}::text`, `%${query.searchQuery}%`));
   }
 
   const rows = await db
@@ -238,7 +208,7 @@ export async function listIpDeviceRecordsPaginated(
 
   const baseWhere = query?.searchQuery
     ? or(
-        ilike(devices.ip, `%${query.searchQuery}%`),
+        ilike(sql`${devices.ip}::text`, `%${query.searchQuery}%`),
         ilike(devices.browser, `%${query.searchQuery}%`)
       )
     : undefined;

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @import "katex/dist/katex.min.css";
+/* Phase 1: アニメーション + PostForm スタイルを別ファイルに分割 */
+@import "./globals/animations.css";
+@import "./globals/post-form.css";
 @plugin "@tailwindcss/typography";
 
 :root {
@@ -22,8 +25,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -185,10 +188,10 @@ h6 {
   width: 32px !important;
   margin: 2px !important;
   border-radius: 8px !important;
-  transition: background 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 .toastui-host .toastui-editor-dropdown-toolbar button:hover {
-  background: #f5f5f4 !important;
+  background-color: #f5f5f4 !important;
   border-color: #d6d3d1 !important;
 }
 
@@ -197,6 +200,22 @@ h6 {
   font-size: 1rem;
   line-height: 1.82;
   padding: 0;
+  /* テーブルが article-viewer を超えて伸びないように、子要素への拡張を許可せずこちらで確定 */
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* BlockViewer ルート要素 (.article-viewer)
+   - 中身の長いテーブル/コードブロックがらみで記事表示エリアが伸びないよう、
+     コンテナ自体を親 (flex-1, max-w-...) の幅に張り付かせる */
+.article-viewer {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  /* 横スクロールは内部 (.table-scroll-wrapper) で行う。
+     コンテナ自体は横方向にはみ出さない */
+  overflow: visible;
 }
 
 .article-viewer .toastui-editor-contents> :first-child {
@@ -285,21 +304,135 @@ h6 {
 .article-viewer .toastui-editor-contents table {
   border-collapse: separate !important;
   border-spacing: 0 !important;
-  display: block !important;
-  width: fit-content !important;
+  /* テーブルはネイティブ表示させ、外側のスクロールラッパー側で
+     内容が大きいときのみ横スクロールする。
+     - display は変更しない (table, table-cell 等を尊重)
+     - width: auto + max-width: 100% で、親の幅を超えない
+     - コンテンツ幅 > 親幅 のときは wrapper の overflow-x: auto が自動で効く
+     - table-layout: auto を維持 (fixed にすると長いセルの文字列が省略される) */
+  display: table !important;
+  width: auto !important;
   max-width: 100% !important;
+  table-layout: auto !important;
   border-radius: 0.85rem !important;
   border: none !important;
   background: #ffffff;
 }
 
-/* テーブルスクロール用ラッパー（overflow-x を table から分離） */
+/* テーブルスクロール用ラッパー（overflow-x を table から分離）
+   - 親 (.article-viewer) の幅に張り付き、内部の table が幅広でも
+     overflow-x: auto で横スクロール表示する
+   - モバイルでのスワイプスクロールを滑らかにする               */
 .article-viewer .table-scroll-wrapper {
   overflow-x: auto !important;
+  overflow-y: hidden !important;
   -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  /* 親カラムの幅に張り付かせて、テーブルが記事表示エリアを伸ばせないようにする */
   max-width: 100% !important;
-  border-radius: 0.85rem !important;
-  margin-bottom: 1.5rem;
+  width: 100%;
+  /* テーブルのコンテンツがスクロール見切れしているとき、視認性を上げるための影。
+     スクロールたびにスクロール位置に応じて JS でクラス付与する想定もあるが、
+     まずは container の四周に淡い枠をつけることで、ラッパー化を視覚化する。*/
+  /* タッチデバイスで水平方向にスワイプが反応するように x 軸方向のジェスチャを優先 */
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+  /* スクロールヒントのフェードシャドウを表示するため擬似要素を使う */
+  position: relative;
+}
+
+/* スクロールバー (Webkit) のチューニング - モバイルでスワイプ可能と分かるようにする */
+.article-viewer .table-scroll-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.article-viewer .table-scroll-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.article-viewer .table-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(120, 113, 108, 0.45);
+  border-radius: 9999px;
+}
+
+.article-viewer .table-scroll-wrapper::-webkit-scrollbar-thumb:hover,
+.article-viewer .table-scroll-wrapper:hover::-webkit-scrollbar-thumb {
+  background: rgba(120, 113, 108, 0.7);
+}
+
+/* スクロール可能な状態: 左右両端にフェードシャドウ (視覚的ヒント) */
+.article-viewer .table-scroll-wrapper.is-scrollable::before,
+.article-viewer .table-scroll-wrapper.is-scrollable::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  pointer-events: none;
+  border-radius: 0.85rem;
+  z-index: 1;
+}
+
+.article-viewer .table-scroll-wrapper.is-scrollable::before {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0)
+  );
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.article-viewer .table-scroll-wrapper.is-scrollable::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0)
+  );
+  opacity: 1;
+  transition: opacity 0.18s ease;
+}
+
+/* 一番左までスクロールしたら左フェードを完全に消す */
+.article-viewer .table-scroll-wrapper.is-scrollable.is-scrolled-left::before {
+  opacity: 1;
+}
+
+.article-viewer .table-scroll-wrapper.is-scrollable.is-scrolled-right::after {
+  opacity: 0;
+}
+
+/* スクロール可能なラップ内でテーブルが常に最前面になるよう、
+   フェードより上に表示する (デフォルトでは position: relative だけ付与)*/
+.article-viewer .table-scroll-wrapper > table {
+  position: relative;
+  z-index: 2;
+}
+
+/* モバイルでのスクロールヒントのヒント強度を上げる */
+@media (max-width: 640px) {
+  .article-viewer .table-scroll-wrapper.is-scrollable::before,
+  .article-viewer .table-scroll-wrapper.is-scrollable::after {
+    width: 24px;
+  }
+}
+
+/* Tailwind Typography (`prose`) が table に対して当てる
+     `table-layout: auto; width: 100%` および
+     子要素 (th/td) への padding/margin を記事詳細ページの内側で無効化する */
+/* Tailwind Typography (`prose`) が table 配下 (th/td) に当てる
+   標準的なテーブルスタイル (border-collapse, padding, vertical-align)を
+   記事詳細ページの内側で上書きする場合のフォールバックフック。
+   現状は上記 (.article-viewer .toastui-editor-contents table) で
+   table-layout / width / overflow をカバーしているので、
+   ここでは th/td の vertical-align のみ統一する                 */
+.prose .article-viewer .toastui-editor-contents th,
+.prose .article-viewer .toastui-editor-contents td,
+.article-viewer .toastui-editor-contents th,
+.article-viewer .toastui-editor-contents td {
+  vertical-align: top;
 }
 
 .article-viewer .toastui-editor-contents th {
@@ -409,90 +542,6 @@ h6 {
   }
 }
 
-
-/* ═══════════════════════════════════════════
-   Owner/Admin Dashboard アニメーション
-   (dashboard-pattern3 準拠)
-   ═══════════════════════════════════════════ */
-@keyframes float-in {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(40px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
-}
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
-  50%       { box-shadow: 0 0 20px 4px rgba(251, 191, 36, 0.25); }
-}
-@keyframes debris-peek {
-  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
-  50%       { transform: translateY(-4px) rotate(calc(var(--r, 0deg) + 3deg)); }
-}
-@keyframes progress-fill {
-  from { width: 0; }
-}
-
-.animate-float-in  { animation: float-in  0.6s cubic-bezier(.22,1,.36,1) both; }
-.animate-slide-up  { animation: slide-up  0.7s cubic-bezier(.22,1,.36,1) both; }
-.animate-shimmer   {
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.6) 50%, transparent 100%);
-  background-size: 200% 100%;
-  animation: shimmer 1.8s ease-in-out infinite;
-}
-.animate-pulse-glow { animation: pulse-glow 2.4s ease-in-out infinite; }
-
-.debris {
-  animation: debris-peek 4s ease-in-out infinite;
-  --r: 0deg;
-}
-
-/* ── カードホバー ── */
-.card-base {
-  transition: transform 0.3s cubic-bezier(.22,1,.36,1),
-              box-shadow 0.3s cubic-bezier(.22,1,.36,1),
-              border-color 0.3s ease;
-}
-.card-base:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px -8px rgba(0,0,0,.12), 0 4px 12px -4px rgba(0,0,0,.08);
-}
-
-/* ── ボタンプレス ── */
-.btn-primary {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-.btn-primary:active { transform: scale(0.97); }
-.btn-primary::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-.btn-primary:hover::before { opacity: 1; }
-
-/* ── スタットカード差分 ── */
-.stat-icon {
-  transition: transform 0.4s cubic-bezier(.22,1,.36,1);
-}
-.card-base:hover .stat-icon { transform: scale(1.1) rotate(-6deg); }
-
-/* ── グラデーションテキスト ── */
-.gradient-text {
-  background: linear-gradient(135deg, #1c1917 0%, #44403c 50%, #1c1917 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
 
 /* ═══════════════════════════════════════════
    Form Components (dashboard-pattern3 準拠)
@@ -1307,128 +1356,178 @@ h6 {
     min-height: 100%;
   }
 
-  .toastui-host .toastui-editor-md-splitter,
-  .toastui-host .toastui-editor-main-container {
-    min-height: calc(100% - 36px);
+.toastui-host .toastui-editor-md-splitter,
+.toastui-host .toastui-editor-main-container {
+min-height: calc(100% - 36px);
+}
+} /* ← @media (max-width: 640px) 閉じ */
+
+/* ── テーブルポップアップ専用: はみ出し防止 —— 10x10 グリッド全体を表示できるよう width 制限を解除 ── */
+.toastui-host .toastui-editor-popup-add-table {
+overflow: visible !important;
+min-width: max-content !important;
+}
+
+/* ── デスクトップ表示時に右側がはみ出さないよう左にオフセット ── */
+@media (min-width: 641px) {
+  .toastui-host .toastui-editor-popup-add-table {
+    margin-left: -120px !important;
   }
 }
 
-/* ═══════════════════════════════════════════
-   PostForm (Create/Modify) デザイン 追加スタイル
-   ═══════════════════════════════════════════ */
-
-/* タグポップアニメーション */
-@keyframes tag-pop {
-  from { transform: scale(0.8); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
-}
-.animate-tag-pop {
-  animation: tag-pop 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+/* ── テーブルポップアップ body: グリッド幅に合わせて伸縮 ── */
+.toastui-host .toastui-editor-popup-add-table .toastui-editor-popup-body {
+padding: 20px 12px 16px !important;
+overflow: visible !important;
+position: relative !important;
+min-width: max-content !important;
 }
 
-/* フェードアップのバリエーション */
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-up {
-  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* スイッチ（トグル）微調整 */
-.form-switch {
-  position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 26px;
-  flex-shrink: 0;
-}
-.form-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-.form-switch .slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background-color: #d6d3d1;
-  border-radius: 26px;
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.form-switch .slider::before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  border-radius: 50%;
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
-.form-switch input:checked + .slider {
-  background-color: #f59e0b;
-}
-.form-switch input:checked + .slider::before {
-  transform: translateX(22px);
+/* ── テーブルグリッド全体: scale を廃止し実サイズで拡大 ── */
+.toastui-host .toastui-editor-popup-add-table .toastui-editor-table-selection {
+transform: none !important;
+position: relative !important;
+overflow: visible !important;
+margin: 0 auto !important;
+width: fit-content !important;
 }
 
-/* サムネイルドロップゾーンのホバーオーバーレイ */
-.thumbnail-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  border-radius: inherit;
-}
-.thumbnail-group:hover .thumbnail-overlay,
-.thumbnail-group:focus-within .thumbnail-overlay {
-  opacity: 1;
+/* ── 各セルを 30px に拡大（従来20px → 1.5倍、タッチターゲット十分） ── */
+.toastui-host .toastui-editor-popup-add-table .toastui-editor-table-cell {
+width: 30px !important;
+height: 30px !important;
+border-radius: 3px !important;
+border: 1px solid #d6d3d1 !important;
 }
 
-/* カスタムセレクト（カテゴリ用） */
-.custom-select-wrapper {
-  position: relative;
+/* ── 選択レイヤー: アンバーカラー — オーバーレイ(z-50)より下に配置 ── */
+.toastui-host .toastui-editor-popup-add-table .toastui-editor-table-selection-layer {
+background: rgba(245, 158, 11, 0.20) !important;
+border: 2px solid #f59e0b !important;
+border-radius: 5px !important;
+z-index: 40 !important;
+position: absolute !important;
+pointer-events: none !important;
 }
-.custom-select-wrapper select {
-  width: 100%;
-  padding: 10px 36px 10px 12px;
-  background-color: #fafaf9;
-  border: 1.5px solid #e7e5e4;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #292524;
-  -webkit-appearance: none;
-  appearance: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
+
+/* ── ヘッダー行のセルは薄いグレー背景 ── */
+.toastui-host .toastui-editor-popup-add-table .toastui-editor-table-cell.header {
+background: #f5f5f4 !important;
 }
-.custom-select-wrapper select:hover {
-  border-color: #d6d3d1;
+
+/* ── 元のエディタサイズ表示を非表示にする ── */
+.toastui-host .toastui-editor-popup-add-table .toastui-editor-table-description {
+display: none !important;
 }
-.custom-select-wrapper select:focus {
-  outline: none;
-  border-color: #f59e0b;
-  background-color: white;
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
+
+/* ── 独自サイズ表示: アンバーグラデーションの大きなバッジ ── */
+.toastui-host .toastui-editor-popup-add-table .tk-table-description {
+font-size: 1.15rem !important;
+font-weight: 900 !important;
+color: #1c1917 !important;
+background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+border: 1.5px solid #fcd34d !important;
+border-radius: 999px !important;
+padding: 6px 22px !important;
+display: inline-block !important;
+margin: 14px auto 6px !important;
+letter-spacing: 0.08em;
+box-shadow: 0 2px 10px rgba(245, 158, 11, 0.20) !important;
+text-align: center !important;
+position: relative !important;
+z-index: 1 !important;
 }
-.custom-select-wrapper::after {
-  content: '';
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0;
-  height: 0;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 5px solid #a8a29e;
-  pointer-events: none;
+
+/* ── ポップアップ内のテーブルグリッドを中央揃えで配置 ── */
+.toastui-host .toastui-editor-popup-add-table .toastui-editor-table {
+margin: 0 auto !important;
+position: relative !important;
+z-index: 1 !important;
+}
+
+/* ── タッチ操作用オーバーレイ ── */
+.toastui-host .toastui-editor-popup-add-table .tk-table-overlay {
+position: absolute !important;
+top: 0 !important;
+left: 0 !important;
+width: 100% !important;
+height: 100% !important;
+z-index: 50 !important;
+touch-action: none !important;
+cursor: pointer !important;
+background: transparent !important;
+}
+
+/* ── テーブルサイズ選択UI 決定/キャンセルボタン ── */
+/* ボタンは popup-body 直下に配置。オーバーレイ(z-50)より上(z-60)に表示 */
+.toastui-host .toastui-editor-popup-add-table .tk-table-btn-group {
+display: flex !important;
+justify-content: center !important;
+gap: 10px !important;
+margin-top: 14px !important;
+padding: 2px 0 8px !important;
+position: relative !important;
+z-index: 60 !important;
+}
+
+.toastui-host .toastui-editor-popup-add-table .tk-table-cancel-btn,
+.toastui-host .toastui-editor-popup-add-table .tk-table-confirm-btn {
+display: inline-flex !important;
+align-items: center !important;
+justify-content: center !important;
+min-width: 80px !important;
+padding: 8px 16px !important;
+font-size: 0.9rem !important;
+font-weight: 700 !important;
+white-space: nowrap !important;
+cursor: pointer !important;
+-webkit-tap-highlight-color: transparent !important;
+transition: background 0.15s ease, transform 0.1s ease !important;
+user-select: none !important;
+-webkit-user-select: none !important;
+position: relative !important;
+}
+
+.toastui-host .toastui-editor-popup-add-table .tk-table-cancel-btn:active,
+.toastui-host .toastui-editor-popup-add-table .tk-table-confirm-btn:active {
+transform: scale(0.96) !important;
+}
+
+.toastui-host .toastui-editor-popup-add-table .tk-table-confirm-btn {
+background: #f59e0b !important;
+color: white !important;
+border: none !important;
+border-radius: 10px !important;
+box-shadow: 0 2px 10px rgba(245, 158, 11, 0.35) !important;
+}
+.toastui-host .toastui-editor-popup-add-table .tk-table-confirm-btn:hover {
+background: #d97706 !important;
+}
+
+.toastui-host .toastui-editor-popup-add-table .tk-table-cancel-btn {
+background: #f5f5f4 !important;
+color: #44403c !important;
+border: 1.5px solid #d6d3d1 !important;
+border-radius: 10px !important;
+}
+.toastui-host .toastui-editor-popup-add-table .tk-table-cancel-btn:hover {
+background: #e7e5e4 !important;
+}
+
+/* ── モバイル時: ポップアップを画面中央にプレミアムモーダル化 ── */
+@media (max-width: 640px) {
+.toastui-host .toastui-editor-popup {
+position: fixed !important;
+top: 50% !important;
+left: 50% !important;
+transform: translate(-50%, -50%) !important;
+margin: 0 !important;
+width: 90vw !important;
+max-width: 400px !important;
+z-index: 9999 !important;
+box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16) !important;
+border-radius: 16px !important;
+border: 1px solid #e7e5e4 !important;
+background: #fff !important;
+}
 }

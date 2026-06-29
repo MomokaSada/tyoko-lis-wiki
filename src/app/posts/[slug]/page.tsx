@@ -6,6 +6,11 @@ import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { cache } from 'react';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { getAccessibleContentDetail } from '@/server/services/contentService';
+import {
+    getFullContentTaxonomy,
+    resolveCategoryPath,
+} from '@/server/services/taxonomyService';
+
 import Link from 'next/link';
 import {
   Edit3,
@@ -20,43 +25,86 @@ import {
   Box
 } from 'lucide-react';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
-import TableOfContents from '@/components/posts/TableOfContents';
+import TableOfContents from './_sections/TableOfContents';
 import { BlockViewerDynamic } from '@/components/editor/BlockViewerDynamic';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
-import { getFullContentTaxonomy, resolveCategoryPath } from '@/server/services/taxonomyService';
-import { PostShareActions } from '@/components/posts/PostShareActions';
-import { ArticleProfile } from '@/components/posts/ArticleProfile';
-import { createHeadingIdBase, createUniqueHeadingId, normalizeHeadingText } from '@/lib/heading';
-import { MobileActions } from '@/components/posts/MobileActions';
+
+import { PostShareActions } from './_sections/PostShareActions';
+import { ArticleProfile } from './_sections/ArticleProfile';
+import { MobileActions } from '@/components/layout/MobileActions';
+import { z } from 'zod';
+import { tagSchema, categorySchema, postCategorySchema } from '@/server/schemas/postSchemas';
+import { extractToc } from '@/server/lib/extractToc';
+
+// ---------------------------------------------------------------------------
+// JSON-LD 構造化データ（Schema.org）
+// ---------------------------------------------------------------------------
 
 /**
- * Zenn風の高度な目次抽出ツール
- * H1 (#) 〜 H4 (####) に対応
+ * 記事ページ用の JSON-LD を生成する。
+ * Article と BreadcrumbList の2種類を配列で返す。
  */
-function extractToc(markdown: string) {
-  if (!markdown) return [];
-  const toc: { id: string, text: string, level: number }[] = [];
-  const usedIds = new Map<string, number>();
+function generateArticleJsonLd(
+  post: NonNullable<Awaited<ReturnType<typeof getCachedContentDetail>>>,
+  categoryPath: { id: number; name: string }[],
+  thumbnailUrl: string | null,
+) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://tyokore.com';
+  const canonicalUrl = `${appUrl}/posts/${encodeURIComponent(post.slug)}`;
+  const description = post.content
+    ? post.content.substring(0, 160).replace(/[#*\[\]]/g, '').trim()
+    : post.title;
+  const datePublished = post.createdAt instanceof Date ? post.createdAt.toISOString() : undefined;
+  const dateModified = post.updatedAt instanceof Date ? post.updatedAt.toISOString() : undefined;
 
-  // コードブロックをスキップしつつ見出しを抽出する正規表現
-  // 1. ``` で囲まれたブロックを最短一致でマッチさせて無視
-  // 2. 改行直後の # (1-6個) で始まる行を抽出
-  const regex = /^(?:```[\s\S]*?^```|^\s*(#{1,6})\s*(.+?)\s*$)/gm;
+  const breadcrumbItems = categoryPath.map((cat, i) => ({
+    '@type': 'ListItem' as const,
+    position: i + 1,
+    name: cat.name,
+    item: `${appUrl}/posts?categoryId=${cat.id}`,
+  }));
 
-  let match;
-  while ((match = regex.exec(markdown)) !== null) {
-    // match[1] が存在する場合のみ見出しとして処理（コードブロックは無視）
-    if (match[1]) {
-      const level = match[1].length;
-      const text = normalizeHeadingText(match[2]);
-      if (text) {
-        const id = createUniqueHeadingId(createHeadingIdBase(text), usedIds);
-        toc.push({ id, text, level });
+  const breadcrumb = breadcrumbItems.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: breadcrumbItems,
       }
-    }
-  }
+    : undefined;
 
-  return toc;
+  const article: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description,
+    url: canonicalUrl,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': canonicalUrl,
+    },
+    ...(datePublished ? { datePublished } : {}),
+    ...(dateModified ? { dateModified } : {}),
+    author: {
+      '@type': 'Organization',
+      name: 'Tyokore Wiki',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Tyokore Wiki',
+    },
+    ...(thumbnailUrl
+      ? {
+          image: {
+            '@type': 'ImageObject',
+            url: thumbnailUrl,
+            width: 1200,
+            height: 630,
+          },
+        }
+      : {}),
+  };
+
+  return [article, ...(breadcrumb ? [breadcrumb] : [])];
 }
 
 // React.cache でリクエスト単位での二重フェッチを防止
@@ -79,24 +127,43 @@ export async function generateMetadata(
 
     if (!post) {
       return {
-        title: '項目が見つかりません | Tyokore Wiki',
+        title: '項目が見つかりません',
       };
     }
 
     const description = post.content
-      ? post.content.substring(0, 160).replace(/[#*\[\]]/g, '').trim()
+      ? post.content
+          // コードブロックとインラインコードを除去
+          .replace(/```[\s\S]*?```/g, '')
+          .replace(/`[^`]+`/g, '')
+          // Markdown リンク [text](url) → text
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+          // 画像 ![alt](url) を除去
+          .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+          // 装飾記号（#, *, _, ~~, >, - など）を除去
+          .replace(/[#*_~>`\-|]/g, '')
+          .substring(0, 160)
+          .trim()
       : post.title;
 
     const thumbnailUrl = getPublicThumbnailUrl(post.thumbnail);
     const ogImage = thumbnailUrl || '/images/no-image.png';
 
+    const datePublished = post.createdAt instanceof Date ? post.createdAt.toISOString() : undefined;
+    const dateModified = post.updatedAt instanceof Date ? post.updatedAt.toISOString() : undefined;
+
     return {
-      title: `${post.title} | Tyokore Wiki`,
+      title: post.title,
       description: description || '項目詳細ページ',
+      alternates: {
+        canonical: `/posts/${encodeURIComponent(post.slug)}`,
+      },
       openGraph: {
         title: post.title,
         description: description || '項目詳細ページ',
         type: 'article',
+        ...(datePublished ? { publishedTime: datePublished } : {}),
+        ...(dateModified ? { modifiedTime: dateModified } : {}),
         images: [
           {
             url: ogImage,
@@ -115,7 +182,7 @@ export async function generateMetadata(
     };
   } catch (error) {
     return {
-      title: '項目詳細 | Tyokore Wiki',
+      title: '項目詳細',
       description: 'Tyokore Wiki の項目詳細ページです。',
     };
   }
@@ -157,36 +224,10 @@ export default async function PostDetailPage({
   // タクソノミー情報の取得
   const { tags: rawTags, categories: rawPostCategories, allCategories: rawAllCategories } = await getFullContentTaxonomy(post.id);
 
-  // 型安全な処理：各要素に必要なプロパティがあるかチェック
-  const isValidTag = (t: unknown): t is { id: number; name: string } => {
-    if (typeof t !== 'object' || t === null) return false;
-    const obj = t as Record<string, unknown>;
-    return 'id' in obj && 'name' in obj && typeof obj.id === 'number' && typeof obj.name === 'string';
-  };
-
-  const isValidCategory = (c: unknown): c is { id: number; name: string; parentId: number | null } => {
-    if (typeof c !== 'object' || c === null) return false;
-    const obj = c as Record<string, unknown>;
-    return 'id' in obj && 'name' in obj && 'parentId' in obj &&
-      typeof obj.id === 'number' && typeof obj.name === 'string' &&
-      (obj.parentId === null || typeof obj.parentId === 'number');
-  };
-
-  const tags = Array.isArray(rawTags) ? rawTags.filter(isValidTag) : [];
-
-  const allCategories = Array.isArray(rawAllCategories)
-    ? rawAllCategories.filter(isValidCategory)
-    : [];
-
-  const postCategories = Array.isArray(rawPostCategories)
-    ? rawPostCategories.flatMap((c) => {
-      if (typeof c !== 'object' || c === null) return [];
-      const obj = c as Record<string, unknown>;
-      if (!('id' in obj) || !('name' in obj)) return [];
-      if (typeof obj.id !== 'number' || typeof obj.name !== 'string') return [];
-      return [{ id: obj.id, name: obj.name }];
-    })
-    : [];
+  // Zod スキーマで一括パース（従来の手書き型ガードを置き換え）
+  const tags = z.array(tagSchema).parse(rawTags ?? []);
+  const allCategories = z.array(categorySchema).parse(rawAllCategories ?? []);
+  const postCategories = z.array(postCategorySchema).parse(rawPostCategories ?? []);
 
   // 最初のカテゴリ（あれば）をベースに階層パスを解決
   const categoryPath = postCategories.length > 0
@@ -207,8 +248,15 @@ export default async function PostDetailPage({
     ? post.updatedAt.toLocaleDateString('ja-JP')
     : '不明';
 
+  const jsonLd = generateArticleJsonLd(post, categoryPath, thumbnailUrl);
+
   return (
-    <div className="min-h-screen bg-stone-50/50 pb-20">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd.length === 1 ? jsonLd[0] : jsonLd).replace(/</g, '\\u003c') }}
+      />
+      <div className="min-h-screen bg-stone-50/50 pb-20">
       {/* 1. ヒーローセクション */}
       <div className="relative w-full min-h-[320px] md:min-h-[420px] h-auto overflow-hidden bg-stone-900 border-b border-stone-800">
         {/* 背景のボケ画像またはグラデーション */}
@@ -267,6 +315,12 @@ export default async function PostDetailPage({
                   <Edit3 size={18} /> 項目を編集
                 </Link>
               )}
+              <Link
+                href={`/posts/${encodeURIComponent(post.slug)}/history`}
+                className="px-5 py-2.5 bg-stone-800/60 text-stone-300 text-sm font-black rounded-2xl hover:bg-stone-700/60 transition-all active:scale-95 flex items-center gap-2"
+              >
+                <History size={18} /> 編集履歴
+              </Link>
             </div>
           </div>
         </div>
@@ -276,8 +330,13 @@ export default async function PostDetailPage({
       <div className="max-w-[72rem] mx-auto px-4 sm:px-6 -mt-40 md:-mt-[280px] relative z-5">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
 
-          {/* 左側：メインコンテンツエリア */}
-          <div className="flex-1 order-1 lg:order-1 pb-32 sm:pb-0 pt-0">
+          {/* 左側：メインコンテンツエリア
+              - flex-1 + min-w-0 を併用することで、Markdown内のテーブルや
+                pre ブロックなど大きい子要素に押し出されて
+                メインカラムの幅が想定外に広がるのを防ぐ
+              - min-w-0 を入れると、この flex アイテムは min-content: 0 になり、
+                親の flex コンテナ幅に厳密に張り付く */}
+          <div className="flex-1 min-w-0 order-1 lg:order-1 pb-32 sm:pb-0 pt-0">
             <div className="bg-white border border-stone-200 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden animate-in slide-in-from-bottom-4 duration-500 delay-200">
               <div className="p-4 sm:p-6 md:p-8 lg:p-10">
 
@@ -345,22 +404,27 @@ export default async function PostDetailPage({
 
       {/* モバイル限定アクションボタン (FAB) */}
       <MobileActions
-        toc={toc}
         postTitle={post.title}
+        postSlug={post.slug}
         userRole={userRole}
         hasEditSession={hasEditSession}
-        articleProfileProps={{
-          postTitle: post.title,
-          postSlug: post.slug,
-          viewCount: post.viewCount,
-          latestRevision: post.latestRevision ?? 1,
-          formattedDate,
-          thumbnailUrl,
-          fallbackThumbnail,
-          categoryPath,
-          tags,
-        }}
+        tocSlot={toc.length > 0 ? <TableOfContents toc={toc} isMobile /> : undefined}
+        profileSlot={
+          <ArticleProfile
+            postTitle={post.title}
+            postSlug={post.slug}
+            viewCount={post.viewCount}
+            latestRevision={post.latestRevision ?? 1}
+            formattedDate={formattedDate}
+            thumbnailUrl={thumbnailUrl}
+            fallbackThumbnail={fallbackThumbnail}
+            categoryPath={categoryPath}
+            tags={tags}
+            isMobile
+          />
+        }
       />
     </div>
+    </>
   );
 }

@@ -10,7 +10,7 @@ import { users } from './users';
 
 export const accountCreateSessions = pgTable('account_create_sessions', {
     uuid: uuid('uuid').primaryKey(),
-    authorId: integer('author_id').notNull(),
+    authorId: integer('author_id'),
     isActive: boolean('is_active').default(true).notNull(),
     startAt: timestamp('start_at').defaultNow().notNull(),
     endAt: timestamp('end_at').notNull(),

@@ -71,7 +71,9 @@ function normalizeMarkdownForViewer(markdown: string) {
   return normalized.join('\n');
 }
 
-function wrapTables(container: HTMLElement) {
+function wrapTables(container: HTMLElement): () => void {
+  const cleanups: Array<() => void> = [];
+
   container.querySelectorAll('table').forEach((table) => {
     // 既にラップ済みの場合はスキップ
     if (table.parentElement?.classList.contains('table-scroll-wrapper')) return;
@@ -80,7 +82,120 @@ function wrapTables(container: HTMLElement) {
     wrapper.className = 'table-scroll-wrapper';
     table.parentElement?.insertBefore(wrapper, table);
     wrapper.appendChild(table);
+
+    // ── ドラッグガード ──
+    // テーブル内で mousedown/touchstart したままドラッグしている最中は、
+    // リンクやボタンの click イベントを抑制する。
+    // これにより、スクロールバーのドラッグ中やモバイルでの長押しスワイプ中に
+    // 意図しないアンカージャンプや TOC の handleScroll が発火するのを防ぐ。
+    //
+    // アプローチ:
+    //   1. mousedown/touchstart で開始位置を記録
+    //   2. mousemove/touchmove で 5px 以上の移動を検出 → isDragging = true
+    //   3. capture phase の click ハンドラで isDragging をチェックし、
+    //      ドラッグ中なら stopPropagation + preventDefault で抑制
+    //   4. 各 interaction の終了時に isDragging をリセット
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+
+    const onMouseDown = (e: MouseEvent) => {
+      isDragging = false;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!e.buttons) return;
+      const dx = Math.abs(e.clientX - dragStartX);
+      const dy = Math.abs(e.clientY - dragStartY);
+      if (dx > 5 || dy > 5) {
+        isDragging = true;
+      }
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      isDragging = false;
+      const touch = e.touches[0];
+      dragStartX = touch.clientX;
+      dragStartY = touch.clientY;
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      const dx = Math.abs(touch.clientX - dragStartX);
+      const dy = Math.abs(touch.clientY - dragStartY);
+      if (dx > 5 || dy > 5) {
+        isDragging = true;
+      }
+    };
+
+    // capture phase で click をインターセプト
+    const onCaptureClick = (e: MouseEvent) => {
+      if (isDragging) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      // この interaction の終了時に確実にリセット
+      isDragging = false;
+    };
+
+    wrapper.addEventListener('mousedown', onMouseDown, { passive: true });
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    wrapper.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    wrapper.addEventListener('click', onCaptureClick, true); // capture phase
+
+    // ── スクロールシャドウ ──
+    const updateShadows = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = wrapper;
+      const maxScroll = scrollWidth - clientWidth;
+
+      if (maxScroll <= 0) {
+        wrapper.classList.remove('is-scrollable');
+        wrapper.classList.remove('is-scrolled-left');
+        wrapper.classList.remove('is-scrolled-right');
+        return;
+      }
+
+      wrapper.classList.add('is-scrollable');
+
+      if (scrollLeft <= 4) {
+        wrapper.classList.remove('is-scrolled-left');
+      } else {
+        wrapper.classList.add('is-scrolled-left');
+      }
+
+      if (scrollLeft >= maxScroll - 4) {
+        wrapper.classList.remove('is-scrolled-right');
+      } else {
+        wrapper.classList.add('is-scrolled-right');
+      }
+    };
+
+    updateShadows();
+
+    wrapper.addEventListener('scroll', updateShadows, { passive: true });
+
+    const onResize = () => updateShadows();
+    window.addEventListener('resize', onResize, { passive: true });
+
+    cleanups.push(() => {
+      wrapper.removeEventListener('scroll', updateShadows);
+      window.removeEventListener('resize', onResize);
+      wrapper.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      wrapper.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      wrapper.removeEventListener('click', onCaptureClick, true);
+    });
+
+    requestAnimationFrame(updateShadows);
   });
+
+  return () => {
+    cleanups.forEach((fn) => fn());
+  };
 }
 
 function normalizeRenderedContent(container: HTMLElement) {
@@ -174,6 +289,7 @@ export default function BlockViewer({ markdown }: { markdown: string }) {
   useEffect(() => {
     let cancelled = false;
     let viewerInstance: { destroy?: () => void } | null = null;
+    let releaseTableWrappers: (() => void) | null = null;
 
     const initializeViewer = async () => {
       ensureStylesheet(TOASTUI_STYLE_ID, TOASTUI_STYLE_HREF);
@@ -197,7 +313,7 @@ export default function BlockViewer({ markdown }: { markdown: string }) {
         }
 
         normalizeRenderedContent(mountRef.current);
-        wrapTables(mountRef.current);
+        releaseTableWrappers = wrapTables(mountRef.current);
         await renderMath(mountRef.current);
 
         if (cancelled) {
@@ -222,6 +338,12 @@ export default function BlockViewer({ markdown }: { markdown: string }) {
 
     return () => {
       cancelled = true;
+
+      try {
+        releaseTableWrappers?.();
+      } catch (error) {
+        console.error(error);
+      }
 
       try {
         viewerInstance?.destroy?.();

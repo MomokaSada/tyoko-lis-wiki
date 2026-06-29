@@ -1,18 +1,21 @@
 import { EditLinkForm } from './edit-link-form';
 import { DeactivateEditLinkButton } from './deactivate-button';
 import { getCurrentActor } from '@/server/lib/currentActor';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { getEditLinks } from '@/server/services/editLinkService';
-import type { StatusFilter } from '@/server/repositories/editLinkRepository';
-import { MobileActions } from '@/components/posts/MobileActions';
+import type { StatusFilter } from '@/server/types/repositoryTypes';
+import { MobileActions } from '@/components/layout/MobileActions';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
-import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { parseListQuery } from '@/types/listQuery';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { CopyLinkButton } from '@/components/ui/CopyLinkButton';
 import { SortControls } from '@/components/ui/SortControls';
 import type { SortOption } from '@/components/ui/SortControls';
 import { StatusFilterSelect } from './status-filter';
+import { formatDateTimeJp } from '@/lib/format/formatDateTime';
 import { Pagination } from '@/components/ui/Pagination';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
@@ -223,7 +226,7 @@ export default async function EditLinksPage(props: {
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           {getStatusBadge(link.status)}
                           <span className="text-[10px] sm:text-xs text-stone-400">
-                            {link.startAt.toLocaleDateString('ja-JP')}
+                            {formatDateTimeJp(link.startAt)}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
@@ -277,7 +280,6 @@ export default async function EditLinksPage(props: {
         userRole={userRole}
         hasEditSession={hasEditSession}
         hideShare={true}
-        hideProfile={true}
       />
     </>
   );

@@ -1,8 +1,11 @@
 import { type Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: '利用規約 | Tyokore Wiki',
+  title: '利用規約',
   description: 'Tyokore Wiki の利用規約です。サービス利用時のルール・条件を掲載しています。',
+  alternates: {
+    canonical: '/terms',
+  },
 };
 
 export default function TermsPage() {

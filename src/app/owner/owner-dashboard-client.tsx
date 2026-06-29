@@ -10,8 +10,8 @@ import {
   AlertTriangle,
   Home,
 } from 'lucide-react';
-import { DashboardCard } from '@/components/ui/DashboardCard';
-import { DbStatusCard } from '@/components/ui/DbStatusCard';
+import { DashboardCard } from '@/components/features/admin/DashboardCard';
+import { DbStatusCard } from '@/components/features/owner/DbStatusCard';
 
 type DbHealthStatus = {
   isConnected: boolean;
@@ -22,7 +22,7 @@ type DbHealthStatus = {
 
 type AccountCreateLink = {
   uuid: string;
-  authorId: number;
+  authorId: number | null;
   authorName: string | null;
   startAt: Date;
   endAt: Date;

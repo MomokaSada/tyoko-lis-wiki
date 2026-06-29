@@ -2,9 +2,11 @@
 
 import { useState, useCallback } from 'react';
 import { Copy, Check } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 
 export function CopyLinkButton({ uuid, path }: { uuid: string; path: string }) {
   const [copied, setCopied] = useState(false);
+  const { showToast } = useToast();
 
   const handleCopy = useCallback(async () => {
     try {
@@ -12,11 +14,12 @@ export function CopyLinkButton({ uuid, path }: { uuid: string; path: string }) {
         `${window.location.origin}${path}${uuid}`,
       );
       setCopied(true);
+      showToast('URL をクリップボードにコピーしました');
       setTimeout(() => setCopied(false), 1500);
     } catch {
       // ignore
     }
-  }, [uuid, path]);
+  }, [uuid, path, showToast]);
 
   return (
     <button

@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
 import { uploadThumbnailFile } from '@/server/lib/thumbnailUpload';
+
 import { checkRateLimit } from '@/server/services/rateLimitService';
+import { apiErrors } from '@/server/errors';
 
 export async function POST(request: Request) {
   const rateLimitResult = await checkRateLimit('thumbnailUpload');
   if (!rateLimitResult.allowed) {
     return NextResponse.json(
       {
-        error: 'アップロード試行が多すぎます。しばらくしてから再度お試しください。',
+        error: apiErrors.thumbnail.uploadRateLimitExceeded,
       },
       { status: 429 },
     );
@@ -24,7 +26,7 @@ export async function POST(request: Request) {
   if (!editor) {
     return NextResponse.json(
       {
-        error: 'サムネイルをアップロードする権限がありません',
+        error: apiErrors.thumbnail.uploadPermissionDenied,
       },
       { status: 403 },
     );
@@ -42,7 +44,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : 'サムネイル画像のアップロードに失敗しました',
+            : apiErrors.thumbnail.uploadFailed,
       },
       { status: 400 },
     );

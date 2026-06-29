@@ -1,6 +1,9 @@
 // ===== ENUM =====
 export * from './enums';
 
+// ===== リレーション =====
+export * from './relations/index'
+
 // ===== テーブル定義 =====
 export * from './users';
 export * from './accountCreateSessions';
@@ -15,24 +18,12 @@ export * from './categories';
 export * from './rateLimitRecords';
 export * from './auditLogs';
 export * from './contentViewStats';
+export * from './passkeys';
+export * from './webauthnChallenges';
+export * from './appSessions';
 
 // ===== 中間テーブル =====
 export * from './contentTags';
 export * from './contentCategories';
 export * from './contentEditLogTags';
 export * from './contentEditLogCategories';
-
-// ===== リレーション =====
-export * from './relations/users';
-export * from './relations/contents';
-export * from './relations/editSessions';
-export * from './relations/devices';
-export * from './relations/deviceSessions';
-export * from './relations/blockDevices';
-export * from './relations/accountCreateSessions';
-export * from './relations/contentEditLogs';
-export * from './relations/tags';
-export * from './relations/categories';
-export * from './relations/junctionTables';
-export * from './relations/auditLogs';
-export * from './relations/contentViewStats';

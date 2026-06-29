@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { withAuthTimeout } from '@/lib/supabaseAuthTimeout'
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request })
@@ -26,7 +27,13 @@ export async function updateSession(request: NextRequest) {
     },
   })
 
-  const { data: { user } } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const result = await withAuthTimeout(supabase.auth.getUser())
+    user = result.data.user
+  } catch (error) {
+    console.warn('[supabase] Auth unavailable, proceeding without authentication')
+  }
 
   return { response, user }
 }

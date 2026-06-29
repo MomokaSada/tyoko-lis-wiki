@@ -1,20 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { Eye, X, Copy, Check } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { Eye, Copy, Check } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
 
 export function DetailModal({ title, content }: { title: string; content: string }) {
   const [open, setOpen] = useState(false);
-
   const close = useCallback(() => setOpen(false), []);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, close]);
 
   return (
     <>
@@ -27,34 +19,12 @@ export function DetailModal({ title, content }: { title: string; content: string
         <span className="ml-1">詳細</span>
       </button>
 
-      {open && createPortal(
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(2px)' }}
-          onClick={close}
-        >
-          <div
-            className="w-full max-w-md animate-float-in card"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="card-body space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-black text-stone-900 text-lg">{title}</h3>
-                <button
-                  onClick={close}
-                  className="btn-ghost btn-sm"
-                  style={{ padding: '0.25rem' }}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <p className="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap break-all">{content}</p>
-              <CopyButton content={content} />
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      <Modal isOpen={open} onClose={close} title={title}>
+        <div className="space-y-4">
+          <p className="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap break-all">{content}</p>
+          <CopyButton content={content} />
+        </div>
+      </Modal>
     </>
   );
 }

@@ -1,18 +1,23 @@
 import {
-  createCategory,
-  createTag,
-  deleteCategory as deleteCategoryFromRepo,
-  findCategoryByName,
-  findCategoryIdsBySearchQuery,
-  findTagsByNames,
-  listCategories,
-  listCategoriesPaginated,
-  listContentCategoryIds,
-  listContentTagIds,
-  listTags,
-  updateCategory,
+    createCategory,
+    createTag,
+    deleteCategory as deleteCategoryFromRepo,
+    findCategoryByName,
+    findCategoryIdsBySearchQuery,
+    findTagsByNames,
+    listCategories,
+    listCategoriesPaginated,
+    listContentCategoryIds,
+    listContentTagIds,
+    listTags,
+    updateCategory,
 } from '@/server/repositories/taxonomyRepository';
 import type { PrivilegedActor as Actor } from '@/types/actor';
+import { logger } from '@/server/lib/logger';
+import {
+    commonErrors,
+    serviceErrors,
+} from '@/server/errors';
 
 function normalizeName(value: string) {
   return value.trim().replace(/\s+/g, ' ');
@@ -88,13 +93,22 @@ function wouldCreateCategoryCycle(
   return false;
 }
 
-export async function getTaxonomyOptions() {
-  const [tagRows, categoryRows] = await Promise.all([listTags(), listCategories()]);
+export async function getTaxonomyOptions(): Promise<{
+  tags: Awaited<ReturnType<typeof listTags>>;
+  categories: Awaited<ReturnType<typeof listCategories>>;
+  error?: string;
+}> {
+  try {
+    const [tagRows, categoryRows] = await Promise.all([listTags(), listCategories()]);
 
-  return {
-    tags: tagRows,
-    categories: categoryRows,
-  };
+    return {
+      tags: tagRows,
+      categories: categoryRows,
+    };
+  } catch (error) {
+    logger.error('[taxonomyService] getTaxonomyOptions failed: DB query error');
+    return { tags: [], categories: [], error: 'タグ・カテゴリの取得に失敗しました。' };
+  }
 }
 
 export async function getTaxonomyOptionsPaginated(
@@ -189,25 +203,35 @@ export function detectTaxonomyChanges(
 /**
  * 項目に紐付く全てのタグとカテゴリの情報を取得します
  */
-export async function getFullContentTaxonomy(contentId: number) {
-  const [tagIds, categoryIds] = await Promise.all([
-    listContentTagIds(contentId),
-    listContentCategoryIds(contentId),
-  ]);
+export async function getFullContentTaxonomy(contentId: number): Promise<{
+  tags: Awaited<ReturnType<typeof listTags>>;
+  categories: Awaited<ReturnType<typeof listCategories>>;
+  allCategories: Awaited<ReturnType<typeof listCategories>>;
+  error?: string;
+}> {
+  try {
+    const [tagIds, categoryIds] = await Promise.all([
+      listContentTagIds(contentId),
+      listContentCategoryIds(contentId),
+    ]);
 
-  const [tagRows, categoryRows] = await Promise.all([
-    listTags(),
-    listCategories(),
-  ]);
+    const [tagRows, categoryRows] = await Promise.all([
+      listTags(),
+      listCategories(),
+    ]);
 
-  const contentTags = tagRows.filter((t) => tagIds.includes(t.id));
-  const contentCategories = categoryRows.filter((c) => categoryIds.includes(c.id));
+    const contentTags = tagRows.filter((t) => tagIds.includes(t.id));
+    const contentCategories = categoryRows.filter((c) => categoryIds.includes(c.id));
 
-  return {
-    tags: contentTags,
-    categories: contentCategories,
-    allCategories: categoryRows, // 階層解決用
-  };
+    return {
+      tags: contentTags,
+      categories: contentCategories,
+      allCategories: categoryRows, // 階層解決用
+    };
+  } catch (error) {
+    logger.error('[taxonomyService] getFullContentTaxonomy failed: DB query error');
+    return { tags: [], categories: [], allCategories: [], error: 'タグ・カテゴリの取得に失敗しました。' };
+  }
 }
 
 /**
@@ -237,17 +261,17 @@ export async function createCategoryAsAdmin(
   input: { name: string; parentId: number | null },
 ) {
   if (actor.role !== 'owner' && actor.role !== 'admin') {
-    return { success: false as const, error: 'カテゴリ管理権限がありません' };
+    return { success: false as const, error: commonErrors.category.adminPermissionDenied };
   }
 
   const name = normalizeName(input.name);
   if (!name) {
-    return { success: false as const, error: 'カテゴリ名を入力してください' };
+    return { success: false as const, error: serviceErrors.category.nameRequired };
   }
 
   const existing = await findCategoryByName(name);
   if (existing) {
-    return { success: false as const, error: 'そのカテゴリ名はすでに存在します' };
+    return { success: false as const, error: serviceErrors.category.nameAlreadyExists };
   }
 
   const created = await createCategory({
@@ -263,28 +287,28 @@ export async function updateCategoryAsAdmin(
   input: { id: number; name: string; parentId: number | null },
 ) {
   if (actor.role !== 'owner' && actor.role !== 'admin') {
-    return { success: false as const, error: 'カテゴリ管理権限がありません' };
+    return { success: false as const, error: commonErrors.category.adminPermissionDenied };
   }
 
   const name = normalizeName(input.name);
   if (!name) {
-    return { success: false as const, error: 'カテゴリ名を入力してください' };
+    return { success: false as const, error: serviceErrors.category.nameRequired };
   }
 
   if (input.parentId === input.id) {
-    return { success: false as const, error: '自分自身を親カテゴリにはできません' };
+    return { success: false as const, error: serviceErrors.category.selfParentNotAllowed };
   }
 
   const allCategories = await listCategories();
   if (wouldCreateCategoryCycle(allCategories, input.id, input.parentId)) {
-    return { success: false as const, error: '親カテゴリの設定が循環しています' };
+    return { success: false as const, error: serviceErrors.category.cycleParentDetected };
   }
 
   const nameConflict = allCategories.find(
     (category) => category.id !== input.id && category.name === name,
   );
   if (nameConflict) {
-    return { success: false as const, error: 'そのカテゴリ名はすでに存在します' };
+    return { success: false as const, error: serviceErrors.category.nameAlreadyExists };
   }
 
   const updated = await updateCategory({
@@ -294,7 +318,7 @@ export async function updateCategoryAsAdmin(
   });
 
   if (!updated) {
-    return { success: false as const, error: '対象のカテゴリが見つかりません' };
+    return { success: false as const, error: serviceErrors.category.categoryNotFound };
   }
 
   return { success: true as const, data: updated };
@@ -305,7 +329,7 @@ export async function deleteCategoryAsAdmin(
   id: number,
 ) {
   if (actor.role !== 'owner' && actor.role !== 'admin') {
-    return { success: false as const, error: 'カテゴリ管理権限がありません' };
+    return { success: false as const, error: commonErrors.category.adminPermissionDenied };
   }
 
   await deleteCategoryFromRepo(id);

@@ -1,24 +1,11 @@
-import { and, eq, ilike, isNotNull, or, sql, asc, desc as dsc, gte } from 'drizzle-orm';
+import { and, desc as dsc, eq, ilike, isNotNull, or, sql, gte } from 'drizzle-orm';
 import { db } from '@/db';
 import { contents, tags, categories, contentTags, contentCategories, contentEditLogs, contentEditLogTags, contentEditLogCategories, editSessions, contentViewStats } from '@/db/schema';
 import { escapeLikePattern } from './modules/escapeLike';
-
-export type ContentSortKey = 'updatedAt' | 'createdAt' | 'viewCount' | 'title';
-export type SortOrder = 'asc' | 'desc';
-
-function getOrderBy(sort: ContentSortKey = 'updatedAt', order: SortOrder = 'desc') {
-  const column = (() => {
-    switch (sort) {
-      case 'createdAt': return contents.createdAt;
-      case 'viewCount': return contents.viewCount;
-      case 'title': return contents.currentTitle;
-      case 'updatedAt':
-      default: return contents.updatedAt;
-    }
-  })();
-
-  return order === 'asc' ? asc(column) : dsc(column);
-}
+import { determineNextLogType } from './contentEditLogRepository';
+import { getOrderBy } from './modules/orderBy';
+import { visibleContentColumns, buildContentListQuery, buildCountQuery } from './modules/contentQueries';
+import type { ContentSortKey, SortOrder } from '@/server/types/repositoryTypes';
 
 export async function findContentBySlug(slug: string) {
   const [content] = await db
@@ -78,12 +65,14 @@ export async function createContentWithInitialRevision(data: {
         currentTitle: contents.currentTitle,
       });
 
+    const logType = await determineNextLogType(createdContent.id, 1);
+
     const [createdLog] = await tx.insert(contentEditLogs).values({
       contentId: createdContent.id,
       deviceSessionId: data.deviceSessionId,
       userId: data.userId,
       revisionNumber: 1,
-      type: 'snapshot',
+      type: logType,
       title: data.title,
       data: data.content,
       thumbnail: data.thumbnail,
@@ -139,6 +128,35 @@ export async function createContentWithInitialRevision(data: {
   });
 }
 
+export async function getSitemapContentList() {
+  return db
+    .select({
+      slug: contents.slug,
+      updatedAt: contents.updatedAt,
+    })
+    .from(contents)
+    .where(eq(contents.isPublished, true));
+}
+
+export async function getHomePageContentList(limitCount: number = 6) {
+  return db
+    .select({
+      id: contents.id,
+      slug: contents.slug,
+      title: contents.currentTitle,
+      thumbnail: contents.currentThumbnail,
+      latestRevision: contents.latestRevision,
+      viewCount: contents.viewCount,
+      isPublished: contents.isPublished,
+      createdAt: contents.createdAt,
+      updatedAt: contents.updatedAt,
+    })
+    .from(contents)
+    .where(eq(contents.isPublished, true))
+    .orderBy(getOrderBy('updatedAt', 'desc'))
+    .limit(limitCount);
+}
+
 export async function listPublishedContents(sort?: ContentSortKey, order?: SortOrder) {
   return db
     .select({
@@ -158,35 +176,13 @@ export async function listPublishedContents(sort?: ContentSortKey, order?: SortO
 }
 
 export async function listVisibleContents(includeUnpublished: boolean, sort?: ContentSortKey, order?: SortOrder, limit?: number, offset?: number, categoryId?: number) {
-  const conditions: ReturnType<typeof eq>[] = [];
-  
-  if (!includeUnpublished) {
-    conditions.push(eq(contents.isPublished, true));
-  }
+  const { query: baseQuery, conditions } = buildContentListQuery(includeUnpublished, sort, order);
 
-  let query = db
-    .selectDistinct({
-      id: contents.id,
-      slug: contents.slug,
-      title: contents.currentTitle,
-      content: contents.currentContent,
-      thumbnail: contents.currentThumbnail,
-      latestRevision: contents.latestRevision,
-      viewCount: contents.viewCount,
-      isPublished: contents.isPublished,
-      createdAt: contents.createdAt,
-      updatedAt: contents.updatedAt,
-    })
-    .from(contents)
-    .orderBy(getOrderBy(sort, order))
-    .$dynamic();
+  let query = baseQuery;
 
   if (categoryId !== undefined) {
     query = query.leftJoin(contentCategories, eq(contents.id, contentCategories.contentId));
     conditions.push(eq(contentCategories.categoryId, categoryId));
-  }
-
-  if (conditions.length > 0) {
     query = query.where(and(...conditions));
   }
 
@@ -198,6 +194,14 @@ export async function listVisibleContents(includeUnpublished: boolean, sort?: Co
   }
 
   return query;
+}
+
+export async function countPublishedContents() {
+  const [count] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(contents)
+    .where(eq(contents.isPublished, true));
+  return count?.count ?? 0;
 }
 
 export async function countVisibleContents(queryText?: string, includeUnpublished?: boolean, categoryId?: number) {
@@ -285,11 +289,12 @@ export async function searchPublishedContents(query: string, sort?: ContentSortK
 }
 
 export async function searchVisibleContents(queryText: string, includeUnpublished: boolean, sort?: ContentSortKey, order?: SortOrder, limit?: number, offset?: number, categoryId?: number) {
+  const escapedQuery = escapeLikePattern(queryText);
   const conditions: Array<ReturnType<typeof eq> | ReturnType<typeof or>> = [];
+
   if (!includeUnpublished) {
     conditions.push(eq(contents.isPublished, true));
   }
-  const escapedQuery = escapeLikePattern(queryText);
 
   conditions.push(
     or(
@@ -300,23 +305,13 @@ export async function searchVisibleContents(queryText: string, includeUnpublishe
       ilike(categories.name, `%${escapedQuery}%`),
     ),
   );
+
   if (categoryId !== undefined) {
     conditions.push(eq(contentCategories.categoryId, categoryId));
   }
 
   let query = db
-    .selectDistinct({
-      id: contents.id,
-      slug: contents.slug,
-      title: contents.currentTitle,
-      content: contents.currentContent,
-      thumbnail: contents.currentThumbnail,
-      latestRevision: contents.latestRevision,
-      viewCount: contents.viewCount,
-      isPublished: contents.isPublished,
-      createdAt: contents.createdAt,
-      updatedAt: contents.updatedAt,
-    })
+    .selectDistinct(visibleContentColumns)
     .from(contents)
     .leftJoin(contentTags, eq(contents.id, contentTags.contentId))
     .leftJoin(tags, eq(contentTags.tagId, tags.id))
@@ -392,20 +387,26 @@ export async function updateContentWithRevision(data: {
   tagChanged: boolean;
   categoryChanged: boolean;
 }) {
+  // トランザクションの外で type を事前判定（postgres-js の接続管理の都合）
+  const [current] = await db
+    .select({
+      latestRevision: contents.latestRevision,
+      currentThumbnail: contents.currentThumbnail,
+    })
+    .from(contents)
+    .where(eq(contents.id, data.contentId))
+    .limit(1);
+
+  const nextRevision = (current?.latestRevision ?? 0) + 1;
+
+  // スナップショット間隔に基づいて type を判定（diff10 → snapshot）
+  const logType = await determineNextLogType(data.contentId, nextRevision);
+
   return db.transaction(async (tx) => {
-    const [current] = await tx
-      .select({
-        latestRevision: contents.latestRevision,
-        currentThumbnail: contents.currentThumbnail,
-      })
-      .from(contents)
-      .where(eq(contents.id, data.contentId))
-      .limit(1);
 
-    const nextRevision = (current?.latestRevision ?? 0) + 1;
-
-    // サムネイルが送信されなかった（null）場合は現在の値を維持する
-    const resolvedThumbnail = data.thumbnail ?? current?.currentThumbnail ?? null;
+    // data.thumbnail は常に明示的に指定される（string or null）
+    // null は「削除」を意味するため、現在値をフォールバックしない
+    const resolvedThumbnail = data.thumbnail ?? null;
 
     const [updatedContent] = await tx
       .update(contents)
@@ -431,7 +432,7 @@ export async function updateContentWithRevision(data: {
       deviceSessionId: data.deviceSessionId,
       userId: data.userId,
       revisionNumber: nextRevision,
-      type: 'snapshot',
+      type: logType,
       title: data.title,
       data: data.content,
       thumbnail: resolvedThumbnail,
@@ -559,6 +560,158 @@ export async function getWeeklyPopularContents(limitCount = 6) {
     .groupBy(contents.id)
     .orderBy(dsc(sql`sum(${contentViewStats.viewCount})`))
     .limit(limitCount);
+}
+
+// ===== 純粋 CRUD 関数（トランザクション対応） =====
+// ビジネスロジックを含まず、1テーブルに対する単一操作のみを行う。
+// 既存の複合関数（createContentWithInitialRevision, updateContentWithRevision）は維持。
+// 将来 Service 層でトランザクションを組み立てる際に使用する。
+
+export async function insertContent(
+  tx: any,
+  data: {
+    slug: string;
+    currentTitle: string;
+    currentContent: string;
+    currentThumbnail: string | null;
+    latestRevision: number;
+    isPublished: boolean;
+  },
+) {
+  const [created] = await tx
+    .insert(contents)
+    .values(data)
+    .returning({
+      id: contents.id,
+      slug: contents.slug,
+      currentTitle: contents.currentTitle,
+    });
+  return created;
+}
+
+export async function updateContentById(
+  tx: any,
+  contentId: number,
+  data: {
+    slug: string;
+    currentTitle: string;
+    currentContent: string;
+    currentThumbnail: string | null;
+    isPublished: boolean;
+    latestRevision: number;
+    updatedAt: Date;
+  },
+) {
+  const [updated] = await tx
+    .update(contents)
+    .set(data)
+    .where(eq(contents.id, contentId))
+    .returning({
+      id: contents.id,
+      slug: contents.slug,
+      title: contents.currentTitle,
+      latestRevision: contents.latestRevision,
+    });
+  return updated;
+}
+
+export async function insertContentEditLog(
+  tx: any,
+  data: {
+    contentId: number;
+    deviceSessionId: number | null;
+    userId: number | null;
+    revisionNumber: number;
+    type: 'snapshot' | 'diff';
+    title: string;
+    data: string;
+    thumbnail: string | null;
+    tagChanged: boolean;
+    categoryChanged: boolean;
+  },
+) {
+  const [created] = await tx
+    .insert(contentEditLogs)
+    .values(data)
+    .returning({
+      id: contentEditLogs.id,
+    });
+  return created;
+}
+
+export async function replaceContentTags(
+  tx: any,
+  contentId: number,
+  tagIds: number[],
+) {
+  await tx.delete(contentTags).where(eq(contentTags.contentId, contentId));
+  if (tagIds.length > 0) {
+    await tx.insert(contentTags).values(
+      tagIds.map((tagId) => ({ contentId, tagId })),
+    );
+  }
+}
+
+export async function replaceContentCategories(
+  tx: any,
+  contentId: number,
+  categoryIds: number[],
+) {
+  await tx.delete(contentCategories).where(eq(contentCategories.contentId, contentId));
+  if (categoryIds.length > 0) {
+    await tx.insert(contentCategories).values(
+      categoryIds.map((categoryId) => ({ contentId, categoryId })),
+    );
+  }
+}
+
+export async function insertContentEditLogTags(
+  tx: any,
+  editLogId: number,
+  tagIds: number[],
+) {
+  if (tagIds.length > 0) {
+    await tx.insert(contentEditLogTags).values(
+      tagIds.map((tagId) => ({ editLogId, tagId })),
+    );
+  }
+}
+
+export async function insertContentEditLogCategories(
+  tx: any,
+  editLogId: number,
+  categoryIds: number[],
+) {
+  if (categoryIds.length > 0) {
+    await tx.insert(contentEditLogCategories).values(
+      categoryIds.map((categoryId) => ({ editLogId, categoryId })),
+    );
+  }
+}
+
+export async function incrementEditSessionUsage(
+  tx: any,
+  sessionId: string,
+) {
+  await tx
+    .update(editSessions)
+    .set({
+      editsUsed: sql`${editSessions.editsUsed} + 1`,
+      updatedAt: new Date(),
+    })
+    .where(eq(editSessions.uuid, sessionId));
+}
+
+/** コンテンツの現在のサムネイルを取得する */
+export async function findCurrentThumbnail(
+  contentId: number,
+): Promise<string | null> {
+  return db
+    .select({ currentThumbnail: contents.currentThumbnail })
+    .from(contents)
+    .where(eq(contents.id, contentId))
+    .limit(1)
+    .then((rows) => rows[0]?.currentThumbnail ?? null);
 }
 
 export async function listReferencedThumbnailUrls() {

@@ -1,27 +1,9 @@
+import { toSafeId } from '@/lib/safe-id';
 import { requireEditSession } from '@/lib/auth/guards';
-import { getTaxonomyOptions } from '@/server/services/contentService';
+import { getTaxonomyOptions } from '@/server/services/taxonomyService';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-import { PostForm } from '@/components/features/posts/PostForm';
-
-function toSafeId(value: unknown): number {
-  if (typeof value === 'bigint') {
-    return Number(value);
-  }
-
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
-
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
-  }
-
-  return 0;
-}
+import { PostForm } from '@/components/features/posts/forms/PostForm';
 
 export default async function CreatePostPage({
   searchParams,

@@ -24,6 +24,10 @@ export function getPublicThumbnailUrl(path: string | null | undefined): string |
 
   // / から始まる相対パスの場合は、Supabaseのドメインを付与する
   if (path.startsWith('/')) {
+    // //evil.com のような network-path reference は相対パスとして扱わない
+    if (path.startsWith('//')) {
+      return null;
+    }
     // NEXT_PUBLIC_SUPABASE_URL はクライアント側に露出される環境変数です
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, '');
     if (!supabaseUrl) return path;

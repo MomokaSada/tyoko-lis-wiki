@@ -1,4 +1,6 @@
-FROM oven/bun:latest
+# 本番ビルドの再現性を確保するため latest ではなく明示的なバージョンタグを使用
+# 更新頻度は Renovate / Dependabot に任せる
+FROM oven/bun:1.2
 WORKDIR /app
 
 # 起動スクリプトをコピー

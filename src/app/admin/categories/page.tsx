@@ -1,12 +1,14 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { getTaxonomyOptionsPaginated } from '@/server/services/taxonomyService';
 import { CategoryCreateForm } from './category-create-form';
 import { CategoryTreeClient } from './category-tree-client';
 import { CategorySearchForm } from './search-form';
-import { MobileActions } from '@/components/posts/MobileActions';
+import { MobileActions } from '@/components/layout/MobileActions';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
-import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { parseListQuery } from '@/types/listQuery';
 import { Pagination } from '@/components/ui/Pagination';
 import Link from 'next/link';
@@ -206,7 +208,6 @@ export default async function CategoriesAdminPage(props: {
         userRole={userRole}
         hasEditSession={hasEditSession}
         hideShare={true}
-        hideProfile={true}
       />
     </>
   );

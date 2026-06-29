@@ -64,3 +64,33 @@ export const RATE_LIMIT_RULES = {
 
 export type RateLimitAction = keyof typeof RATE_LIMIT_RULES;
 
+export type RateLimitResult =
+    | {allowed: true }
+    | {allowed: false, retryAfterMs: number };
+
+export async function checkRateLimit(action: RateLimitAction): Promise<RateLimitResult> {
+    const { getCurrentRequestDevice } = await import('@/server/services/modules/requestDevice');
+    const { countRateLimitRecords, insertRateLimitRecord } = await import('@/server/repositories/rateLimitRepository');
+
+    const device = await getCurrentRequestDevice();
+    if (!device) {
+        return { allowed: true };
+    }
+
+    const rule = RATE_LIMIT_RULES[action];
+
+    const windowStart = new Date(Date.now() - rule.windowMs);
+    const count = await countRateLimitRecords(device.ip, action, windowStart);
+
+    if (count >= rule.maxAttempts) {
+        return {
+            allowed: false,
+            retryAfterMs: rule.windowMs
+        };
+    }
+
+    await insertRateLimitRecord(device.ip, action);
+
+    return { allowed: true };
+}
+

@@ -1,8 +1,19 @@
 'use server';
 
-import { getCurrentActor } from '@/server/lib/currentActor';
-import { cleanupOrphanThumbnails, getOrphanThumbnailStats } from '@/server/services/thumbnailService';
+import {
+    cleanupOrphanThumbnails,
+    getOrphanThumbnailStats,
+} from '@/server/services/thumbnailService';
+import { requireActor } from '@/server/actions/modules/withAction';
+import { commonErrors } from '@/server/errors';
 import type { BaseActionState } from '@/types/actionState';
+
+/*
+ * 管理系の保守 Action。
+ * 一般の Action と比べて共通前処理（レート制限・デバイス記録・Zod パース）が
+ * 不要なため、意図的にシンプルな構造を保つ。
+ * スキーマパースが必要になった場合のみ withAction に寄せる。
+ */
 
 export type ThumbnailScanResult = {
   scannedCount: number;
@@ -20,15 +31,14 @@ export type ThumbnailCleanupActionState = BaseActionState & {
 };
 
 export async function scanThumbnailsAction(): Promise<ThumbnailScanResult | { error: string }> {
-  const actor = await getCurrentActor();
-
-  if (!actor) {
-    return { error: '権限がありません' };
+  const actor = await requireActor();
+  if ('error' in actor) {
+    return { error: commonErrors.permissionDenied };
   }
 
   const stats = await getOrphanThumbnailStats(actor);
   if (!stats.scannedAt) {
-    return { error: '権限がありません' };
+    return { error: commonErrors.permissionDenied };
   }
 
   return {
@@ -43,11 +53,10 @@ export async function scanThumbnailsAction(): Promise<ThumbnailScanResult | { er
 export async function cleanupOrphanThumbnailsAction(
   _prevState: ThumbnailCleanupActionState,
 ): Promise<ThumbnailCleanupActionState> {
-  const actor = await getCurrentActor();
-
-  if (!actor) {
+  const actor = await requireActor();
+  if ('error' in actor) {
     return {
-      error: '未使用サムネイルの掃除権限がありません',
+      error: commonErrors.permissionDenied,
       deletedCount: 0,
       scannedCount: 0,
       referencedCount: 0,

@@ -1,18 +1,23 @@
 'use server';
 
-import { createAccountCreateLinkSchema } from '@/server/schemas/accountCreateLinkSchemas';
-import { deactivateAccountCreateLinkSchema } from '@/server/schemas/accountCreateLinkSchemas';
+import {
+    createAccountCreateLinkSchema,
+    deactivateAccountCreateLinkSchema,
+} from '@/server/schemas';
+
 import {
     createAccountCreateLink,
     deactivateAccountCreateLink,
 } from '@/server/services/accountCreateLinkService';
+import { recordAuditLog } from '@/server/services/auditLogService';
+
 import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
+
+import { commonErrors } from '@/server/errors';
+import { withAction } from '@/server/actions/modules/withAction';
 import { revalidatePath } from 'next/cache';
 import type { BaseActionState } from '@/types/actionState';
-import { checkRateLimit } from '@/server/services/rateLimitService';
-import { recordCurrentRequestDevice } from '@/server/services/deviceService';
-import { recordAuditLog } from '@/server/services/auditLogService';
 
 export type CreateAccountCreateLinkActionState = BaseActionState & {
     generatedUrl: string | null;
@@ -25,16 +30,8 @@ export async function createAccountCreateLinkAction(
     _prevState: CreateAccountCreateLinkActionState,
     formData: FormData,
 ): Promise<CreateAccountCreateLinkActionState> {
-    await recordCurrentRequestDevice();
-
-    const rateLimitResult = await checkRateLimit('createAccountCreateLink');
-    if (!rateLimitResult.allowed) {
-        return {
-            error: 'アカウント作成リンク作成試行が多すぎます。しばらくしてから再度お試しください。',
-            generatedUrl: null,
-            expiresAt: null,
-        };
-    }
+    const preflight = await withAction({ rateLimit: 'createAccountCreateLink' });
+    if (preflight) return { ...preflight, generatedUrl: null, expiresAt: null };
 
     const parsed = createAccountCreateLinkSchema.safeParse({
         expiresInMinutes: formData.get('expiresInMinutes'),
@@ -52,7 +49,7 @@ export async function createAccountCreateLinkAction(
 
     if (!actor) {
         return {
-            error: 'リンク発行権限がありません',
+            error: commonErrors.accountCreateLink.createPermissionDenied,
             generatedUrl: null,
             expiresAt: null,
         };
@@ -86,6 +83,9 @@ export async function deactivateAccountCreateLinkAction(
     _prevState: DeactivateAccountCreateLinkActionState,
     formData: FormData,
 ): Promise<DeactivateAccountCreateLinkActionState> {
+    const preflight = await withAction({ device: false });
+    if (preflight) return preflight;
+
     const parsed = deactivateAccountCreateLinkSchema.safeParse({
         uuid: formData.get('uuid'),
     });
@@ -100,7 +100,7 @@ export async function deactivateAccountCreateLinkAction(
 
     if (!actor) {
         return {
-            error: 'リンク無効化権限がありません',
+            error: commonErrors.accountCreateLink.deactivatePermissionDenied,
         };
     }
 

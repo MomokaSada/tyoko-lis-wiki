@@ -1,11 +1,12 @@
 'use client';
 
-import { useActionState } from 'react';
-import {
-  createAccountCreateLinkAction,
-  type CreateAccountCreateLinkActionState,
-} from '@/server/actions/accountCreateLinkActions';
+import { useActionState, useState, useCallback } from 'react';
+import { Check } from 'lucide-react';
+import { createAccountCreateLinkAction } from '@/server/actions/accountCreateLinkActions';
+import type { CreateAccountCreateLinkActionState } from '@/server/actions/accountCreateLinkActions';
 import { CopyableLink } from '@/components/ui/CopyableLink';
+import { formatDateTimeJp } from '@/lib/format/formatDateTime';
+import { useToast } from '@/components/ui/toast';
 
 const initialState: CreateAccountCreateLinkActionState = {
   error: null,
@@ -20,6 +21,48 @@ const quickTimes = [
   { label: '24時間', value: 1440 },
   { label: '7日', value: 10080 },
 ];
+
+function CopyUrlSection({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false);
+  const { showToast } = useToast();
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      showToast('URL をクリップボードにコピーしました');
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore
+    }
+  }, [url, showToast]);
+
+  return (
+    <div className="bg-white rounded-xl p-4 border border-blue-100">
+      <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wider mb-2">生成されたリンク</p>
+      <div className="copy-box">
+        <code>{url}</code>
+        <button
+          type="button"
+          className="copy-btn"
+          onClick={handleCopy}
+        >
+          {copied ? (
+            <>
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              コピー完了
+            </>
+          ) : (
+            <>
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              コピー
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function AccountCreateLinkForm() {
   const [state, action, isPending] = useActionState(
@@ -113,20 +156,7 @@ export function AccountCreateLinkForm() {
             <h4 className="font-bold text-blue-800">アカウント作成リンクが生成されました</h4>
           </div>
           <div className="space-y-3">
-            <div className="bg-white rounded-xl p-4 border border-blue-100">
-              <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wider mb-2">生成されたリンク</p>
-              <div className="copy-box">
-                <code>{`${process.env.NEXT_PUBLIC_APP_URL}${state.generatedUrl}`}</code>
-                <button
-                  type="button"
-                  className="copy-btn"
-                  onClick={() => navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_APP_URL}${state.generatedUrl}`)}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  コピー
-                </button>
-              </div>
-            </div>
+            <CopyUrlSection url={`${process.env.NEXT_PUBLIC_APP_URL}${state.generatedUrl}`} />
 
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-xl p-4 border border-blue-100">
@@ -134,14 +164,14 @@ export function AccountCreateLinkForm() {
                   <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   <p className="text-[10px] text-blue-400 font-bold uppercase">有効期限</p>
                 </div>
-                <p className="font-bold text-stone-800">{state.expiresAt}</p>
+                <p className="font-bold text-stone-800">{formatDateTimeJp(state.expiresAt)}</p>
               </div>
               <div className="bg-white rounded-xl p-4 border border-blue-100">
                 <div className="flex items-center gap-2 mb-2">
                   <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   <p className="text-[10px] text-blue-400 font-bold uppercase">発行日時</p>
                 </div>
-                <p className="font-bold text-stone-800">{new Date().toLocaleString('ja-JP')}</p>
+                <p className="font-bold text-stone-800">{formatDateTimeJp(new Date())}</p>
                 <p className="text-xs text-stone-500">発行者: owner</p>
               </div>
             </div>

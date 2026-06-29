@@ -1,13 +1,20 @@
-import type { BanAccountInput } from '@/server/schemas/accountBanSchemas';
+import type { BanAccountInput } from '@/server/schemas';
 import {
-  activateUserById,
-  deactivateUserById,
-  findUserById,
-  listManageableAccounts,
-  listManageableAccountsPaginated,
+    activateUserById,
+    deactivateUserById,
+    listManageableAccounts,
+    listManageableAccountsPaginated,
 } from '@/server/repositories/accountBanRepository';
+import {
+    findUserById,
+} from '@/server/repositories/userRepository';
+
 import type { Actor } from '@/types/actor';
 import type { ListQuery, ListResult } from '@/types/listQuery';
+import {
+    commonErrors,
+    serviceErrors,
+} from '@/server/errors';
 
 export async function getManageableAccounts(
   actor: Actor,
@@ -35,14 +42,14 @@ export async function banAccount(actor: Actor, input: BanAccountInput) {
   if (actor.role !== 'owner') {
     return {
       success: false as const,
-      error: 'アカウントBAN権限がありません',
+      error: commonErrors.accountBan.banPermissionDenied,
     };
   }
 
   if (actor.id === input.userId) {
     return {
       success: false as const,
-      error: '自分自身はBANできません',
+      error: serviceErrors.accountBan.selfBanNotAllowed,
     };
   }
 
@@ -50,14 +57,14 @@ export async function banAccount(actor: Actor, input: BanAccountInput) {
   if (!user) {
     return {
       success: false as const,
-      error: '対象ユーザーが見つかりません',
+      error: serviceErrors.accountBan.userNotFound,
     };
   }
 
   if (!user.isActive) {
     return {
       success: false as const,
-      error: 'このアカウントは既にBANされています',
+      error: serviceErrors.accountBan.alreadyBanned,
     };
   }
 
@@ -72,21 +79,29 @@ export async function unbanAccount(actor: Actor, input: BanAccountInput) {
   if (actor.role !== 'owner') {
     return {
       success: false as const,
-      error: 'アカウントBAN解除権限がありません',
+      error: commonErrors.accountBan.unbanPermissionDenied,
+    };
+  }
+
+  const user = await findUserById(input.userId);
+  if (!user) {
+    return {
+      success: false as const,
+      error: serviceErrors.accountBan.userNotFound,
+    };
+  }
+
+  if (user.isActive) {
+    return {
+      success: false as const,
+      error: serviceErrors.accountBan.notBanned,
     };
   }
 
   const updated = await activateUserById(input.userId);
 
-  if (!updated) {
-    return {
-      success: false as const,
-      error: '対象ユーザーが見つかりません',
-    };
-  }
-
   return {
     success: true as const,
-    data: updated,
+    data: updated!,
   };
 }

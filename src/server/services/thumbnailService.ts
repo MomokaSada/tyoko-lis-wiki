@@ -1,11 +1,13 @@
 import { listReferencedThumbnailUrls } from '@/server/repositories/contentRepository';
 import {
-  deleteThumbnailObjects,
-  extractThumbnailStoragePath,
-  listAllThumbnailObjects,
+    deleteThumbnailObjects,
+    extractThumbnailStoragePath,
+    listAllThumbnailObjects,
 } from '@/server/lib/thumbnailUpload';
-import type { ThumbnailObject } from '@/server/lib/thumbnailUpload';
+import { ThumbnailObject } from '@/server/lib/thumbnailUpload';
+
 import type { PrivilegedActor as Actor } from '@/types/actor';
+import { serviceErrors } from '@/server/errors';
 
 const CLEANUP_MIN_AGE_HOURS = 24;
 
@@ -62,7 +64,7 @@ export async function cleanupOrphanThumbnails(actor: Actor) {
   if (actor.role !== 'owner') {
     return {
       success: false as const,
-      error: '未使用サムネイルの掃除権限がありません',
+      error: serviceErrors.thumbnail.cleanupPermissionDenied,
     };
   }
 

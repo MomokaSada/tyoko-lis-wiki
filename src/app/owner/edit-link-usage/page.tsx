@@ -1,10 +1,12 @@
 import { getCurrentActor } from '@/server/lib/currentActor';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { formatDateTimeJst } from '@/lib/format/formatDateTime';
 import { getDeviceSessionUsageRecords } from '@/server/services/deviceService';
-import { MobileActions } from '@/components/posts/MobileActions';
+import { MobileActions } from '@/components/layout/MobileActions';
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
-import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { parseListQuery } from '@/types/listQuery';
 import { DataTable } from '@/components/ui/DataTable';
 import type { Column } from '@/components/ui/DataTable';
@@ -107,6 +109,7 @@ export default async function EditLinkUsagePage(props: {
     {
       key: 'recordId',
       label: '',
+      isAction: true,
       headerAlign: 'center',
       cellAlign: 'center',
       render: (_, record) => (
@@ -175,7 +178,6 @@ export default async function EditLinkUsagePage(props: {
         userRole={userRole}
         hasEditSession={hasEditSession}
         hideShare={true}
-        hideProfile={true}
       />
     </>
   );

@@ -1,12 +1,15 @@
 import { AccountCreateLinkForm } from './account-create-link-form';
 import { getCurrentActor } from '@/server/lib/currentActor';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { getAccountCreateLinks } from '@/server/services/accountCreateLinkService';
-import type { AccountStatusFilter } from '@/server/repositories/accountCreateLinkRepository';
-import { MobileActions } from '@/components/posts/MobileActions';
+import type { AccountStatusFilter } from '@/server/types/repositoryTypes';
+import { MobileActions } from '@/components/layout/MobileActions';
 import { InvalidButton } from './invalid-button';
 import { headers } from 'next/headers';
+import { formatDateTimeJp } from '@/lib/format/formatDateTime';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
-import { getCurrentEditor } from '@/server/lib/currentEditor';
+
 import { parseListQuery } from '@/types/listQuery';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { CopyLinkButton } from '@/components/ui/CopyLinkButton';
@@ -189,7 +192,7 @@ export default async function AccountCreateLinksPage(props: {
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         {getStatusBadge(link.status)}
                         <span className="text-[10px] sm:text-xs text-stone-400">
-                          {link.startAt.toLocaleDateString('ja-JP')}
+                          {formatDateTimeJp(link.startAt)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -197,8 +200,8 @@ export default async function AccountCreateLinksPage(props: {
                         <CopyLinkButton uuid={link.uuid} path="/auth/register?session=" />
                       </div>
                       <div className="text-[10px] sm:text-xs text-stone-400 mt-0.5">
-                        <div>作成者: {link.authorName ?? `user:${link.authorId}`}</div>
-                        <div>有効期限: {link.endAt.toLocaleDateString('ja-JP')}</div>
+                        <div>作成者: {link.authorName ?? (link.authorId != null ? `user:${link.authorId}` : 'システム')}</div>
+                        <div>有効期限: {formatDateTimeJp(link.endAt)}</div>
                       </div>
                     </div>
                     <div className="flex gap-1 shrink-0">
@@ -230,7 +233,6 @@ export default async function AccountCreateLinksPage(props: {
         userRole={userRole}
         hasEditSession={hasEditSession}
         hideShare={true}
-        hideProfile={true}
       />
     </>
   );

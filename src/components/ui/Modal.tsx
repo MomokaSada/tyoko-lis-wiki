@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import { useScrollLock } from '@/lib/useScrollLock';
+import { useScrollLock } from '@/client/lib/useScrollLock';
 
 interface ModalProps {
   isOpen: boolean;
@@ -17,6 +17,14 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'max-w-md' 
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // ESC キーで閉じる
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [isOpen, onClose]);
 
   useScrollLock(isOpen);
 

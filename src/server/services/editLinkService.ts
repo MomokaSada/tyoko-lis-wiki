@@ -1,24 +1,33 @@
 import { randomUUID } from 'node:crypto';
-import { findEditSessions, insertEditSession, deactivateEditSession, type StatusFilter } from '@/server/repositories/editLinkRepository';
-import type { CreateEditLinkInput } from '@/server/schemas/editLinkSchemas';
+import {
+    findEditSessions,
+    insertEditSession,
+    deactivateEditSession,
+} from '@/server/repositories/editLinkRepository';
+import type { StatusFilter } from '@/server/types/repositoryTypes';
+import type { CreateEditLinkInput } from '@/server/schemas';
 import type { Actor } from '@/types/actor';
-import { isUniqueViolation } from '@/server/services/modules/pgError';
+import {
+    commonErrors,
+    serviceErrors,
+} from '@/server/errors';
+import { isUniqueViolation } from '@/server/lib/pgError';
 import type { ListQuery, ListResult } from '@/types/listQuery';
 
 type CreateEditLinkResult =
   | {
-      success: true;
-      data: {
-        uuid: string;
-        url: string;
-        endAt: Date;
-        maxEdits: number;
-      };
-    }
-  | {
-      success: false;
-      error: string;
+    success: true;
+    data: {
+      uuid: string;
+      url: string;
+      endAt: Date;
+      maxEdits: number;
     };
+  }
+  | {
+    success: false;
+    error: string;
+  };
 
 export type EditLinkListItem = {
   uuid: string;
@@ -40,7 +49,7 @@ export async function createEditLink(
   if (actor.role !== 'owner' && actor.role !== 'admin') {
     return {
       success: false,
-      error: 'リンク発行権限がありません',
+      error: commonErrors.editLink.createPermissionDenied,
     };
   }
 
@@ -77,7 +86,7 @@ export async function createEditLink(
 
   return {
     success: false,
-    error: '編集リンクの生成に失敗しました',
+    error: serviceErrors.editLink.createFailed,
   };
 }
 
@@ -117,12 +126,12 @@ export async function deactivateEditLink(
   uuid: string,
 ): Promise<DeactivateEditLinkResult> {
   if (actor.role !== 'owner' && actor.role !== 'admin') {
-    return { success: false, error: '権限がありません' };
+    return { success: false, error: serviceErrors.editLink.deactivatePermissionDenied };
   }
 
   const result = await deactivateEditSession(uuid);
   if (!result) {
-    return { success: false, error: 'リンクが見つかりませんでした' };
+    return { success: false, error: serviceErrors.editLink.linkNotFound };
   }
 
   return { success: true };

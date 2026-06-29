@@ -1,8 +1,34 @@
-import { asc, eq, ilike, ne, and, sql, desc } from 'drizzle-orm';
+import { eq, ne, and, sql, desc, asc, ilike } from 'drizzle-orm';
 import { escapeLikePattern } from './modules/escapeLike';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import type { ListQuery, ListResult } from '@/types/listQuery';
+
+export async function deactivateUserById(userId: number) {
+  const [updated] = await db
+    .update(users)
+    .set({
+      isActive: false,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId))
+    .returning({
+      id: users.id,
+      name: users.name,
+      type: users.type,
+      authUserId: users.authUserId,
+    });
+
+  return updated ?? null;
+}
+
+export type ManageableAccountRow = {
+  id: number;
+  name: string;
+  type: string;
+  isActive: boolean;
+  createdAt: Date;
+};
 
 export async function listManageableAccounts() {
   return db
@@ -17,14 +43,6 @@ export async function listManageableAccounts() {
     .where(ne(users.type, 'owner'))
     .orderBy(asc(users.name));
 }
-
-export type ManageableAccountRow = {
-  id: number;
-  name: string;
-  type: string;
-  isActive: boolean;
-  createdAt: Date;
-};
 
 export async function listManageableAccountsPaginated(
   query?: ListQuery<'name' | 'createdAt' | 'isActive'>,
@@ -72,55 +90,6 @@ export async function listManageableAccountsPaginated(
     items: rows,
     totalCount: Number(countResult[0]?.count ?? 0),
   };
-}
-
-export async function findUserByName(name: string) {
-  const [user] = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      type: users.type,
-      isActive: users.isActive,
-      authUserId: users.authUserId,
-      createdAt: users.createdAt,
-    })
-    .from(users)
-    .where(and(eq(users.name, name), ne(users.type, 'owner')))
-    .limit(1);
-
-  return user ?? null;
-}
-
-export async function findUserById(userId: number) {
-  const [user] = await db
-    .select({
-      id: users.id,
-      name: users.name,
-      isActive: users.isActive,
-    })
-    .from(users)
-    .where(and(eq(users.id, userId), ne(users.type, 'owner')))
-    .limit(1);
-
-  return user ?? null;
-}
-
-export async function deactivateUserById(userId: number) {
-  const [updated] = await db
-    .update(users)
-    .set({
-      isActive: false,
-      updatedAt: new Date(),
-    })
-    .where(eq(users.id, userId))
-    .returning({
-      id: users.id,
-      name: users.name,
-      type: users.type,
-      authUserId: users.authUserId,
-    });
-
-  return updated ?? null;
 }
 
 export async function activateUserById(userId: number) {

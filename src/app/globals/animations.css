@@ -1,0 +1,85 @@
+/* ═══════════════════════════════════════════
+   Animation / Keyframes
+   globals.css から段階的分離 Phase 1
+   ═══════════════════════════════════════════ */
+
+/* ── Owner/Admin Dashboard アニメーション ── */
+@keyframes float-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+  50%       { box-shadow: 0 0 20px 4px rgba(251, 191, 36, 0.25); }
+}
+@keyframes debris-peek {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50%       { transform: translateY(-4px) rotate(calc(var(--r, 0deg) + 3deg)); }
+}
+@keyframes progress-fill {
+  from { width: 0; }
+}
+
+.animate-float-in  { animation: float-in  0.6s cubic-bezier(.22,1,.36,1) both; }
+.animate-slide-up  { animation: slide-up  0.7s cubic-bezier(.22,1,.36,1) both; }
+.animate-shimmer   {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.6) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+.animate-pulse-glow { animation: pulse-glow 2.4s ease-in-out infinite; }
+
+.debris {
+  animation: debris-peek 4s ease-in-out infinite;
+  --r: 0deg;
+}
+
+/* ── カードホバー ── */
+.card-base {
+  transition: transform 0.3s cubic-bezier(.22,1,.36,1),
+              box-shadow 0.3s cubic-bezier(.22,1,.36,1),
+              border-color 0.3s ease;
+}
+.card-base:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px -8px rgba(0,0,0,.12), 0 4px 12px -4px rgba(0,0,0,.08);
+}
+
+/* ── ボタンプレス ── */
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.btn-primary:hover::before { opacity: 1; }
+
+/* ── スタットカード差分 ── */
+.stat-icon {
+  transition: transform 0.4s cubic-bezier(.22,1,.36,1);
+}
+.card-base:hover .stat-icon { transform: scale(1.1) rotate(-6deg); }
+
+/* ── グラデーションテキスト ── */
+.gradient-text {
+  background: linear-gradient(135deg, #1c1917 0%, #44403c 50%, #1c1917 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

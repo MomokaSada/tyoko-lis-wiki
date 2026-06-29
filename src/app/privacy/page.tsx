@@ -1,8 +1,11 @@
 import { type Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'プライバシーポリシー | Tyokore Wiki',
+  title: 'プライバシーポリシー',
   description: 'Tyokore Wiki のプライバシーポリシーです。個人情報の取扱いについての説明を掲載しています。',
+  alternates: {
+    canonical: '/privacy',
+  },
 };
 
 export default function PrivacyPage() {

@@ -1,10 +1,11 @@
 'use client';
 
-import { useActionState } from 'react';
-import {
-  createEditLinkAction,
-  type CreateEditLinkActionState,
-} from '@/server/actions/editLinkActions';
+import { useActionState, useState, useCallback } from 'react';
+import { Check } from 'lucide-react';
+import { createEditLinkAction } from '@/server/actions/editLinkActions';
+import type { CreateEditLinkActionState } from '@/server/actions/editLinkActions';
+import { formatDateTimeJp } from '@/lib/format/formatDateTime';
+import { useToast } from '@/components/ui/toast';
 
 const initialState: CreateEditLinkActionState = {
   error: null,
@@ -25,6 +26,48 @@ const editPresets = [
   { label: '50回', value: 50 },
   { label: '100回', value: 100 },
 ];
+
+function CopyUrlSection({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false);
+  const { showToast } = useToast();
+
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      showToast('URL をクリップボードにコピーしました');
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore
+    }
+  }, [url, showToast]);
+
+  return (
+    <div className="bg-white rounded-xl p-4 border border-emerald-100">
+      <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider mb-2">生成されたリンク</p>
+      <div className="copy-box">
+        <code>{url}</code>
+        <button
+          type="button"
+          className="copy-btn"
+          onClick={handleCopy}
+        >
+          {copied ? (
+            <>
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              コピー完了
+            </>
+          ) : (
+            <>
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              コピー
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function EditLinkForm() {
   const [state, action, isPending] = useActionState(createEditLinkAction, initialState);
@@ -161,20 +204,7 @@ export function EditLinkForm() {
             <h4 className="font-bold text-emerald-800">編集リンクが生成されました</h4>
           </div>
           <div className="space-y-3">
-            <div className="bg-white rounded-xl p-4 border border-emerald-100">
-              <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider mb-2">生成されたリンク</p>
-              <div className="copy-box">
-                <code>{`${process.env.NEXT_PUBLIC_APP_URL}${state.generatedUrl}`}</code>
-                <button
-                  type="button"
-                  className="copy-btn"
-                  onClick={() => navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_APP_URL}${state.generatedUrl}`)}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  コピー
-                </button>
-              </div>
-            </div>
+            <CopyUrlSection url={`${process.env.NEXT_PUBLIC_APP_URL}${state.generatedUrl}`} />
 
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white rounded-xl p-4 border border-emerald-100">
@@ -182,7 +212,7 @@ export function EditLinkForm() {
                   <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   <p className="text-[10px] text-emerald-400 font-bold uppercase">有効期限</p>
                 </div>
-                <p className="font-bold text-stone-800">{state.expiresAt}</p>
+                <p className="font-bold text-stone-800">{formatDateTimeJp(state.expiresAt)}</p>
               </div>
               <div className="bg-white rounded-xl p-4 border border-emerald-100">
                 <div className="flex items-center gap-2 mb-2">
@@ -201,7 +231,7 @@ export function EditLinkForm() {
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-xs font-bold border border-stone-200">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                {state.expiresAt}
+                {formatDateTimeJp(state.expiresAt)}
               </span>
             </div>
           </div>

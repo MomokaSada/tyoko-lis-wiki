@@ -1,8 +1,10 @@
+import { toSafeId } from '@/lib/safe-id';
 import { requireEditSession } from '@/lib/auth/guards';
-import { getEditableContentDetail, getTaxonomyOptions } from '@/server/services/contentService';
-import { PostForm } from '@/components/features/posts/PostForm';
+import { getEditableContentDetail } from '@/server/services/contentService';
+import { getTaxonomyOptions } from '@/server/services/taxonomyService';
+import { PostForm } from '@/components/features/posts/forms/PostForm';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, History } from 'lucide-react';
 
 export default async function ModifyPostPage({
   searchParams,
@@ -26,18 +28,26 @@ export default async function ModifyPostPage({
 
   // シリアライズエラーや BigInt、および不正な要素によるクラッシュを回避するため、極めて防御的にマッピングを行う
   const serializedTags = Array.isArray(taxonomy?.tags)
-    ? taxonomy.tags.filter((t: any) => t && typeof t === 'object').map((t: any) => ({
-      id: t.id,
-      name: t.name || ''
-    }))
+    ? taxonomy.tags
+        .filter((t: unknown): t is Record<string, unknown> => !!t && typeof t === 'object')
+        .map((t) => ({
+          id: toSafeId(t.id),
+          name: typeof t.name === 'string' ? t.name : '',
+        }))
     : [];
 
   const serializedCategories = Array.isArray(taxonomy?.categories)
-    ? taxonomy.categories.filter((c: any) => c && typeof c === 'object').map((c: any) => ({
-      id: c.id,
-      name: c.name || '',
-      parentId: c.parentId ?? null
-    }))
+    ? taxonomy.categories
+        .filter((c: unknown): c is Record<string, unknown> => !!c && typeof c === 'object')
+        .map((c) => {
+          const parentIdRaw = c.parentId;
+          const parentId = parentIdRaw === null || parentIdRaw === undefined ? null : toSafeId(parentIdRaw);
+          return {
+            id: toSafeId(c.id),
+            name: typeof c.name === 'string' ? c.name : '',
+            parentId,
+          };
+        })
     : [];
 
   return (
@@ -52,6 +62,19 @@ export default async function ModifyPostPage({
             <ChevronLeft size={12} />
             {content?.title ?? '記事一覧'}に戻る
           </Link>
+          {content && (
+            <Link
+              href={
+                sessionToken
+                  ? `/posts/${encodeURIComponent(content.slug)}/history?session=${encodeURIComponent(sessionToken)}`
+                  : `/posts/${encodeURIComponent(content.slug)}/history`
+              }
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold text-stone-400 hover:text-stone-800 hover:bg-stone-100 transition-all uppercase tracking-widest"
+            >
+              <History size={12} />
+              編集履歴
+            </Link>
+          )}
         </div>
       </header>
 

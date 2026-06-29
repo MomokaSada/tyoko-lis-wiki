@@ -1,19 +1,14 @@
 import type { NextConfig } from "next";
 
+// NOTE: 以前は NEXT_PUBLIC_DEV_HOSTNAME でカスタムホスト名（.local 等）を
+// 指定していたが、HMR WebSocket が wss:// で接続しようとして失敗し、
+// ページの定期リロードを引き起こす原因となっていた。
+// → localhost のみ使用。モバイル確認が必要な場合は LAN IP で直接アクセスする。
+//   例: http://192.168.x.x:3000
+
 const nextConfig: NextConfig = {
-  typescript: {
-    // 開発速度向上のため、ビルド時の型チェックエラーを無視する
-    ignoreBuildErrors: true,
-  },
   images: {
     remotePatterns: [
-      {
-        // Supabase Storage (ローカル開発環境: ワークステーション名)
-        protocol: "http",
-        hostname: "dev-machine.local",
-        port: "54321",
-        pathname: "/storage/v1/**",
-      },
       {
         // Supabase Storage (ローカル開発環境: localhost)
         protocol: "http",

@@ -1,21 +1,35 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { getCurrentEditor } from '@/server/lib/currentEditor';
-import { getFirstZodErrorMessage, getZodFieldErrors } from '@/server/lib/zodError';
-import {
-  createContentSchema,
-  deleteContentSchema,
-  normalizeCreateContentInput,
-  updateContentSchema,
-} from '@/server/schemas/contentSchemas';
-import { createContent, deleteContent, updateContent } from '@/server/services/contentService';
 import { getCurrentActor } from '@/server/lib/currentActor';
-import { recordCurrentEditDeviceSession, recordCurrentRequestDevice } from '@/server/services/deviceService';
-import { getCurrentRequestBan } from '@/server/services/ipBanService';
-import { BaseActionState } from '@/types/actionState';
-import { checkRateLimit } from '@/server/services/rateLimitService';
+import { getCurrentEditor } from '@/server/lib/currentEditor';
+import {
+    getFirstZodErrorMessage,
+    getZodFieldErrors,
+} from '@/server/lib/zodError';
+
+import { z } from 'zod';
+import {
+    createContentSchema,
+    deleteContentSchema,
+    normalizeCreateContentInput,
+    updateContentSchema,
+} from '@/server/schemas';
+import { commonErrors } from '@/server/errors';
 import { recordAuditLog } from '@/server/services/auditLogService';
+import {
+    createContent,
+    deleteContent,
+    updateContent,
+} from '@/server/services/contentService';
+import { recordCurrentEditDeviceSession } from '@/server/services/deviceService';
+import { getCurrentRequestBan } from '@/server/services/ipBanService';
+
+import {
+    withAction,
+    requireActor,
+} from '@/server/actions/modules/withAction';
+import type { BaseActionState } from '@/types/actionState';
 
 export type ContentActionState = BaseActionState & {
   slug: string | null;
@@ -23,23 +37,38 @@ export type ContentActionState = BaseActionState & {
   fieldErrors?: Record<string, string>;
 };
 
-export async function createContentAction(
-  _prevState: ContentActionState,
+// ---------------------------------------------------------------------------
+// 内部ヘルパー: createContentAction / updateContentAction の
+// 前処理（withAction → Zod パース → BAN チェック → Editor 解決 →
+// デバイスセッション記録）を共通化する
+// ---------------------------------------------------------------------------
+
+type PreprocessContentResult<T> =
+  | { success: true; parsed: T; editor: NonNullable<Awaited<ReturnType<typeof getCurrentEditor>>>; deviceSessionId: number | null }
+  | { success: false; state: ContentActionState };
+
+/** preprocessContentAction が内部でアクセスするプロパティ */
+interface ContentParsedBase {
+  session?: string | null;
+}
+
+async function preprocessContentAction<T extends ContentParsedBase>(
   formData: FormData,
-): Promise<ContentActionState> {
-  await recordCurrentRequestDevice();
+  schema: z.ZodType<T>,
+  options: {
+    rateLimit: 'createContent' | 'updateContent';
+    banError: string;
+    requireSession: boolean;
+  },
+): Promise<PreprocessContentResult<T>> {
+  // 1. withAction によるレート制限・デバイス記録
+  const preflight = await withAction({ rateLimit: options.rateLimit });
+  if (preflight) return { success: false, state: { ...preflight, slug: null, title: null } };
 
-  const rateLimitResult = await checkRateLimit('createContent');
-  if (!rateLimitResult.allowed) {
-    return {
-      error: '項目作成試行が多すぎます。しばらくしてから再度お試しください。',
-      slug: null,
-      title: null,
-    };
-  }
-
-  const parsed = createContentSchema.safeParse({
+  // 2. Zod パース
+  const parsed = schema.safeParse({
     session: formData.get('session'),
+    contentId: formData.get('contentId'),
     title: formData.get('title'),
     slug: formData.get('slug'),
     content: formData.get('content'),
@@ -54,47 +83,58 @@ export async function createContentAction(
 
   if (!parsed.success) {
     return {
-      error: getFirstZodErrorMessage(parsed.error),
-      fieldErrors: getZodFieldErrors(parsed.error),
-      slug: null,
-      title: null,
+      success: false,
+      state: {
+        error: getFirstZodErrorMessage(parsed.error),
+        fieldErrors: getZodFieldErrors(parsed.error),
+        slug: null,
+        title: null,
+      },
     };
   }
 
+  // 3. IP BAN チェック
   const activeBan = await getCurrentRequestBan();
-
   if (activeBan) {
-    return {
-      error: 'このIPアドレスからの項目作成は許可されていません',
-      slug: null,
-      title: null,
-    };
+    return { success: false, state: { error: options.banError, slug: null, title: null } };
   }
 
-  const normalized = normalizeCreateContentInput(parsed.data);
-  const editor = await getCurrentEditor(normalized.session);
+  // 4. Editor 解決
+  const sessionValue = parsed.data.session ?? null;
+  const editor = await getCurrentEditor(options.requireSession ? sessionValue : null);
 
   if (!editor) {
-    return {
-      error: '項目作成権限がありません',
-      slug: null,
-      title: null,
-    };
+    return { success: false, state: { error: commonErrors.content.createPermissionDenied, slug: null, title: null } };
   }
 
+  // 5. デバイスセッション記録
   const deviceSessionId =
     editor.type === 'session'
       ? await recordCurrentEditDeviceSession(editor.sessionId)
       : null;
 
+  return { success: true, parsed: parsed.data, editor, deviceSessionId };
+}
+
+export async function createContentAction(
+  _prevState: ContentActionState,
+  formData: FormData,
+): Promise<ContentActionState> {
+  const preprocessed = await preprocessContentAction(formData, createContentSchema, {
+    rateLimit: 'createContent',
+    banError: commonErrors.ip.contentCreateNotAllowed,
+    requireSession: true,
+  });
+  if (!preprocessed.success) return preprocessed.state;
+
+  const { editor, deviceSessionId } = preprocessed;
+  const normalized = normalizeCreateContentInput(preprocessed.parsed);
+
+  // セッションは normalize 済みの値を使う
   const result = await createContent(editor, normalized, { deviceSessionId });
 
   if (!result.success) {
-    return {
-      error: result.error,
-      slug: null,
-      title: null,
-    };
+    return { error: result.error, slug: null, title: null };
   }
 
   await recordAuditLog({
@@ -105,11 +145,9 @@ export async function createContentAction(
     detail: { slug: result.data.slug },
   });
 
-  await recordCurrentRequestDevice();
-
   const destination =
-    parsed.data.session && parsed.data.session.length > 0
-      ? `/posts/${encodeURIComponent(result.data.slug)}?session=${encodeURIComponent(parsed.data.session)}`
+    normalized.session && normalized.session.length > 0
+      ? `/posts/${encodeURIComponent(result.data.slug)}?session=${encodeURIComponent(normalized.session)}`
       : `/posts/${encodeURIComponent(result.data.slug)}`;
 
   redirect(destination);
@@ -119,76 +157,21 @@ export async function updateContentAction(
   _prevState: ContentActionState,
   formData: FormData,
 ): Promise<ContentActionState> {
-  await recordCurrentRequestDevice();
-
-  const rateLimitResult = await checkRateLimit('updateContent');
-  if (!rateLimitResult.allowed) {
-    return {
-      error: '項目編集試行が多すぎます。しばらくしてから再度お試しください。',
-      slug: null,
-      title: null,
-    };
-  }
-  const parsed = updateContentSchema.safeParse({
-    session: formData.get('session'),
-    contentId: formData.get('contentId'),
-    title: formData.get('title'),
-    slug: formData.get('slug'),
-    content: formData.get('content'),
-    thumbnail: formData.get('removeThumbnail') === 'on' ? null : formData.get('thumbnail'),
-    isPublished: formData.get('isPublished') === 'on',
-    tagIds: formData.getAll('tagIds'),
-    newTags: formData.get('newTags'),
-    categoryIds: formData.getAll('categoryIds'),
-    newCategoryName: formData.get('newCategoryName'),
-    newCategoryParentId: formData.get('newCategoryParentId'),
+  const preprocessed = await preprocessContentAction(formData, updateContentSchema, {
+    rateLimit: 'updateContent',
+    banError: commonErrors.ip.contentEditNotAllowed,
+    requireSession: false,
   });
+  if (!preprocessed.success) return preprocessed.state;
 
-  if (!parsed.success) {
-    return {
-      error: getFirstZodErrorMessage(parsed.error),
-      fieldErrors: getZodFieldErrors(parsed.error),
-      slug: null,
-      title: null,
-    };
-  }
+  const { editor, deviceSessionId, parsed } = preprocessed;
 
-  const activeBan = await getCurrentRequestBan();
-
-  if (activeBan) {
-    return {
-      error: 'このIPアドレスからの項目編集は許可されていません',
-      slug: null,
-      title: null,
-    };
-  }
-
-  const editor = await getCurrentEditor(parsed.data.session ?? null);
-
-  if (!editor) {
-    return {
-      error: '項目編集権限がありません',
-      slug: null,
-      title: null,
-    };
-  }
-
-  const deviceSessionId =
-    editor.type === 'session'
-      ? await recordCurrentEditDeviceSession(editor.sessionId)
-      : null;
-
-  const result = await updateContent(editor, parsed.data, { deviceSessionId });
+  const result = await updateContent(editor, parsed, { deviceSessionId });
 
   if (!result.success) {
-    return {
-      error: result.error,
-      slug: null,
-      title: null,
-    };
+    return { error: result.error, slug: null, title: null };
   }
 
-  await recordCurrentRequestDevice();
   await recordAuditLog({
     actorId: editor.type === "actor" ? editor.actorId : null,
     action: "update_content",
@@ -197,10 +180,9 @@ export async function updateContentAction(
     detail: { slug: result.data.slug },
   });
 
-
   const destination =
-    parsed.data.session && parsed.data.session.length > 0
-      ? `/posts/${encodeURIComponent(result.data.slug)}?session=${encodeURIComponent(parsed.data.session)}`
+    parsed.session && parsed.session.length > 0
+      ? `/posts/${encodeURIComponent(result.data.slug)}?session=${encodeURIComponent(parsed.session)}`
       : `/posts/${encodeURIComponent(result.data.slug)}`;
 
   redirect(destination);
@@ -210,14 +192,14 @@ export async function deleteContentAction(
   _prevState: ContentActionState,
   formData: FormData,
 ): Promise<ContentActionState> {
-  const rateLimitResult = await checkRateLimit('deleteContent');
-  if (!rateLimitResult.allowed) {
-    return {
-      error: '項目削除試行が多すぎます。しばらくしてから再度お試しください。',
-      slug: null,
-      title: null,
-    };
+  const preflight = await withAction({ rateLimit: 'deleteContent', device: false });
+  if (preflight) return { ...preflight, slug: null, title: null };
+
+  const activeBan = await getCurrentRequestBan();
+  if (activeBan) {
+    return { error: commonErrors.ip.contentDeleteNotAllowed, slug: null, title: null };
   }
+
   const parsed = deleteContentSchema.safeParse({
     contentId: formData.get('contentId'),
   });
@@ -230,14 +212,9 @@ export async function deleteContentAction(
     };
   }
 
-  const actor = await getCurrentActor();
-
-  if (!actor) {
-    return {
-      error: '項目削除権限がありません',
-      slug: null,
-      title: null,
-    };
+  const actor = await requireActor();
+  if ('error' in actor) {
+    return { error: commonErrors.content.deletePermissionDenied, slug: null, title: null };
   }
 
   const result = await deleteContent(

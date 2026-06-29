@@ -3,6 +3,7 @@ import { escapeLikePattern } from './modules/escapeLike';
 import { db } from '@/db';
 import { editSessions, users } from '@/db/schema';
 import type { ListQuery, ListResult } from '@/types/listQuery';
+import type { StatusFilter } from '@/server/types/repositoryTypes';
 
 export async function insertEditSession(data: {
   uuid: string;
@@ -38,8 +39,6 @@ export type EditSessionRow = {
   endAt: Date;
   createdAt: Date;
 };
-
-export type StatusFilter = 'active' | 'expired' | 'inactive' | 'limit-reached';
 
 export async function findEditSessions(
   query?: ListQuery<'createdAt' | 'endAt' | 'editsUsed'>,
@@ -123,6 +122,25 @@ export async function findEditSessions(
     items: rows,
     totalCount: Number(countResult[0]?.count ?? 0),
   };
+}
+
+/** 有効な編集セッションを UUID で検索する（guards.ts / currentEditor.ts 用） */
+export async function findActiveEditSession(uuid: string) {
+  const now = new Date();
+  const [session] = await db
+    .select({ uuid: editSessions.uuid })
+    .from(editSessions)
+    .where(
+      and(
+        eq(editSessions.uuid, uuid),
+        eq(editSessions.isActive, true),
+        gt(editSessions.endAt, now),
+        lt(editSessions.editsUsed, editSessions.maxEdits),
+      ),
+    )
+    .limit(1);
+
+  return session ?? null;
 }
 
 export async function deactivateEditSession(uuid: string) {

@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useActionState, useEffect } from 'react';
-import {
-  updateCategoryAction,
-  type CategoryActionState,
-} from '@/server/actions/categoryActions';
+import { updateCategoryAction } from '@/server/actions/categoryActions';
+import type { CategoryActionState } from '@/server/actions/categoryActions';
 import { Loader2 } from 'lucide-react';
 import { CategorySearchPicker } from '@/components/ui/CategorySearchPicker';
 

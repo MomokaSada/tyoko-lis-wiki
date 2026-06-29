@@ -1,52 +1,73 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { getFirstZodErrorMessage } from '@/server/lib/zodError';
-import { loginSchema, registerSchema } from '@/server/schemas/authSchemas';
-import { recordCurrentRequestDevice } from '@/server/services/deviceService';
-import { getCurrentRequestBan } from '@/server/services/ipBanService';
-import { getCurrentActor } from '@/server/lib/currentActor';
+import { loginSchema, registerSchema } from '@/server/schemas';
 import { recordAuditLog } from '@/server/services/auditLogService';
-import { registerAccount, signIn } from '@/server/services/authService';
-import { checkRateLimit } from '@/server/services/rateLimitService';
+import {
+    registerAccount,
+    signIn,
+} from '@/server/services/authService';
+import { getCurrentRequestBan } from '@/server/services/ipBanService';
+
+import {
+    getSessionTokenFromCookie,
+    deleteSessionCookie,
+} from '@/server/lib/appSessionCookie';
+import { getCurrentActor } from '@/server/lib/currentActor';
+
+import {
+    withAction,
+    parseOrError,
+} from '@/server/actions/modules/withAction';
+import { createClient } from '@/lib/supabase/server';
+
+import { deactivateSession } from '@/server/services/appSessionService';
+import { commonErrors } from '@/server/errors';
 import type { BaseActionState } from '@/types/actionState';
 
 export type ActionState = BaseActionState;
+
+/**
+ * Server Action: ログアウト処理。
+ * Supabase Auth のセッションとアプリケーションセッションの両方を破棄する。
+ */
+export async function logoutAction(): Promise<void> {
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+
+    const sessionToken = await getSessionTokenFromCookie();
+    if (sessionToken) {
+        await deactivateSession(sessionToken);
+    }
+
+    await deleteSessionCookie();
+}
 
 /** Server Action: ログインフォームの送信を処理する */
 export async function loginAction(
   _prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await recordCurrentRequestDevice();
+  const preflight = await withAction({ rateLimit: 'login' });
+  if (preflight) return preflight;
 
-  const rateLimitResult = await checkRateLimit('login');
-  if (!rateLimitResult.allowed) {
-    return { error: 'ログイン試行が多すぎます。しばらくしてから再度お試しください。' };
-  }
-
-  const parsed = loginSchema.safeParse({
-    username: formData.get('username'),
+  const parsed = parseOrError(loginSchema, {
+    userName: formData.get('userName'),
     password: formData.get('password'),
   });
-
-  if (!parsed.success) {
-    return { error: getFirstZodErrorMessage(parsed.error) };
-  }
+  if ('error' in parsed) return parsed;
 
   const activeBan = await getCurrentRequestBan();
-
   if (activeBan) {
-    return { error: 'このIPアドレスからのログインは許可されていません' };
+    return { error: commonErrors.ip.loginNotAllowed };
   }
 
-  const result = await signIn(parsed.data);
-
+  const result = await signIn(parsed.parsed);
   if (!result.success) {
     await recordAuditLog({
       actorId: null,
       action: 'login_failed',
-      detail: { username: parsed.data.username },
+      detail: { userName: parsed.parsed.userName },
     });
     return { error: result.error };
   }
@@ -59,7 +80,6 @@ export async function loginAction(
     targetId: actor?.id != null ? String(actor.id) : null,
   });
 
-  // サーバーサイドリダイレクト（クライアント往復なしで高速）
   redirect('/');
 }
 
@@ -67,41 +87,31 @@ export async function registerAction(
   _prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  await recordCurrentRequestDevice();
+  const preflight = await withAction({ rateLimit: 'register' });
+  if (preflight) return preflight;
 
-  const rateLimitResult = await checkRateLimit('register');
-  if (!rateLimitResult.allowed) {
-    return { error: 'アカウント作成試行が多すぎます。しばらくしてから再度お試しください。' };
-  }
-
-  const parsed = registerSchema.safeParse({
+  const parsed = parseOrError(registerSchema, {
     session: formData.get('session'),
-    username: formData.get('username'),
+    userName: formData.get('userName'),
     password: formData.get('password'),
     confirmPassword: formData.get('confirmPassword'),
   });
-
-  if (!parsed.success) {
-    return { error: getFirstZodErrorMessage(parsed.error) };
-  }
+  if ('error' in parsed) return parsed;
 
   const activeBan = await getCurrentRequestBan();
-
   if (activeBan) {
-    return { error: 'このIPアドレスからのアカウント作成は許可されていません' };
+    return { error: commonErrors.ip.registerNotAllowed };
   }
 
-  const result = await registerAccount(parsed.data);
-
+  const result = await registerAccount(parsed.parsed);
   if (!result.success) {
     return { error: result.error };
   }
 
   const loginResult = await signIn({
-    username: parsed.data.username,
-    password: parsed.data.password,
+    userName: parsed.parsed.userName,
+    password: parsed.parsed.password,
   });
-
   if (!loginResult.success) {
     return { error: loginResult.error };
   }

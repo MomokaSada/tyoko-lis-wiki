@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { Copy, Check } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 
 export function CopyableCell({
   text,
@@ -12,20 +13,22 @@ export function CopyableCell({
   mono?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
+  const { showToast } = useToast();
 
   const handleCopy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
+      showToast('テキストをクリップボードにコピーしました');
       setTimeout(() => setCopied(false), 1500);
     } catch {
       // fallback: select-less copy not supported
     }
-  }, [text]);
+  }, [text, showToast]);
 
   return (
-    <div className="inline-flex items-center gap-2">
-      <span className={`text-sm font-bold text-stone-800 ${mono ? 'font-mono' : ''}`}>{text}</span>
+    <div className="inline-flex items-center gap-2 max-w-full">
+      <span className={`text-sm font-bold text-stone-800 truncate max-w-[140px] sm:max-w-[200px] ${mono ? 'font-mono' : ''}`}>{text}</span>
       <button
         type="button"
         onClick={handleCopy}

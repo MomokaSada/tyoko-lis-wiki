@@ -1,8 +1,36 @@
-import { and, asc, desc, eq, ilike, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, sql } from 'drizzle-orm';
 import { escapeLikePattern } from './modules/escapeLike';
 import { db } from '@/db';
 import { contentEditLogs, contents, deviceSessions, devices, editSessions, users } from '@/db/schema';
 import type { ListQuery, ListResult } from '@/types/listQuery';
+
+export async function findDeviceById(id: number) {
+  const [device] = await db
+    .select({
+      id: devices.id,
+      ip: devices.ip,
+      browser: devices.browser,
+    })
+    .from(devices)
+    .where(eq(devices.id, id))
+    .limit(1);
+
+  return device ?? null;
+}
+
+export async function findDeviceByIp(ip: string) {
+  const [device] = await db
+    .select({
+      id: devices.id,
+      ip: devices.ip,
+      browser: devices.browser,
+    })
+    .from(devices)
+    .where(eq(devices.ip, ip))
+    .limit(1);
+
+  return device ?? null;
+}
 
 export async function findDeviceByIpAndBrowser(ip: string, browser: string) {
   const [device] = await db
@@ -16,6 +44,24 @@ export async function findDeviceByIpAndBrowser(ip: string, browser: string) {
   return device ?? null;
 }
 
+/** デバイスを作成し、id/ip/browser を返す */
+export async function createDevice(input: { ip: string; browser: string }) {
+  const [device] = await db
+    .insert(devices)
+    .values({
+      ip: input.ip,
+      browser: input.browser,
+    })
+    .returning({
+      id: devices.id,
+      ip: devices.ip,
+      browser: devices.browser,
+    });
+
+  return device;
+}
+
+/** デバイスを作成し、id のみ返す（deviceService 用） */
 export async function createDeviceRecord(input: { ip: string; browser: string }) {
   const [device] = await db
     .insert(devices)
@@ -172,7 +218,7 @@ export async function listDeviceSessionUsageRecordsPaginated(
   if (query?.searchQuery) {
     const escaped = escapeLikePattern(query.searchQuery);
     conditions.push(
-      ilike(deviceSessions.sessionId, `%${escaped}%`),
+      ilike(sql`${deviceSessions.sessionId}::text`, `%${escaped}%`),
     );
   }
 
@@ -229,6 +275,17 @@ export async function getDeviceSessionUsageRecord(id: number) {
     .limit(1);
 
   return record ?? null;
+}
+
+/** 複数の deviceSession ID から sessionId（編集リンクUUID）を一括取得 */
+export async function findDeviceSessionsByIds(
+  ids: number[],
+): Promise<{ id: number; sessionId: string }[]> {
+  if (ids.length === 0) return [];
+  return db
+    .select({ id: deviceSessions.id, sessionId: deviceSessions.sessionId })
+    .from(deviceSessions)
+    .where(inArray(deviceSessions.id, ids));
 }
 
 export async function getDeviceSessionEditLogs(deviceSessionId: number) {

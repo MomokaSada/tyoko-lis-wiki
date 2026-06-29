@@ -3,6 +3,13 @@ import { RegisterForm } from './register-form';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
 import { CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'アカウント登録',
+  description: 'Tyokore Wiki にアカウントを登録して編集機能を利用できます。',
+  robots: { index: false },
+};
 
 export default async function AccountRegisterPage({
   searchParams,
