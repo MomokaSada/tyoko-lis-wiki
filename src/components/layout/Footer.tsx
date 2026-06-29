@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { socialLinks } from '@/lib/socialLinks';
 
 export const Footer = () => {
@@ -10,11 +11,13 @@ export const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-start gap-10 md:gap-14">
           <div className="space-y-6">
             <div className="flex items-center">
-              <img
+              <Image
                 src="/images/logo.webp"
                 alt="ちょこちょこ大百科"
-                className="w-auto object-contain drop-shadow-sm"
-                style={{ height: "clamp(40px, 6.5vw, 72px)" }}
+                width={180}
+                height={60}
+                className="w-auto h-[clamp(40px,6.5vw,72px)] object-contain drop-shadow-sm"
+                priority={false}
               />
             </div>
             <p className="text-xs text-stone-400 font-medium max-w-xs leading-relaxed">

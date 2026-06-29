@@ -21,7 +21,7 @@ import {
 } from '@/server/actions/modules/withAction';
 import { createClient } from '@/lib/supabase/server';
 
-import { revokeSession } from '@/server/repositories/appSessionRepository';
+import { deactivateSession } from '@/server/services/appSessionService';
 import { commonErrors } from '@/server/errors';
 import type { BaseActionState } from '@/types/actionState';
 
@@ -37,7 +37,7 @@ export async function logoutAction(): Promise<void> {
 
     const sessionToken = await getSessionTokenFromCookie();
     if (sessionToken) {
-        await revokeSession(sessionToken);
+        await deactivateSession(sessionToken);
     }
 
     await deleteSessionCookie();

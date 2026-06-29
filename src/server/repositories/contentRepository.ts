@@ -568,6 +568,146 @@ export async function getWeeklyPopularContents(limitCount = 6) {
     .limit(limitCount);
 }
 
+// ===== 純粋 CRUD 関数（トランザクション対応） =====
+// ビジネスロジックを含まず、1テーブルに対する単一操作のみを行う。
+// 既存の複合関数（createContentWithInitialRevision, updateContentWithRevision）は維持。
+// 将来 Service 層でトランザクションを組み立てる際に使用する。
+
+export async function insertContent(
+  tx: any,
+  data: {
+    slug: string;
+    currentTitle: string;
+    currentContent: string;
+    currentThumbnail: string | null;
+    latestRevision: number;
+    isPublished: boolean;
+  },
+) {
+  const [created] = await tx
+    .insert(contents)
+    .values(data)
+    .returning({
+      id: contents.id,
+      slug: contents.slug,
+      currentTitle: contents.currentTitle,
+    });
+  return created;
+}
+
+export async function updateContentById(
+  tx: any,
+  contentId: number,
+  data: {
+    slug: string;
+    currentTitle: string;
+    currentContent: string;
+    currentThumbnail: string | null;
+    isPublished: boolean;
+    latestRevision: number;
+    updatedAt: Date;
+  },
+) {
+  const [updated] = await tx
+    .update(contents)
+    .set(data)
+    .where(eq(contents.id, contentId))
+    .returning({
+      id: contents.id,
+      slug: contents.slug,
+      title: contents.currentTitle,
+      latestRevision: contents.latestRevision,
+    });
+  return updated;
+}
+
+export async function insertContentEditLog(
+  tx: any,
+  data: {
+    contentId: number;
+    deviceSessionId: number | null;
+    userId: number | null;
+    revisionNumber: number;
+    type: 'snapshot' | 'diff';
+    title: string;
+    data: string;
+    thumbnail: string | null;
+    tagChanged: boolean;
+    categoryChanged: boolean;
+  },
+) {
+  const [created] = await tx
+    .insert(contentEditLogs)
+    .values(data)
+    .returning({
+      id: contentEditLogs.id,
+    });
+  return created;
+}
+
+export async function replaceContentTags(
+  tx: any,
+  contentId: number,
+  tagIds: number[],
+) {
+  await tx.delete(contentTags).where(eq(contentTags.contentId, contentId));
+  if (tagIds.length > 0) {
+    await tx.insert(contentTags).values(
+      tagIds.map((tagId) => ({ contentId, tagId })),
+    );
+  }
+}
+
+export async function replaceContentCategories(
+  tx: any,
+  contentId: number,
+  categoryIds: number[],
+) {
+  await tx.delete(contentCategories).where(eq(contentCategories.contentId, contentId));
+  if (categoryIds.length > 0) {
+    await tx.insert(contentCategories).values(
+      categoryIds.map((categoryId) => ({ contentId, categoryId })),
+    );
+  }
+}
+
+export async function insertContentEditLogTags(
+  tx: any,
+  editLogId: number,
+  tagIds: number[],
+) {
+  if (tagIds.length > 0) {
+    await tx.insert(contentEditLogTags).values(
+      tagIds.map((tagId) => ({ editLogId, tagId })),
+    );
+  }
+}
+
+export async function insertContentEditLogCategories(
+  tx: any,
+  editLogId: number,
+  categoryIds: number[],
+) {
+  if (categoryIds.length > 0) {
+    await tx.insert(contentEditLogCategories).values(
+      categoryIds.map((categoryId) => ({ editLogId, categoryId })),
+    );
+  }
+}
+
+export async function incrementEditSessionUsage(
+  tx: any,
+  sessionId: string,
+) {
+  await tx
+    .update(editSessions)
+    .set({
+      editsUsed: sql`${editSessions.editsUsed} + 1`,
+      updatedAt: new Date(),
+    })
+    .where(eq(editSessions.uuid, sessionId));
+}
+
 /** コンテンツの現在のサムネイルを取得する */
 export async function findCurrentThumbnail(
   contentId: number,

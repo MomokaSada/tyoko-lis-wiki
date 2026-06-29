@@ -15,6 +15,7 @@ export function getRequirement(pathname: string): RouteRequirement {
   // 既知の公開ルート
   if (
     pathname === '/' ||
+    pathname === '/auth/login' ||
     pathname === '/posts' ||
     pathname.startsWith('/posts/') ||
     pathname.startsWith('/guide/') ||

@@ -19,6 +19,9 @@ import { PostCardGrid } from './_sections/PostCardGrid';
 export const metadata: Metadata = {
   title: '項目一覧 | Tyokore Wiki',
   description: 'Tyokore Wiki の項目一覧ページです。カテゴリやタグで検索・フィルタリングできます。',
+  alternates: {
+    canonical: '/posts',
+  },
 };
 
 export default async function PostsPage({

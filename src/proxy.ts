@@ -4,6 +4,68 @@ import { updateSession } from './lib/supabase/middleware';
 import { getRequirement } from './lib/auth/routeRules';
 import { ADMIN_ROLES, HEADER_CLIENT_IP, HEADER_USER_ROLE, HEADER_IS_PROTECTED, PATHS } from './lib/auth/constants';
 
+// ---------------------------------------------------------------------------
+// Content Security Policy
+// ---------------------------------------------------------------------------
+// ポリシーは middleware で動的に設定し、next.config の静的な headers は使わない。
+// これにより将来 script の nonce 対応が容易になる。
+// ---------------------------------------------------------------------------
+
+/** Supabase のオリジンを環境変数から抽出（ローカル dev と本番の両方に対応） */
+function getSupabaseOrigin(): string | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    // port がデフォルト（80/443）の場合は省略
+    const portStr = parsed.port ? `:${parsed.port}` : '';
+    return `${parsed.protocol}//${parsed.hostname}${portStr}`;
+  } catch {
+    return null;
+  }
+}
+
+function buildCspHeader(): string {
+  const supabaseOrigin = getSupabaseOrigin();
+  // img-src / connect-src には Supabase のオリジンを動的に追加
+  const imgSources = ["'self'", 'data:', 'blob:', '*.supabase.co'];
+  const connectSources = ["'self'", '*.supabase.co'];
+
+  if (supabaseOrigin && !supabaseOrigin.includes('supabase.co')) {
+    // ローカル開発環境: *.supabase.co はマッチしないので明示的に追加
+    imgSources.push(supabaseOrigin);
+    connectSources.push(supabaseOrigin);
+  }
+
+  return [
+    "default-src 'self'",
+    // Next.js はインラインスクリプト (RSC ペイロード, next/dynamic 等) を
+    // 大量に生成するため 'unsafe-inline' は必須。プロダクションでは
+    // strict-dynamic への移行を検討する。
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    // Next.js は CSS-in-JS 的な手法でインラインスタイルを注入する
+    "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
+    // 画像: 自サイト + Supabase Storage + data URI (OGP fallback)
+    `img-src ${imgSources.join(' ')}`,
+    // Google Fonts (Inter) 用
+    "font-src 'self' data: fonts.gstatic.com fonts.googleapis.com",
+    // Supabase API / Auth への接続
+    `connect-src ${connectSources.join(' ')}`,
+    // セキュリティ: iframe / プラグイン / base タグを制限
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join('; ');
+}
+
+/** レスポンスに CSP ヘッダーを追加する */
+function setCspHeaders(res: NextResponse): NextResponse {
+  res.headers.set('Content-Security-Policy', buildCspHeader());
+  return res;
+}
+
 function normalizeCandidateIp(candidate: string | null | undefined) {
   if (!candidate) {
     return null;
@@ -103,7 +165,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       newResponse.cookies.set(cookie.name, cookie.value, cookie);
     });
 
-    return newResponse;
+    return setCspHeaders(newResponse);
   };
 
   switch (requirement.kind) {
@@ -111,7 +173,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // 公開ページ: 認証不要
     // ----------------------------------------------------------------
     case 'public':
-      return createForwardResponse(response);
+      return setCspHeaders(createForwardResponse(response));
 
     // ----------------------------------------------------------------
     // ログイン必須ページ
@@ -121,20 +183,20 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     case 'login': {
       // Supabase Auth セッション または パスキー(app_session) Cookie のいずれかがあれば許可
       if (!user && !appSessionToken) {
-        return NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url));
+        return setCspHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
       }
 
       // Supabase ユーザーがいる場合のみロールチェック
       // （パスキーユーザーはページコンポーネントの getCurrentActor() で権限検証）
       if (user && requirement.role) {
         if (requirement.role === 'admin' && !ADMIN_ROLES.includes(requestRole)) {
-          return NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url));
+          return setCspHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
         }
         if (requirement.role === 'owner' && requestRole !== 'owner') {
-          return NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url));
+          return setCspHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
         }
       }
-      return createForwardResponse(response);
+      return setCspHeaders(createForwardResponse(response));
     }
 
     // ----------------------------------------------------------------
@@ -146,20 +208,20 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // ----------------------------------------------------------------
     case 'createAndEditPost': {
       if (user && ADMIN_ROLES.includes(requestRole)) {
-        return createForwardResponse(response);
+        return setCspHeaders(createForwardResponse(response));
       }
 
       // パスキー認証済みユーザー（app_session Cookie）も許可
       if (appSessionToken) {
-        return createForwardResponse(response);
+        return setCspHeaders(createForwardResponse(response));
       }
 
       const editSessionToken = request.nextUrl.searchParams.get('session');
       if (editSessionToken) {
-        return createForwardResponse(response);
+        return setCspHeaders(createForwardResponse(response));
       }
 
-      return NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url));
+      return setCspHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
     }
 
     // ----------------------------------------------------------------
@@ -170,22 +232,22 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // ----------------------------------------------------------------
     case 'accountCreateSession': {
       if (user) {
-        return NextResponse.redirect(new URL(PATHS.HOME, request.url));
+        return setCspHeaders(NextResponse.redirect(new URL(PATHS.HOME, request.url)));
       }
 
       const accountSessionToken = request.nextUrl.searchParams.get('session');
       if (accountSessionToken) {
-        return createForwardResponse(response);
+        return setCspHeaders(createForwardResponse(response));
       }
 
-      return NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url));
+      return setCspHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
     }
 
     // ----------------------------------------------------------------
     // 存在しないページ
     // ----------------------------------------------------------------
     case 'notFound': {
-      return NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url));
+      return setCspHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
     }
 
     // ----------------------------------------------------------------
@@ -198,7 +260,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       if (process.env.NODE_ENV === 'development') {
         console.warn(`[proxy] 未処理の route requirement for path: "${request.nextUrl.pathname}"`);
       }
-      return createForwardResponse(response);
+      return setCspHeaders(createForwardResponse(response));
     }
   }
 }

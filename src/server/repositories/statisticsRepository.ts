@@ -74,6 +74,15 @@ export async function sumViewCountBetween(start: string, end: string) {
 
 export type DailyViewRow = { date: string; total: number };
 
+/** 公開済み記事の合計ビュー数を取得（Admin ダッシュボード用） */
+export async function sumPublishedViewCount() {
+  const [row] = await db
+    .select({ total: sql<number>`coalesce(sum(${contents.viewCount}),0)` })
+    .from(contents)
+    .where(eq(contents.isPublished, true));
+  return Number(row?.total ?? 0);
+}
+
 export async function sumViewCountGroupedByDateSince(date: string): Promise<DailyViewRow[]> {
   const rows = await db
     .select({

@@ -111,13 +111,17 @@ export async function createContent(
 }
 
 export async function getPublishedContentList(sort?: ContentSortKey, order?: SortOrder) {
-  const rows = await listPublishedContents(sort, order);
+  try {
+    const rows = await listPublishedContents(sort, order);
 
-  return rows.map((row) => ({
-    ...row,
-    excerpt:
-      row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
-  }));
+    return rows.map((row) => ({
+      ...row,
+      excerpt:
+        row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
+    }));
+  } catch (error) {
+    return [];
+  }
 }
 
 export async function searchPublishedContentList(query: string, sort?: ContentSortKey, order?: SortOrder) {
@@ -127,13 +131,17 @@ export async function searchPublishedContentList(query: string, sort?: ContentSo
     return getPublishedContentList(sort, order);
   }
 
-  const rows = await searchPublishedContents(trimmedQuery, sort, order);
+  try {
+    const rows = await searchPublishedContents(trimmedQuery, sort, order);
 
-  return rows.map((row) => ({
-    ...row,
-    excerpt:
-      row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
-  }));
+    return rows.map((row) => ({
+      ...row,
+      excerpt:
+        row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
+    }));
+  } catch (error) {
+    return [];
+  }
 }
 
 export async function searchVisibleContentList(
@@ -147,15 +155,25 @@ export async function searchVisibleContentList(
 ) {
   const trimmedQuery = query.trim();
   const offset = (page - 1) * pageSize;
-
   const searchQuery = trimmedQuery || undefined;
 
-  const [totalCount, rows] = await Promise.all([
-    countVisibleContents(searchQuery, includeUnpublished, categoryId),
-    searchQuery
-      ? await searchVisibleContents(searchQuery, includeUnpublished, sort, order, pageSize, offset, categoryId)
-      : await listVisibleContents(includeUnpublished, sort, order, pageSize, offset, categoryId),
-  ]);
+  let totalCount = 0;
+  let rows: Awaited<ReturnType<typeof listVisibleContents>> = [];
+
+  try {
+    const results = await Promise.all([
+      countVisibleContents(searchQuery, includeUnpublished, categoryId),
+      searchQuery
+        ? searchVisibleContents(searchQuery, includeUnpublished, sort, order, pageSize, offset, categoryId)
+        : listVisibleContents(includeUnpublished, sort, order, pageSize, offset, categoryId),
+    ]);
+    totalCount = results[0];
+    rows = results[1];
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[contentService] searchVisibleContentList failed:', error);
+    }
+  }
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -174,38 +192,75 @@ export async function searchVisibleContentList(
   };
 }
 
+export async function getHomePageData() {
+  try {
+    const [recentResult, weeklyPosts] = await Promise.all([
+      searchVisibleContentList('', false, 'updatedAt', 'desc', 1, 6),
+      getWeeklyPopularContentList(6),
+    ]);
+
+    return {
+      recentPosts: recentResult.posts.slice(0, 3),
+      featuredPost: recentResult.posts.length > 0 ? recentResult.posts[0] : null,
+      allTimePosts: recentResult.posts,
+      weeklyPosts,
+      totalPosts: recentResult.pagination.totalCount,
+    };
+  } catch (error) {
+    return {
+      recentPosts: [],
+      featuredPost: null,
+      allTimePosts: [],
+      weeklyPosts: [],
+      totalPosts: 0,
+    };
+  }
+}
+
 export async function getWeeklyPopularContentList(limitCount = 6) {
-  return await getWeeklyPopularContents(limitCount);
+  try {
+    return await getWeeklyPopularContents(limitCount);
+  } catch (error) {
+    return [];
+  }
 }
 
 export async function getPublishedContentDetail(slug: string) {
-  const content = await findPublishedContentBySlug(slug);
+  try {
+    const content = await findPublishedContentBySlug(slug);
 
-  if (!content) {
+    if (!content) {
+      return null;
+    }
+
+    const updated = await incrementContentViewCount(content.id);
+
+    return {
+      ...content,
+      viewCount: updated?.viewCount ?? content.viewCount,
+    };
+  } catch (error) {
     return null;
   }
-
-  const updated = await incrementContentViewCount(content.id);
-
-  return {
-    ...content,
-    viewCount: updated?.viewCount ?? content.viewCount,
-  };
 }
 
 export async function getAccessibleContentDetail(slug: string, editor: EditorContext | null) {
-  const content = editor
-    ? await findEditableContentBySlug(slug)
-    : await findPublishedContentBySlug(slug);
+  try {
+    const content = editor
+      ? await findEditableContentBySlug(slug)
+      : await findPublishedContentBySlug(slug);
 
-  if (!content) {
+    if (!content) {
+      return null;
+    }
+    if (!editor) {
+      await incrementContentViewCount(content.id);
+    }
+
+    return content;
+  } catch (error) {
     return null;
   }
-  if (!editor) {
-    await incrementContentViewCount(content.id);
-  }
-
-  return content;
 }
 
 export async function getEditableContentDetail(slug: string) {

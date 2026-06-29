@@ -1,7 +1,6 @@
 import React from 'react';
 import {
-    searchVisibleContentList,
-    getWeeklyPopularContentList,
+    getHomePageData,
 } from '@/server/services/contentService';
 import { PopularRankingBoard } from '@/components/features/home/PopularRankingBoard';
 import { MobileActions } from '@/components/layout/MobileActions';
@@ -13,17 +12,14 @@ import { RecentPostsSection } from './_sections/RecentPostsSection';
 import { FeaturedPostSection } from './_sections/FeaturedPostSection';
 import { PendingPasskeyRegistration } from '@/components/features/home/PendingPasskeyRegistration';
 
-export const dynamic = 'force-dynamic';
+// トップページは 60 秒ごとに ISR で再生成する。
+// force-dynamic から移行することで、同一訪問者への連続リクエストで
+// キャッシュヒットし、データベース負荷を軽減する。
+// 投稿作成・編集後は on-demand revalidation で即時反映される。
+export const revalidate = 60;
 
 export default async function HomePage() {
-  // 本番データ取得 (最新3件を急上昇項目代わりに表示)
-  const { posts } = await searchVisibleContentList('', false);
-  const recentPosts = posts.slice(0, 3);
-  const featuredPost = posts.length > 0 ? posts[0] : null;
-
-  // ランキング取得
-  const { posts: allTimePosts } = await searchVisibleContentList('', false, 'viewCount', 'desc', 1, 6);
-  const weeklyPosts = await getWeeklyPopularContentList(6);
+  const { recentPosts, featuredPost, allTimePosts, weeklyPosts, totalPosts } = await getHomePageData();
 
   const headersList = await headers();
   const userRole = headersList.get(HEADER_USER_ROLE);
@@ -34,7 +30,7 @@ export default async function HomePage() {
     <>
       <div className="max-w-[72rem] mx-auto px-4 sm:px-6 py-8 md:py-10 space-y-8 animate-in fade-in duration-500">
         {/* ウェルカムバナー */}
-        <WelcomeBannerSection totalPosts={posts.length} />
+        <WelcomeBannerSection totalPosts={totalPosts} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
           {/* 最新項目リスト */}

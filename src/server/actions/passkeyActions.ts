@@ -208,7 +208,7 @@ export async function finishPasskeyRegistrationAction(
     const challengeRecord = await getValidChallenge(challengeId, 'register', actor.id);
     if (!challengeRecord) {
         return {
-            error: actionErrors.passkey.challengeExpired
+            error: actionErrors.passkey.challengeNotFound
         }
     }
 
@@ -280,7 +280,7 @@ export async function finishPasskeyLoginAction(
     const parsed = authenticationResponseSchema.safeParse(formData.get('credential'));
     if (!parsed.success) {
         return {
-            error: actionErrors.passkey.credentialParseFailedAlt
+            error: actionErrors.passkey.credentialParseFailed
         }
     }
     const credential = parsed.data;
@@ -302,7 +302,7 @@ export async function finishPasskeyLoginAction(
     const parsedId = challengeIdSchema.safeParse(formData.get('challengeId'));
     if (!parsedId.success) {
         return {
-            error: actionErrors.passkey.challengeNotFoundWithPeriod
+            error: actionErrors.passkey.challengeNotFound
         }
     }
     const challengeId = parsedId.data;
@@ -310,7 +310,7 @@ export async function finishPasskeyLoginAction(
     const challengeRecord = await getValidChallenge(challengeId, 'login');
     if (!challengeRecord) {
         return {
-            error: actionErrors.passkey.challengeExpired
+            error: actionErrors.passkey.challengeNotFound
         }
     }
 
@@ -520,7 +520,7 @@ export async function finishPasskeyLoginAndRegistrationAction(
     // --- challenge の検証（userId フィルターなし：セッションが未作成のため） ---
     const challengeRecord = await getValidChallenge(challengeId, 'register');
     if (!challengeRecord || challengeRecord.userId == null) {
-        return { error: actionErrors.passkey.challengeExpired };
+        return { error: actionErrors.passkey.challengeNotFound };
     }
     const userId = challengeRecord.userId;
 
@@ -569,7 +569,7 @@ export async function finishPasskeyLoginAndRegistrationAction(
         if (!signInResult.success) {
             // ここでエラーになるのは異常系（パスワードは step1 で確認済み）
             console.error('[passkey] signIn after registration failed unexpectedly:', signInResult.error);
-            return { error: actionErrors.passkey.sessionCreateFailedLong };
+            return { error: actionErrors.passkey.sessionCreateFailed };
         }
 
         // アプリケーションセッションを作成

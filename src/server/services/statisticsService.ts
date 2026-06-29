@@ -11,6 +11,7 @@ import {
   countContentsBetween,
   sumViewCountSince,
   sumViewCountBetween,
+  sumPublishedViewCount,
   sumViewCountGroupedByDateSince,
 } from '@/server/repositories/statisticsRepository';
 
@@ -20,6 +21,11 @@ export type OwnerDashboardStats = {
   totalContents: number;
   publishedContents: number;
 };
+
+/** Admin ダッシュボードの公開記事合計ビュー数を取得 */
+export async function getPublishedPostsViewCount(): Promise<number> {
+  return sumPublishedViewCount();
+}
 
 export type AdminDashboardStats = {
   thisMonthPosts: number;

@@ -93,12 +93,16 @@ function wouldCreateCategoryCycle(
 }
 
 export async function getTaxonomyOptions() {
-  const [tagRows, categoryRows] = await Promise.all([listTags(), listCategories()]);
+  try {
+    const [tagRows, categoryRows] = await Promise.all([listTags(), listCategories()]);
 
-  return {
-    tags: tagRows,
-    categories: categoryRows,
-  };
+    return {
+      tags: tagRows,
+      categories: categoryRows,
+    };
+  } catch (error) {
+    return { tags: [], categories: [] };
+  }
 }
 
 export async function getTaxonomyOptionsPaginated(
@@ -194,24 +198,28 @@ export function detectTaxonomyChanges(
  * 項目に紐付く全てのタグとカテゴリの情報を取得します
  */
 export async function getFullContentTaxonomy(contentId: number) {
-  const [tagIds, categoryIds] = await Promise.all([
-    listContentTagIds(contentId),
-    listContentCategoryIds(contentId),
-  ]);
+  try {
+    const [tagIds, categoryIds] = await Promise.all([
+      listContentTagIds(contentId),
+      listContentCategoryIds(contentId),
+    ]);
 
-  const [tagRows, categoryRows] = await Promise.all([
-    listTags(),
-    listCategories(),
-  ]);
+    const [tagRows, categoryRows] = await Promise.all([
+      listTags(),
+      listCategories(),
+    ]);
 
-  const contentTags = tagRows.filter((t) => tagIds.includes(t.id));
-  const contentCategories = categoryRows.filter((c) => categoryIds.includes(c.id));
+    const contentTags = tagRows.filter((t) => tagIds.includes(t.id));
+    const contentCategories = categoryRows.filter((c) => categoryIds.includes(c.id));
 
-  return {
-    tags: contentTags,
-    categories: contentCategories,
-    allCategories: categoryRows, // 階層解決用
-  };
+    return {
+      tags: contentTags,
+      categories: contentCategories,
+      allCategories: categoryRows, // 階層解決用
+    };
+  } catch (error) {
+    return { tags: [], categories: [], allCategories: [] };
+  }
 }
 
 /**

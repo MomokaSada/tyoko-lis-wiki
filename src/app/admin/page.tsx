@@ -4,9 +4,9 @@ import Link from 'next/link';
 import {
   Plus,
 } from 'lucide-react';
-import { countVisibleContents, searchVisibleContentList } from '@/server/services/contentService';
+import { searchVisibleContentList, countVisibleContents } from '@/server/services/contentService';
 import { getEditLinks } from '@/server/services/editLinkService';
-import { getAdminDashboardStats } from '@/server/services/statisticsService';
+import { getAdminDashboardStats, getPublishedPostsViewCount } from '@/server/services/statisticsService';
 import { getTaxonomyOptions } from '@/server/services/taxonomyService';
 
 import { getCurrentActor } from '@/server/lib/currentActor';
@@ -29,14 +29,16 @@ export default async function AdminPage() {
   const editor = await getCurrentEditor();
   const hasEditSession = !!(editor && editor.type === 'session');
 
-  // 統計データ取得
-  const [{ posts: recentPosts }, { posts: publishedPosts }] = await Promise.all([
+  // 統計データ取得（重複排除版）
+  // - totalPosts は searchVisibleContentList の pagination から取得（countVisibleContents の呼び出しを削減）
+  // - publishedPosts の個別取得は廃止し、statisticsService でビュー数合計を直接取得
+  const [{ posts: recentPosts, pagination: recentPagination }] = await Promise.all([
     searchVisibleContentList('', true, 'updatedAt', 'desc', 1, 5),
-    searchVisibleContentList('', false, 'updatedAt', 'desc', 1, 100),
   ]);
 
-  const totalPosts = await countVisibleContents('', true);
+  const totalPosts = recentPagination.totalCount;
   const publishedCount = await countVisibleContents('', false);
+  const publishedViewCount = await getPublishedPostsViewCount();
 
   // カテゴリと編集リンク詳細の取得
   const taxonomy = await getTaxonomyOptions();
@@ -66,7 +68,7 @@ export default async function AdminPage() {
         editSessionsCount={editSessionsCount}
         thisMonthCount={stats.thisMonthPosts}
         lastMonthCount={stats.lastMonthPosts}
-        publishedPostsViewCount={publishedPosts.reduce((sum, post) => sum + (post.viewCount || 0), 0).toLocaleString()}
+        publishedPostsViewCount={publishedViewCount.toLocaleString()}
         viewTrend={stats.viewTrend}
         last7Chart={stats.last7Chart}
       />

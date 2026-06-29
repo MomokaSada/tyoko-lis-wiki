@@ -29,7 +29,7 @@ import { getCurrentActor } from '@/server/lib/currentActor';
 import { getFirstZodErrorMessage } from '@/server/lib/zodError';
 import { RateLimitAction } from '@/server/lib/rateLimit';
 
-import { commonErrors } from '@/server/errors';
+import { commonErrors, getRateLimitMessage } from '@/server/errors';
 
 import type { PrivilegedActor } from '@/types/actor';
 import type { BaseActionState } from '@/types/actionState';
@@ -70,26 +70,6 @@ export async function withAction(
   }
 
   return null;
-}
-
-function getRateLimitMessage(action: RateLimitAction): string {
-  const messages: Record<RateLimitAction, string> = {
-    login: 'ログイン試行が多すぎます。しばらくしてから再度お試しください。',
-    register: 'アカウント作成試行が多すぎます。しばらくしてから再度お試しください。',
-    createContent: '項目作成試行が多すぎます。しばらくしてから再度お試しください。',
-    updateContent: '項目編集試行が多すぎます。しばらくしてから再度お試しください。',
-    deleteContent: '項目削除試行が多すぎます。しばらくしてから再度お試しください。',
-    thumbnailUpload: 'サムネイルアップロード試行が多すぎます。しばらくしてから再度お試しください。',
-    createCategory: 'カテゴリ作成試行が多すぎます。しばらくしてから再度お試しください。',
-    updateCategory: 'カテゴリ更新試行が多すぎます。しばらくしてから再度お試しください。',
-    deleteCategory: 'カテゴリ削除試行が多すぎます。しばらくしてから再度お試しください。',
-    createIpBan: 'IPBAN作成試行が多すぎます。しばらくしてから再度お試しください。',
-    createEditLink: '編集リンク作成試行が多すぎます。しばらくしてから再度お試しください。',
-    createAccountCreateLink: 'アカウント作成リンク作成試行が多すぎます。しばらくしてから再度お試しください。',
-    deactivateEditLink: '操作が多すぎます。しばらくしてから再度お試しください。',
-    banAccount: 'BAN試行が多すぎます。しばらくしてから再度お試しください。',
-  };
-  return messages[action];
 }
 
 // ---------------------------------------------------------------------------

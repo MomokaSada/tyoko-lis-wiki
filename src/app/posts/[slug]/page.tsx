@@ -33,6 +33,98 @@ import { PostShareActions } from './_sections/PostShareActions';
 import { ArticleProfile } from './_sections/ArticleProfile';
 import { createHeadingIdBase, createUniqueHeadingId, normalizeHeadingText } from '@/lib/heading';
 import { MobileActions } from '@/components/layout/MobileActions';
+import { z } from 'zod';
+
+// ---------------------------------------------------------------------------
+// タクソノミー型の Zod スキーマ
+// 従来の手書き型ガードを Zod の safeParse に置き換え、検証ロジックを一元化する
+// ---------------------------------------------------------------------------
+const tagSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+});
+
+const categorySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  parentId: z.number().nullable(),
+});
+
+const postCategorySchema = z.object({
+  id: z.number(),
+  name: z.string(),
+});
+
+// ---------------------------------------------------------------------------
+// JSON-LD 構造化データ（Schema.org）
+// ---------------------------------------------------------------------------
+
+/**
+ * 記事ページ用の JSON-LD を生成する。
+ * Article と BreadcrumbList の2種類を配列で返す。
+ */
+function generateArticleJsonLd(
+  post: NonNullable<Awaited<ReturnType<typeof getCachedContentDetail>>>,
+  categoryPath: { id: number; name: string }[],
+  thumbnailUrl: string | null,
+) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const canonicalUrl = `${appUrl}/posts/${encodeURIComponent(post.slug)}`;
+  const description = post.content
+    ? post.content.substring(0, 160).replace(/[#*\[\]]/g, '').trim()
+    : post.title;
+  const datePublished = post.createdAt instanceof Date ? post.createdAt.toISOString() : undefined;
+  const dateModified = post.updatedAt instanceof Date ? post.updatedAt.toISOString() : undefined;
+
+  const breadcrumbItems = categoryPath.map((cat, i) => ({
+    '@type': 'ListItem' as const,
+    position: i + 1,
+    name: cat.name,
+    item: `${appUrl}/posts?categoryId=${cat.id}`,
+  }));
+
+  const breadcrumb = breadcrumbItems.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: breadcrumbItems,
+      }
+    : undefined;
+
+  const article: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description,
+    url: canonicalUrl,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': canonicalUrl,
+    },
+    ...(datePublished ? { datePublished } : {}),
+    ...(dateModified ? { dateModified } : {}),
+    author: {
+      '@type': 'Organization',
+      name: 'Tyokore Wiki',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Tyokore Wiki',
+    },
+    ...(thumbnailUrl
+      ? {
+          image: {
+            '@type': 'ImageObject',
+            url: thumbnailUrl,
+            width: 1200,
+            height: 630,
+          },
+        }
+      : {}),
+  };
+
+  return [article, ...(breadcrumb ? [breadcrumb] : [])];
+}
 
 /**
  * Zenn風の高度な目次抽出ツール
@@ -98,6 +190,9 @@ export async function generateMetadata(
     return {
       title: `${post.title} | Tyokore Wiki`,
       description: description || '項目詳細ページ',
+      alternates: {
+        canonical: `/posts/${encodeURIComponent(post.slug)}`,
+      },
       openGraph: {
         title: post.title,
         description: description || '項目詳細ページ',
@@ -162,35 +257,20 @@ export default async function PostDetailPage({
   // タクソノミー情報の取得
   const { tags: rawTags, categories: rawPostCategories, allCategories: rawAllCategories } = await getFullContentTaxonomy(post.id);
 
-  // 型安全な処理：各要素に必要なプロパティがあるかチェック
-  const isValidTag = (t: unknown): t is { id: number; name: string } => {
-    if (typeof t !== 'object' || t === null) return false;
-    const obj = t as Record<string, unknown>;
-    return 'id' in obj && 'name' in obj && typeof obj.id === 'number' && typeof obj.name === 'string';
-  };
-
-  const isValidCategory = (c: unknown): c is { id: number; name: string; parentId: number | null } => {
-    if (typeof c !== 'object' || c === null) return false;
-    const obj = c as Record<string, unknown>;
-    return 'id' in obj && 'name' in obj && 'parentId' in obj &&
-      typeof obj.id === 'number' && typeof obj.name === 'string' &&
-      (obj.parentId === null || typeof obj.parentId === 'number');
-  };
-
-  const tags = Array.isArray(rawTags) ? rawTags.filter(isValidTag) : [];
+  // Zod スキーマで一括パース（従来の手書き型ガードを置き換え）
+  const tags = Array.isArray(rawTags)
+    ? rawTags.filter((t): t is z.infer<typeof tagSchema> => tagSchema.safeParse(t).success)
+    : [];
 
   const allCategories = Array.isArray(rawAllCategories)
-    ? rawAllCategories.filter(isValidCategory)
+    ? rawAllCategories.filter((c): c is z.infer<typeof categorySchema> => categorySchema.safeParse(c).success)
     : [];
 
   const postCategories = Array.isArray(rawPostCategories)
-    ? rawPostCategories.flatMap((c) => {
-      if (typeof c !== 'object' || c === null) return [];
-      const obj = c as Record<string, unknown>;
-      if (!('id' in obj) || !('name' in obj)) return [];
-      if (typeof obj.id !== 'number' || typeof obj.name !== 'string') return [];
-      return [{ id: obj.id, name: obj.name }];
-    })
+    ? rawPostCategories
+        .map((c) => postCategorySchema.safeParse(c))
+        .filter((r) => r.success)
+        .map((r) => r.data)
     : [];
 
   // 最初のカテゴリ（あれば）をベースに階層パスを解決
@@ -212,8 +292,15 @@ export default async function PostDetailPage({
     ? post.updatedAt.toLocaleDateString('ja-JP')
     : '不明';
 
+  const jsonLd = generateArticleJsonLd(post, categoryPath, thumbnailUrl);
+
   return (
-    <div className="min-h-screen bg-stone-50/50 pb-20">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd.length === 1 ? jsonLd[0] : jsonLd) }}
+      />
+      <div className="min-h-screen bg-stone-50/50 pb-20">
       {/* 1. ヒーローセクション */}
       <div className="relative w-full min-h-[320px] md:min-h-[420px] h-auto overflow-hidden bg-stone-900 border-b border-stone-800">
         {/* 背景のボケ画像またはグラデーション */}
@@ -382,5 +469,6 @@ export default async function PostDetailPage({
         }
       />
     </div>
+    </>
   );
 }

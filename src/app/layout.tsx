@@ -16,8 +16,15 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tyokore.com'),
   title: "ちょこちょこ大百科",
   description: "ちょこれとちょこれリスナーの公式大百科",
+  alternates: {
+    canonical: '/',
+    languages: {
+      'ja': '/',
+    },
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
