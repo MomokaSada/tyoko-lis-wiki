@@ -49,20 +49,18 @@ const APP_SESSION_COOKIE_NAME = process.env.APP_SESSION_COOKIE_NAME ?? 'app_sess
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   let response = NextResponse.next({ request: { headers: request.headers } });
 
-  // ルート要件を先に判定し、public ルートは Auth を完全スキップする
   const requirement = getRequirement(request.nextUrl.pathname);
 
   let user = null;
 
-  // public ページの Auth 呼び出しは不要（〜100ms 節約）
-  if (requirement.kind !== 'public') {
-    try {
-      const result = await updateSession(request);
-      response = result.response;
-      user = result.user;
-    } catch (error) {
-      console.warn('[proxy] Supabase unavailable, running without authentication');
-    }
+  // 全ルートで updateSession を呼び Cookie のリフレッシュを行う。
+  // 内部で withAuthTimeout により Supabase 停止時は 3 秒で諦める。
+  try {
+    const result = await updateSession(request);
+    response = result.response;
+    user = result.user;
+  } catch (error) {
+    console.warn('[proxy] Supabase unavailable, running without authentication');
   }
 
   const requestRole = user?.app_metadata?.role;
@@ -212,9 +210,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - _next/webpack-hmr (hot module replacement)
-     * - favicon.ico (favicon file)
-     * - public assets (images, etc)
+     * - favicon.ico / favicon/ (favicon files)
+     * - vendor/ (vendor assets: toastui, etc.)
+     * - public assets (images, fonts, scripts, styles, etc.)
      */
-    '/((?!_next/static|_next/image|_next/webpack-hmr|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|_next/webpack-hmr|favicon\\.ico|favicon/|vendor/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|js|css|json|webmanifest|ico)$).*)',
   ],
 };
