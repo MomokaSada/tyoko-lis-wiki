@@ -7,22 +7,18 @@ import {
     verifyRegistrationResponse,
 } from '@simplewebauthn/server';
 import type { AuthenticatorTransportFuture } from '@simplewebauthn/server';
-import { createAppSession } from '@/server/repositories/appSessionRepository';
 import {
+    createAppSession,
     createPasskey,
     getPasskeysByUserId,
     getPasskeyByCredentialId,
     updatePasskeyCounter,
-} from '@/server/repositories/passkeyRepository';
-import { findUserByName } from '@/server/repositories/authRepository';
-import {
+    findUserByName,
     getUserProfile,
-} from '@/server/repositories/userRepository';
-import {
     createChallenge,
     getValidChallenge,
     markChallengeConsumed,
-} from '@/server/repositories/webauthnChallengeRepository';
+} from '@/server/services/passkeyService';
 import {
     RP_NAME,
     RP_ID,

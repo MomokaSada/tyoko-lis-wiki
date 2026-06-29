@@ -33,7 +33,7 @@ function MarkdownIcon({ size = 24, className }: { size?: number; className?: str
 }
 
 export const metadata: Metadata = {
-  title: 'Markdownエディタの使い方 | ちょこちょこ大百科',
+  title: 'Markdownエディタの使い方',
   description: 'ちょこちょこ大百科の記事作成で使用できるMarkdownエディタ（MDツール）の使い方を詳しく解説します。基本的な記法から便利な機能まで網羅。',
 };
 

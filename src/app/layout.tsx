@@ -15,15 +15,43 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+const defaultTitle = "ちょこちょこ大百科";
+const defaultDescription = "ちょこれとちょこれリスナーの公式大百科";
+const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tyokore.com';
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tyokore.com'),
-  title: "ちょこちょこ大百科",
-  description: "ちょこれとちょこれリスナーの公式大百科",
+  metadataBase: new URL(appUrl),
+  title: {
+    default: defaultTitle,
+    template: `%s | ${defaultTitle}`,
+  },
+  description: defaultDescription,
   alternates: {
     canonical: '/',
     languages: {
       'ja': '/',
     },
+  },
+  openGraph: {
+    title: defaultTitle,
+    description: defaultDescription,
+    siteName: defaultTitle,
+    type: 'website',
+    locale: 'ja_JP',
+    images: [
+      {
+        url: '/images/no-image.png',
+        width: 1200,
+        height: 630,
+        alt: defaultTitle,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: defaultTitle,
+    description: defaultDescription,
+    images: ['/images/no-image.png'],
   },
   icons: {
     icon: [

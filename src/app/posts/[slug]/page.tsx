@@ -31,29 +31,10 @@ import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
 
 import { PostShareActions } from './_sections/PostShareActions';
 import { ArticleProfile } from './_sections/ArticleProfile';
-import { createHeadingIdBase, createUniqueHeadingId, normalizeHeadingText } from '@/lib/heading';
 import { MobileActions } from '@/components/layout/MobileActions';
 import { z } from 'zod';
-
-// ---------------------------------------------------------------------------
-// タクソノミー型の Zod スキーマ
-// 従来の手書き型ガードを Zod の safeParse に置き換え、検証ロジックを一元化する
-// ---------------------------------------------------------------------------
-const tagSchema = z.object({
-  id: z.number(),
-  name: z.string(),
-});
-
-const categorySchema = z.object({
-  id: z.number(),
-  name: z.string(),
-  parentId: z.number().nullable(),
-});
-
-const postCategorySchema = z.object({
-  id: z.number(),
-  name: z.string(),
-});
+import { tagSchema, categorySchema, postCategorySchema } from '@/server/schemas/postSchemas';
+import { extractToc } from '@/server/lib/extractToc';
 
 // ---------------------------------------------------------------------------
 // JSON-LD 構造化データ（Schema.org）
@@ -126,36 +107,6 @@ function generateArticleJsonLd(
   return [article, ...(breadcrumb ? [breadcrumb] : [])];
 }
 
-/**
- * Zenn風の高度な目次抽出ツール
- * H1 (#) 〜 H4 (####) に対応
- */
-function extractToc(markdown: string) {
-  if (!markdown) return [];
-  const toc: { id: string, text: string, level: number }[] = [];
-  const usedIds = new Map<string, number>();
-
-  // コードブロックをスキップしつつ見出しを抽出する正規表現
-  // 1. ``` で囲まれたブロックを最短一致でマッチさせて無視
-  // 2. 改行直後の # (1-6個) で始まる行を抽出
-  const regex = /^(?:```[\s\S]*?^```|^\s*(#{1,6})\s*(.+?)\s*$)/gm;
-
-  let match;
-  while ((match = regex.exec(markdown)) !== null) {
-    // match[1] が存在する場合のみ見出しとして処理（コードブロックは無視）
-    if (match[1]) {
-      const level = match[1].length;
-      const text = normalizeHeadingText(match[2]);
-      if (text) {
-        const id = createUniqueHeadingId(createHeadingIdBase(text), usedIds);
-        toc.push({ id, text, level });
-      }
-    }
-  }
-
-  return toc;
-}
-
 // React.cache でリクエスト単位での二重フェッチを防止
 const getCachedContentDetail = cache(getAccessibleContentDetail);
 
@@ -176,19 +127,33 @@ export async function generateMetadata(
 
     if (!post) {
       return {
-        title: '項目が見つかりません | Tyokore Wiki',
+        title: '項目が見つかりません',
       };
     }
 
     const description = post.content
-      ? post.content.substring(0, 160).replace(/[#*\[\]]/g, '').trim()
+      ? post.content
+          // コードブロックとインラインコードを除去
+          .replace(/```[\s\S]*?```/g, '')
+          .replace(/`[^`]+`/g, '')
+          // Markdown リンク [text](url) → text
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+          // 画像 ![alt](url) を除去
+          .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+          // 装飾記号（#, *, _, ~~, >, - など）を除去
+          .replace(/[#*_~>`\-|]/g, '')
+          .substring(0, 160)
+          .trim()
       : post.title;
 
     const thumbnailUrl = getPublicThumbnailUrl(post.thumbnail);
     const ogImage = thumbnailUrl || '/images/no-image.png';
 
+    const datePublished = post.createdAt instanceof Date ? post.createdAt.toISOString() : undefined;
+    const dateModified = post.updatedAt instanceof Date ? post.updatedAt.toISOString() : undefined;
+
     return {
-      title: `${post.title} | Tyokore Wiki`,
+      title: post.title,
       description: description || '項目詳細ページ',
       alternates: {
         canonical: `/posts/${encodeURIComponent(post.slug)}`,
@@ -197,6 +162,8 @@ export async function generateMetadata(
         title: post.title,
         description: description || '項目詳細ページ',
         type: 'article',
+        ...(datePublished ? { publishedTime: datePublished } : {}),
+        ...(dateModified ? { modifiedTime: dateModified } : {}),
         images: [
           {
             url: ogImage,
@@ -215,7 +182,7 @@ export async function generateMetadata(
     };
   } catch (error) {
     return {
-      title: '項目詳細 | Tyokore Wiki',
+      title: '項目詳細',
       description: 'Tyokore Wiki の項目詳細ページです。',
     };
   }
@@ -258,20 +225,9 @@ export default async function PostDetailPage({
   const { tags: rawTags, categories: rawPostCategories, allCategories: rawAllCategories } = await getFullContentTaxonomy(post.id);
 
   // Zod スキーマで一括パース（従来の手書き型ガードを置き換え）
-  const tags = Array.isArray(rawTags)
-    ? rawTags.filter((t): t is z.infer<typeof tagSchema> => tagSchema.safeParse(t).success)
-    : [];
-
-  const allCategories = Array.isArray(rawAllCategories)
-    ? rawAllCategories.filter((c): c is z.infer<typeof categorySchema> => categorySchema.safeParse(c).success)
-    : [];
-
-  const postCategories = Array.isArray(rawPostCategories)
-    ? rawPostCategories
-        .map((c) => postCategorySchema.safeParse(c))
-        .filter((r) => r.success)
-        .map((r) => r.data)
-    : [];
+  const tags = z.array(tagSchema).parse(rawTags ?? []);
+  const allCategories = z.array(categorySchema).parse(rawAllCategories ?? []);
+  const postCategories = z.array(postCategorySchema).parse(rawPostCategories ?? []);
 
   // 最初のカテゴリ（あれば）をベースに階層パスを解決
   const categoryPath = postCategories.length > 0

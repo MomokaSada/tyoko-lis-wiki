@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { getPublishedContentList } from '@/server/services/contentService';
+import { getSitemapContentList } from '@/server/services/contentService';
 
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tyokore.com';
 
@@ -14,7 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let postPages: MetadataRoute.Sitemap = [];
   try {
-    const posts = await getPublishedContentList();
+    const posts = await getSitemapContentList();
     postPages = posts.map((post) => ({
       url: `${BASE_URL}/posts/${encodeURIComponent(post.slug)}`,
       lastModified: post.updatedAt instanceof Date ? post.updatedAt : new Date(),
@@ -22,7 +22,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }));
   } catch {
-    // データベース取得に失敗した場合は、静的なページのみを返す
   }
 
   return [...staticPages, ...postPages];

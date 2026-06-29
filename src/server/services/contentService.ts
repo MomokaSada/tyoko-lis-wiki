@@ -1,3 +1,5 @@
+import { logger } from '@/server/lib/logger';
+
 import type {
     CreateContentInput,
     DeleteContentInput,
@@ -11,6 +13,9 @@ import {
     findPublishedContentBySlug,
     findEditableContentBySlug,
     findContentBySlug,
+    getSitemapContentList as getSitemapContentListRepo,
+    getHomePageContentList,
+    countPublishedContents,
     incrementContentViewCount,
     listVisibleContents,
     listPublishedContents,
@@ -110,6 +115,14 @@ export async function createContent(
   };
 }
 
+export async function getSitemapContentList() {
+  try {
+    return await getSitemapContentListRepo();
+  } catch {
+    return [];
+  }
+}
+
 export async function getPublishedContentList(sort?: ContentSortKey, order?: SortOrder) {
   try {
     const rows = await listPublishedContents(sort, order);
@@ -170,9 +183,7 @@ export async function searchVisibleContentList(
     totalCount = results[0];
     rows = results[1];
   } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[contentService] searchVisibleContentList failed:', error);
-    }
+    logger.warn('[contentService] searchVisibleContentList failed:', error);
   }
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -194,17 +205,18 @@ export async function searchVisibleContentList(
 
 export async function getHomePageData() {
   try {
-    const [recentResult, weeklyPosts] = await Promise.all([
-      searchVisibleContentList('', false, 'updatedAt', 'desc', 1, 6),
+    const [recentList, totalCount, weeklyPosts] = await Promise.all([
+      getHomePageContentList(6),
+      countPublishedContents(),
       getWeeklyPopularContentList(6),
     ]);
 
     return {
-      recentPosts: recentResult.posts.slice(0, 3),
-      featuredPost: recentResult.posts.length > 0 ? recentResult.posts[0] : null,
-      allTimePosts: recentResult.posts,
+      recentPosts: recentList.slice(0, 3),
+      featuredPost: recentList.length > 0 ? recentList[0] : null,
+      allTimePosts: recentList,
       weeklyPosts,
-      totalPosts: recentResult.pagination.totalCount,
+      totalPosts: totalCount,
     };
   } catch (error) {
     return {

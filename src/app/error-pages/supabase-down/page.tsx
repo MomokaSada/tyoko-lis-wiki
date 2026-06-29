@@ -1,6 +1,13 @@
 import Link from 'next/link';
 import { CloudOff, ArrowLeft } from 'lucide-react';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'データベース接続エラー',
+  description: 'データベースに接続できませんでした。',
+  robots: { index: false },
+};
 
 export default function SupabaseDownPage() {
   return (

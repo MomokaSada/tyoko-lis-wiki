@@ -1,31 +1,14 @@
 import type { NextConfig } from "next";
 
-/** 開発環境のマシンホスト名（localhost 以外を使う場合に .env で指定） */
-const devHostname = process.env.NEXT_PUBLIC_DEV_HOSTNAME;
-
-/** CSP ノンスを生成する（ビルド時にはダミー、本番はサーバー側で上書き） */
-// 非推奨: next.config のヘッダーは静的な文字列しか使えないため、
-// CSP は middleware (proxy.ts) で動的に設定する方針に変更。
-// 参照: doc/architecture/csp-strategy.md
+// NOTE: 以前は NEXT_PUBLIC_DEV_HOSTNAME でカスタムホスト名（.local 等）を
+// 指定していたが、HMR WebSocket が wss:// で接続しようとして失敗し、
+// ページの定期リロードを引き起こす原因となっていた。
+// → localhost のみ使用。モバイル確認が必要な場合は LAN IP で直接アクセスする。
+//   例: http://192.168.x.x:3000
 
 const nextConfig: NextConfig = {
-  // 型チェックは build スクリプト内で tsc --noEmit により実行するため、
-  // next.config 側の ignoreBuildErrors は削除する。
-  // 参照: package.json scripts.build
-  allowedDevOrigins: devHostname ? [devHostname] : [],
   images: {
     remotePatterns: [
-      ...(devHostname
-        ? [
-            {
-              // Supabase Storage (ローカル開発環境: カスタムホスト名)
-              protocol: "http" as const,
-              hostname: devHostname,
-              port: "54321",
-              pathname: "/storage/v1/**",
-            },
-          ]
-        : []),
       {
         // Supabase Storage (ローカル開発環境: localhost)
         protocol: "http",

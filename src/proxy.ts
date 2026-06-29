@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from './lib/supabase/middleware';
 import { getRequirement } from './lib/auth/routeRules';
 import { ADMIN_ROLES, HEADER_CLIENT_IP, HEADER_USER_ROLE, HEADER_IS_PROTECTED, PATHS } from './lib/auth/constants';
+import { logger } from '@/server/lib/logger';
 
 // ---------------------------------------------------------------------------
 // Content Security Policy
@@ -60,9 +61,17 @@ function buildCspHeader(): string {
   ].join('; ');
 }
 
-/** レスポンスに CSP ヘッダーを追加する */
-function setCspHeaders(res: NextResponse): NextResponse {
+/** レスポンスに各種セキュリティヘッダーを追加する */
+function setSecurityHeaders(res: NextResponse): NextResponse {
   res.headers.set('Content-Security-Policy', buildCspHeader());
+  // HSTS: 常に HTTPS で通信させる（本番環境のみ有効）
+  if (process.env.NODE_ENV === 'production') {
+    res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
+  }
+  // MIME スニッフィング対策
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  // リファラー情報の送信ポリシー (クロスオリジンへのリーク防止)
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   return res;
 }
 
@@ -122,7 +131,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     response = result.response;
     user = result.user;
   } catch (error) {
-    console.warn('[proxy] Supabase unavailable, running without authentication');
+    logger.warn('[proxy] Supabase unavailable, running without authentication');
   }
 
   const requestRole = user?.app_metadata?.role;
@@ -165,7 +174,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       newResponse.cookies.set(cookie.name, cookie.value, cookie);
     });
 
-    return setCspHeaders(newResponse);
+    return setSecurityHeaders(newResponse);
   };
 
   switch (requirement.kind) {
@@ -173,7 +182,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // 公開ページ: 認証不要
     // ----------------------------------------------------------------
     case 'public':
-      return setCspHeaders(createForwardResponse(response));
+      return setSecurityHeaders(createForwardResponse(response));
 
     // ----------------------------------------------------------------
     // ログイン必須ページ
@@ -183,20 +192,20 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     case 'login': {
       // Supabase Auth セッション または パスキー(app_session) Cookie のいずれかがあれば許可
       if (!user && !appSessionToken) {
-        return setCspHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
+        return setSecurityHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
       }
 
       // Supabase ユーザーがいる場合のみロールチェック
       // （パスキーユーザーはページコンポーネントの getCurrentActor() で権限検証）
       if (user && requirement.role) {
         if (requirement.role === 'admin' && !ADMIN_ROLES.includes(requestRole)) {
-          return setCspHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
+          return setSecurityHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
         }
         if (requirement.role === 'owner' && requestRole !== 'owner') {
-          return setCspHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
+          return setSecurityHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
         }
       }
-      return setCspHeaders(createForwardResponse(response));
+      return setSecurityHeaders(createForwardResponse(response));
     }
 
     // ----------------------------------------------------------------
@@ -208,20 +217,20 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // ----------------------------------------------------------------
     case 'createAndEditPost': {
       if (user && ADMIN_ROLES.includes(requestRole)) {
-        return setCspHeaders(createForwardResponse(response));
+        return setSecurityHeaders(createForwardResponse(response));
       }
 
       // パスキー認証済みユーザー（app_session Cookie）も許可
       if (appSessionToken) {
-        return setCspHeaders(createForwardResponse(response));
+        return setSecurityHeaders(createForwardResponse(response));
       }
 
       const editSessionToken = request.nextUrl.searchParams.get('session');
       if (editSessionToken) {
-        return setCspHeaders(createForwardResponse(response));
+        return setSecurityHeaders(createForwardResponse(response));
       }
 
-      return setCspHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
+      return setSecurityHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
     }
 
     // ----------------------------------------------------------------
@@ -232,22 +241,22 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // ----------------------------------------------------------------
     case 'accountCreateSession': {
       if (user) {
-        return setCspHeaders(NextResponse.redirect(new URL(PATHS.HOME, request.url)));
+        return setSecurityHeaders(NextResponse.redirect(new URL(PATHS.HOME, request.url)));
       }
 
       const accountSessionToken = request.nextUrl.searchParams.get('session');
       if (accountSessionToken) {
-        return setCspHeaders(createForwardResponse(response));
+        return setSecurityHeaders(createForwardResponse(response));
       }
 
-      return setCspHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
+      return setSecurityHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
     }
 
     // ----------------------------------------------------------------
     // 存在しないページ
     // ----------------------------------------------------------------
     case 'notFound': {
-      return setCspHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
+      return setSecurityHeaders(NextResponse.redirect(new URL(PATHS.NOT_FOUND, request.url)));
     }
 
     // ----------------------------------------------------------------
@@ -258,9 +267,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // ----------------------------------------------------------------
     default: {
       if (process.env.NODE_ENV === 'development') {
-        console.warn(`[proxy] 未処理の route requirement for path: "${request.nextUrl.pathname}"`);
+        logger.warn(`[proxy] 未処理の route requirement for path: "${request.nextUrl.pathname}"`);
       }
-      return setCspHeaders(createForwardResponse(response));
+      return setSecurityHeaders(createForwardResponse(response));
     }
   }
 }

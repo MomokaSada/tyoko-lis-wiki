@@ -10,14 +10,14 @@ import { MobileActions } from '@/components/layout/MobileActions';
 import type {
     ContentSortKey,
     SortOrder,
-} from '@/server/types/repositoryTypes';
+} from '@/types/content';
 import { PostsHeroSection } from './_sections/PostsHeroSection';
 import { PostsStatusBar } from './_sections/PostsStatusBar';
 import { PostsEmptyState } from './_sections/PostsEmptyState';
 import { PostCardGrid } from './_sections/PostCardGrid';
 
 export const metadata: Metadata = {
-  title: '項目一覧 | Tyokore Wiki',
+  title: '項目一覧',
   description: 'Tyokore Wiki の項目一覧ページです。カテゴリやタグで検索・フィルタリングできます。',
   alternates: {
     canonical: '/posts',

@@ -1,6 +1,13 @@
 import Link from 'next/link';
 import { ServerCrash, ArrowLeft } from 'lucide-react';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'サーバーエラー',
+  description: 'サーバーで問題が発生しました。',
+  robots: { index: false },
+};
 
 export default function ServerErrorPage() {
   return (

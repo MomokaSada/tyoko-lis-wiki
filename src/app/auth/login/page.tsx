@@ -1,6 +1,13 @@
 import LoginForm from './login-form';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'ログイン',
+  description: 'Tyokore Wiki にログインして編集機能や管理画面を利用できます。',
+  robots: { index: false },
+};
 
 export default async function LoginPage({
   searchParams,

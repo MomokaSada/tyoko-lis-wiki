@@ -1,6 +1,13 @@
 import Link from 'next/link';
 import { Wrench, ArrowLeft } from 'lucide-react';
 import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'メンテナンス中',
+  description: 'ただいまメンテナンスを実施中です。',
+  robots: { index: false },
+};
 
 export default function MaintenancePage() {
   return (
