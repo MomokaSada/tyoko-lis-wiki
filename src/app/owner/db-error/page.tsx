@@ -1,6 +1,7 @@
 import { type Metadata } from 'next';
 import Link from 'next/link';
-import { Database, WifiOff, Home, AlertTriangle } from 'lucide-react';
+import { WifiOff, Home, AlertTriangle } from 'lucide-react';
+import { RetryButton } from './retry-button';
 
 export const metadata: Metadata = {
   title: 'DB接続エラー - Owner',
@@ -13,9 +14,10 @@ export default async function DbErrorPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  const errorMessage = error
-    ? decodeURIComponent(error)
-    : 'データベースとの接続に失敗しました。';
+  const errorMessage = (() => {
+    if (!error) return 'データベースとの接続に失敗しました。';
+    try { return decodeURIComponent(error); } catch { return error; }
+  })();
 
   return (
     <section className="max-w-7xl mx-auto px-6 pt-12 pb-10">
@@ -61,13 +63,7 @@ export default async function DbErrorPage({
               <Home className="w-4 h-4" />
               ダッシュボードに戻る
             </Link>
-            <button
-              onClick={() => window.location.reload()}
-              className="inline-flex items-center gap-2 bg-white text-stone-700 font-bold px-6 py-3 rounded-xl border border-stone-300 hover:bg-stone-50 transition-colors text-sm"
-            >
-              <Database className="w-4 h-4" />
-              再接続を試みる
-            </button>
+            <RetryButton />
           </div>
         </div>
 

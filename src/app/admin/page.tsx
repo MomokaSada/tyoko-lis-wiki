@@ -18,6 +18,7 @@ import { MobileActions } from '@/components/layout/MobileActions';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { AdminHeroSection } from './_sections/AdminHeroSection';
 import { AdminStatsSection } from './_sections/AdminStatsSection';
+import ErrorBanner from '@/components/ui/ErrorBanner';
 
 export const metadata: Metadata = {
   robots: { index: false },
@@ -29,34 +30,45 @@ export default async function AdminPage() {
   const editor = await getCurrentEditor();
   const hasEditSession = !!(editor && editor.type === 'session');
 
-  // 統計データ取得（重複排除版）
-  // - totalPosts は searchVisibleContentList の pagination から取得（countVisibleContents の呼び出しを削減）
-  // - publishedPosts の個別取得は廃止し、statisticsService でビュー数合計を直接取得
-  const [{ posts: recentPosts, pagination: recentPagination }] = await Promise.all([
+  // 並列取得: 5つの独立した統計/データ取得をまとめる
+  const [
+    contentResult,
+    publishedCount,
+    publishedViewCount,
+    taxonomy,
+    actor,
+    stats,
+  ] = await Promise.all([
     searchVisibleContentList('', true, 'updatedAt', 'desc', 1, 5),
+    countVisibleContents('', false),
+    getPublishedPostsViewCount(),
+    getTaxonomyOptions(),
+    getCurrentActor(),
+    getAdminDashboardStats(),
   ]);
 
+  const { posts: recentPosts, pagination: recentPagination, error: fetchError } = contentResult;
   const totalPosts = recentPagination.totalCount;
-  const publishedCount = await countVisibleContents('', false);
-  const publishedViewCount = await getPublishedPostsViewCount();
 
-  // カテゴリと編集リンク詳細の取得
-  const taxonomy = await getTaxonomyOptions();
-  const actor = await getCurrentActor();
+  // editLinksResult のみ actor 依存のため直列
   const editLinksResult = actor ? await getEditLinks(actor) : { items: [], totalCount: 0 };
 
   // アクティブなリンク数
   const activeEditLinks = editLinksResult.items.filter(link => link.isActive).length;
   const editSessionsCount = editLinksResult.totalCount;
 
-  // 統計情報（月間投稿数・ビュー統計）
-  const stats = await getAdminDashboardStats();
-
   // 本日の日付
   const today = new Date().toLocaleDateString('ja-JP');
 
   return (
     <>
+      {/* ═══ エラーバナー ═══ */}
+      {fetchError && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4">
+          <ErrorBanner message={fetchError} />
+        </div>
+      )}
+
       {/* ═══ Admin Hero ═══ */}
       <AdminHeroSection userRole={userRole} today={today} />
 

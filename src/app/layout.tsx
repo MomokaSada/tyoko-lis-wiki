@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Header } from "../components/layout/Header";
 import { Footer } from "../components/layout/Footer";
@@ -10,14 +10,14 @@ import { ToastProvider } from "../components/ui/toast";
 import { headers } from "next/headers";
 import { HEADER_USER_ROLE } from "@/lib/auth/constants";
 
-const inter = Inter({
+const inter = localFont({
+  src: "./fonts/Inter-Latin.woff2",
   variable: "--font-inter",
-  subsets: ["latin"],
 });
 
 const defaultTitle = "ちょこちょこ大百科";
 const defaultDescription = "ちょこれとちょこれリスナーの公式大百科";
-const appUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tyokore.com';
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://tyokore.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),

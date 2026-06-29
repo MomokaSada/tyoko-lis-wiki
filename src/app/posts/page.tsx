@@ -15,6 +15,7 @@ import { PostsHeroSection } from './_sections/PostsHeroSection';
 import { PostsStatusBar } from './_sections/PostsStatusBar';
 import { PostsEmptyState } from './_sections/PostsEmptyState';
 import { PostCardGrid } from './_sections/PostCardGrid';
+import ErrorBanner from '@/components/ui/ErrorBanner';
 
 export const metadata: Metadata = {
   title: '項目一覧',
@@ -31,12 +32,18 @@ export default async function PostsPage({
 }) {
   const sp = await searchParams;
   const pageSize = 12;
-  const page = typeof sp.page === 'string' ? Math.max(1, parseInt(sp.page)) : 1;
+  const parsePositiveInt = (value: string | undefined) => {
+    if (typeof value !== 'string') return undefined;
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
+  };
+
+  const page = parsePositiveInt(typeof sp.page === 'string' ? sp.page : undefined) ?? 1;
   const query = typeof sp.q === 'string' ? sp.q : '';
   const session = typeof sp.session === 'string' ? sp.session : '';
   const sort = typeof sp.sort === 'string' ? sp.sort as ContentSortKey : 'updatedAt';
   const order = typeof sp.order === 'string' ? sp.order as SortOrder : 'desc';
-  const categoryId = typeof sp.categoryId === 'string' ? parseInt(sp.categoryId) : undefined;
+  const categoryId = parsePositiveInt(typeof sp.categoryId === 'string' ? sp.categoryId : undefined);
 
   const actor = await getCurrentActor();
   const canViewPrivate = Boolean(actor);
@@ -47,7 +54,7 @@ export default async function PostsPage({
   const editor = await getCurrentEditor(session);
   const hasEditSession = !!(editor && editor.type === 'session');
 
-  const { posts, pagination } = await searchVisibleContentList(
+  const result = await searchVisibleContentList(
     query,
     showPrivate,
     sort,
@@ -56,6 +63,7 @@ export default async function PostsPage({
     pageSize,
     categoryId
   );
+  const { posts, pagination, error: fetchError } = result;
 
   return (
     <>
@@ -72,6 +80,9 @@ export default async function PostsPage({
 
         {/* 2. メインコンテンツエリア */}
         <div className="max-w-[72rem] mx-auto px-4 sm:px-6 -mt-6 md:-mt-8 relative z-20">
+          {/* エラーバナー: DB障害などが発生した場合 */}
+          {fetchError && <div className="mb-6"><ErrorBanner message={fetchError} /></div>}
+
           {/* フィルタリング・ステータスバー */}
           <PostsStatusBar
             query={query}
@@ -79,7 +90,7 @@ export default async function PostsPage({
             totalCount={pagination.totalCount}
           />
 
-          {pagination.totalCount === 0 ? (
+          {!fetchError && pagination.totalCount === 0 ? (
             <PostsEmptyState query={query} categoryId={categoryId} />
           ) : (
             <PostCardGrid

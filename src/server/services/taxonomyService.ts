@@ -13,6 +13,7 @@ import {
     updateCategory,
 } from '@/server/repositories/taxonomyRepository';
 import type { PrivilegedActor as Actor } from '@/types/actor';
+import { logger } from '@/server/lib/logger';
 import {
     commonErrors,
     serviceErrors,
@@ -92,7 +93,11 @@ function wouldCreateCategoryCycle(
   return false;
 }
 
-export async function getTaxonomyOptions() {
+export async function getTaxonomyOptions(): Promise<{
+  tags: Awaited<ReturnType<typeof listTags>>;
+  categories: Awaited<ReturnType<typeof listCategories>>;
+  error?: string;
+}> {
   try {
     const [tagRows, categoryRows] = await Promise.all([listTags(), listCategories()]);
 
@@ -101,7 +106,8 @@ export async function getTaxonomyOptions() {
       categories: categoryRows,
     };
   } catch (error) {
-    return { tags: [], categories: [] };
+    logger.error('[taxonomyService] getTaxonomyOptions failed: DB query error');
+    return { tags: [], categories: [], error: 'タグ・カテゴリの取得に失敗しました。' };
   }
 }
 
@@ -197,7 +203,12 @@ export function detectTaxonomyChanges(
 /**
  * 項目に紐付く全てのタグとカテゴリの情報を取得します
  */
-export async function getFullContentTaxonomy(contentId: number) {
+export async function getFullContentTaxonomy(contentId: number): Promise<{
+  tags: Awaited<ReturnType<typeof listTags>>;
+  categories: Awaited<ReturnType<typeof listCategories>>;
+  allCategories: Awaited<ReturnType<typeof listCategories>>;
+  error?: string;
+}> {
   try {
     const [tagIds, categoryIds] = await Promise.all([
       listContentTagIds(contentId),
@@ -218,7 +229,8 @@ export async function getFullContentTaxonomy(contentId: number) {
       allCategories: categoryRows, // 階層解決用
     };
   } catch (error) {
-    return { tags: [], categories: [], allCategories: [] };
+    logger.error('[taxonomyService] getFullContentTaxonomy failed: DB query error');
+    return { tags: [], categories: [], allCategories: [], error: 'タグ・カテゴリの取得に失敗しました。' };
   }
 }
 

@@ -11,6 +11,7 @@ import { WelcomeBannerSection } from './_sections/WelcomeBannerSection';
 import { RecentPostsSection } from './_sections/RecentPostsSection';
 import { FeaturedPostSection } from './_sections/FeaturedPostSection';
 import { PendingPasskeyRegistration } from '@/components/features/home/PendingPasskeyRegistration';
+import ErrorBanner from '@/components/ui/ErrorBanner';
 
 // トップページは 60 秒ごとに ISR で再生成する。
 // force-dynamic から移行することで、同一訪問者への連続リクエストで
@@ -19,7 +20,7 @@ import { PendingPasskeyRegistration } from '@/components/features/home/PendingPa
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const { recentPosts, featuredPost, allTimePosts, weeklyPosts, totalPosts } = await getHomePageData();
+  const { recentPosts, featuredPost, allTimePosts, weeklyPosts, totalPosts, error: fetchError } = await getHomePageData();
 
   const headersList = await headers();
   const userRole = headersList.get(HEADER_USER_ROLE);
@@ -29,6 +30,9 @@ export default async function HomePage() {
   return (
     <>
       <div className="max-w-[72rem] mx-auto px-4 sm:px-6 py-8 md:py-10 space-y-8 animate-in fade-in duration-500">
+        {/* エラーバナー: DB障害などが発生した場合 */}
+        {fetchError && <ErrorBanner message={fetchError} />}
+
         {/* ウェルカムバナー */}
         <WelcomeBannerSection totalPosts={totalPosts} />
 

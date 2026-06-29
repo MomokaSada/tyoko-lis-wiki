@@ -49,7 +49,7 @@ function generateArticleJsonLd(
   categoryPath: { id: number; name: string }[],
   thumbnailUrl: string | null,
 ) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://tyokore.com';
   const canonicalUrl = `${appUrl}/posts/${encodeURIComponent(post.slug)}`;
   const description = post.content
     ? post.content.substring(0, 160).replace(/[#*\[\]]/g, '').trim()
@@ -254,7 +254,7 @@ export default async function PostDetailPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd.length === 1 ? jsonLd[0] : jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd.length === 1 ? jsonLd[0] : jsonLd).replace(/</g, '\\u003c') }}
       />
       <div className="min-h-screen bg-stone-50/50 pb-20">
       {/* 1. ヒーローセクション */}

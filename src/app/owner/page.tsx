@@ -43,15 +43,18 @@ export default async function OwnerPage() {
   const actor = await getCurrentActor();
   const isOwner = actor?.role === 'owner';
 
-  const [accountCreateLinksResult, manageableAccountsResult, activeIpBansResult, deviceSessionUsageRecordsResult] =
-    actor
-      ? await Promise.all([
-        getAccountCreateLinks(actor),
-        getManageableAccounts(actor),
-        getActiveIpBans(actor),
-        getDeviceSessionUsageRecords(actor),
-      ])
-      : [{ items: [], totalCount: 0 }, { items: [], totalCount: 0 }, { items: [], totalCount: 0 }, { items: [], totalCount: 0 }];
+  // getOwnerDashboardStats を actor 依存クエリと並列実行
+  const statsPromise = getOwnerDashboardStats();
+  const actorResultsPromise = actor
+    ? Promise.all([
+      getAccountCreateLinks(actor),
+      getManageableAccounts(actor),
+      getActiveIpBans(actor),
+      getDeviceSessionUsageRecords(actor),
+    ])
+    : Promise.resolve([{ items: [], totalCount: 0 } as never, { items: [], totalCount: 0 } as never, { items: [], totalCount: 0 } as never, { items: [], totalCount: 0 } as never]);
+
+  const [stats, [accountCreateLinksResult, manageableAccountsResult, activeIpBansResult, deviceSessionUsageRecordsResult]] = await Promise.all([statsPromise, actorResultsPromise]);
 
   const accountCreateLinks = accountCreateLinksResult.items;
   const manageableAccounts = manageableAccountsResult.items;
@@ -60,9 +63,6 @@ export default async function OwnerPage() {
     blockedBy: number; blockedByName: string | null; createdAt: Date;
   }[];
   const deviceSessionUsageRecords = deviceSessionUsageRecordsResult.items;
-
-  // ── システム概要の実データ ──
-  const stats = await getOwnerDashboardStats();
 
   const totalEditsUsed = deviceSessionUsageRecords.reduce((sum, r) => sum + r.editsUsed, 0);
   const totalMaxEdits = deviceSessionUsageRecords.reduce((sum, r) => sum + r.maxEdits, 0);

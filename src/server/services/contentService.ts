@@ -5,7 +5,6 @@ import type {
     DeleteContentInput,
     UpdateContentInput,
 } from '@/server/schemas';
-
 import {
     createContentWithInitialRevision,
     deleteContentById,
@@ -18,9 +17,7 @@ import {
     countPublishedContents,
     incrementContentViewCount,
     listVisibleContents,
-    listPublishedContents,
     searchVisibleContents,
-    searchPublishedContents,
     updateContentWithRevision,
     countVisibleContents,
     getWeeklyPopularContents,
@@ -31,6 +28,8 @@ import type {
 } from '@/server/types/repositoryTypes';
 
 import { EditorContext } from '@/server/lib/currentEditor';
+
+type VisibleContentRow = NonNullable<Awaited<ReturnType<typeof listVisibleContents>>>[number];
 
 import {
     commonErrors,
@@ -116,45 +115,7 @@ export async function createContent(
 }
 
 export async function getSitemapContentList() {
-  try {
-    return await getSitemapContentListRepo();
-  } catch {
-    return [];
-  }
-}
-
-export async function getPublishedContentList(sort?: ContentSortKey, order?: SortOrder) {
-  try {
-    const rows = await listPublishedContents(sort, order);
-
-    return rows.map((row) => ({
-      ...row,
-      excerpt:
-        row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
-    }));
-  } catch (error) {
-    return [];
-  }
-}
-
-export async function searchPublishedContentList(query: string, sort?: ContentSortKey, order?: SortOrder) {
-  const trimmedQuery = query.trim();
-
-  if (!trimmedQuery) {
-    return getPublishedContentList(sort, order);
-  }
-
-  try {
-    const rows = await searchPublishedContents(trimmedQuery, sort, order);
-
-    return rows.map((row) => ({
-      ...row,
-      excerpt:
-        row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
-    }));
-  } catch (error) {
-    return [];
-  }
+  return getSitemapContentListRepo();
 }
 
 export async function searchVisibleContentList(
@@ -165,7 +126,11 @@ export async function searchVisibleContentList(
   page: number = 1,
   pageSize: number = 10,
   categoryId?: number
-) {
+): Promise<{
+  posts: (VisibleContentRow & { excerpt: string })[];
+  pagination: { totalCount: number; totalPages: number; currentPage: number; pageSize: number };
+  error?: string;
+}> {
   const trimmedQuery = query.trim();
   const offset = (page - 1) * pageSize;
   const searchQuery = trimmedQuery || undefined;
@@ -183,7 +148,12 @@ export async function searchVisibleContentList(
     totalCount = results[0];
     rows = results[1];
   } catch (error) {
-    logger.warn('[contentService] searchVisibleContentList failed:', error);
+    logger.error('[contentService] searchVisibleContentList failed:', error);
+    return {
+      posts: [] as (VisibleContentRow & { excerpt: string })[],
+      pagination: { totalCount: 0, totalPages: 0, currentPage: page, pageSize },
+      error: 'データの取得に失敗しました。時間をおいて再度お試しください。',
+    };
   }
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -193,7 +163,7 @@ export async function searchVisibleContentList(
       ...row,
       excerpt:
         row.content.length > 140 ? `${row.content.slice(0, 140).trim()}...` : row.content,
-    })),
+    })) as (VisibleContentRow & { excerpt: string })[],
     pagination: {
       totalCount,
       totalPages,
@@ -203,7 +173,14 @@ export async function searchVisibleContentList(
   };
 }
 
-export async function getHomePageData() {
+export async function getHomePageData(): Promise<{
+  recentPosts: Awaited<ReturnType<typeof getHomePageContentList>>;
+  featuredPost: Awaited<ReturnType<typeof getHomePageContentList>>[number] | null;
+  allTimePosts: Awaited<ReturnType<typeof getHomePageContentList>>;
+  weeklyPosts: Awaited<ReturnType<typeof getWeeklyPopularContentList>>;
+  totalPosts: number;
+  error?: string;
+}> {
   try {
     const [recentList, totalCount, weeklyPosts] = await Promise.all([
       getHomePageContentList(6),
@@ -219,12 +196,14 @@ export async function getHomePageData() {
       totalPosts: totalCount,
     };
   } catch (error) {
+    logger.error('[contentService] getHomePageData failed:', error);
     return {
       recentPosts: [],
       featuredPost: null,
       allTimePosts: [],
       weeklyPosts: [],
       totalPosts: 0,
+      error: 'データの取得に失敗しました。時間をおいて再度お試しください。',
     };
   }
 }
@@ -233,46 +212,24 @@ export async function getWeeklyPopularContentList(limitCount = 6) {
   try {
     return await getWeeklyPopularContents(limitCount);
   } catch (error) {
+    logger.error('[contentService] getWeeklyPopularContentList failed:', error);
     return [];
   }
 }
 
-export async function getPublishedContentDetail(slug: string) {
-  try {
-    const content = await findPublishedContentBySlug(slug);
-
-    if (!content) {
-      return null;
-    }
-
-    const updated = await incrementContentViewCount(content.id);
-
-    return {
-      ...content,
-      viewCount: updated?.viewCount ?? content.viewCount,
-    };
-  } catch (error) {
-    return null;
-  }
-}
-
 export async function getAccessibleContentDetail(slug: string, editor: EditorContext | null) {
-  try {
-    const content = editor
-      ? await findEditableContentBySlug(slug)
-      : await findPublishedContentBySlug(slug);
+  const content = editor
+    ? await findEditableContentBySlug(slug)
+    : await findPublishedContentBySlug(slug);
 
-    if (!content) {
-      return null;
-    }
-    if (!editor) {
-      await incrementContentViewCount(content.id);
-    }
-
-    return content;
-  } catch (error) {
+  if (!content) {
     return null;
   }
+  if (!editor) {
+    await incrementContentViewCount(content.id);
+  }
+
+  return content;
 }
 
 export async function getEditableContentDetail(slug: string) {
