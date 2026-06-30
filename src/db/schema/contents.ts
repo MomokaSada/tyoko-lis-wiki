@@ -6,6 +6,7 @@ import {
     integer,
     boolean,
     timestamp,
+    index,
 } from 'drizzle-orm/pg-core';
 
 export const contents = pgTable('contents', {
@@ -19,4 +20,8 @@ export const contents = pgTable('contents', {
     isPublished: boolean('is_published').default(false).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => ({
+    updatedAtIdx: index('idx_contents_updated_at').on(table.updatedAt),
+    isPublishedIdx: index('idx_contents_is_published').on(table.isPublished),
+    createdAtIdx: index('idx_contents_created_at').on(table.createdAt),
+}));

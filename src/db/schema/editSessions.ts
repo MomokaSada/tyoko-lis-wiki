@@ -5,6 +5,7 @@ import {
     boolean,
     timestamp,
     foreignKey,
+    index,
 } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
@@ -18,12 +19,12 @@ export const editSessions = pgTable('edit_sessions', {
     endAt: timestamp('end_at').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
-} , (table) => (
-    [
-        foreignKey({
-            columns: [table.authorId],
-            foreignColumns: [users.id],
-        }).onDelete('cascade'),
-    ]
-));
+} , (table) => ({
+    authorFk: foreignKey({
+        columns: [table.authorId],
+        foreignColumns: [users.id],
+    }).onDelete('cascade'),
+    authorIdIdx: index('idx_edit_sessions_author_id').on(table.authorId),
+    createdAtIdx: index('idx_edit_sessions_created_at').on(table.createdAt),
+}));
 
