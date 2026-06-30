@@ -45,15 +45,17 @@ export function RecentPostsSection({ posts }: { posts: PostSummary[] }) {
                 key={article.id}
                 className="relative flex items-stretch rounded-[2rem] overflow-hidden border border-white/10 hover:shadow-2xl hover:shadow-stone-200/50 hover:-translate-y-1 transition-all duration-500 cursor-pointer group"
               >
-                {/* カード全体の背景画像 */}
-                <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{
-                    backgroundImage: `url(${thumbnailUrl || '/images/no-image.png'})`,
-                  }}
-                />
-                {/* カード全体の暗いオーバーレイ + ぼかし */}
-                <div className="absolute inset-0 backdrop-blur-[10px] bg-black/30" />
+                {/* カード全体の背景画像とぼかしをラップ（ブラーのはみ出し防止） */}
+                <div className="absolute inset-0 overflow-hidden rounded-[2rem]">
+                  <div
+                    className="absolute inset-0 bg-cover bg-center scale-105 filter blur-[10px]"
+                    style={{
+                      backgroundImage: `url(${thumbnailUrl || '/images/no-image.png'})`,
+                    }}
+                  />
+                  {/* カード全体の暗いオーバーレイ */}
+                  <div className="absolute inset-0 bg-black/30" />
+                </div>
 
                 {/* 左: 順位エリア（透明背景・番号はオーバーレイの上に） */}
                 <div className="relative flex items-center justify-center w-[100px] shrink-0 z-10">

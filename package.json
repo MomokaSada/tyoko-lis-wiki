@@ -16,7 +16,7 @@
     "@simplewebauthn/browser": "13.3.0",
     "@simplewebauthn/server": "13.3.1",
     "@supabase/ssr": "^0.10.0",
-    "@supabase/supabase-js": "^2.97.0",
+    "@supabase/supabase-js": "^2.108.2",
     "diff": "^9.0.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.1",

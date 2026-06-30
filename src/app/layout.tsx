@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     locale: 'ja_JP',
     images: [
       {
-        url: '/images/no-image.png',
+        url: '/images/app-icon.webp',
         width: 1200,
         height: 630,
         alt: defaultTitle,
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: defaultTitle,
     description: defaultDescription,
-    images: ['/images/no-image.png'],
+    images: ['/images/app-icon.webp'],
   },
   icons: {
     icon: [

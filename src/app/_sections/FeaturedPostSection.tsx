@@ -29,7 +29,7 @@ export function FeaturedPostSection({ post }: { post: PostSummary | null }) {
       {post ? (
         <div className="relative overflow-visible flex-1">
           <div className="absolute -top-8 left-0 right-0 md:-left-4 md:-right-4 -bottom-4 bg-linear-to-tr from-amber-100/40 to-orange-50/30 rounded-[2rem] -z-10 transform -rotate-4 -translate-y-4" />
-          <Link href={`/posts/${post.slug}`} className="relative z-10 bg-stone-900 rounded-[2.25rem] p-6 md:p-8 text-white overflow-hidden h-full flex flex-col justify-end group cursor-pointer shadow-xl shadow-stone-200/20 hover:-translate-y-1 transition-transform duration-500">
+          <Link href={`/posts/${post.slug}`} className="relative z-10 bg-stone-900 rounded-[2.25rem] p-6 md:p-8 text-white overflow-hidden h-full flex flex-col justify-end group cursor-pointer shadow-xl shadow-stone-200/20 hover:-translate-y-1 transition-transform duration-500 min-h-[300px] lg:min-h-0">
             <div className="absolute top-6 left-6 md:top-8 md:left-8 bg-amber-400 text-stone-900 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest z-20 shadow-sm shadow-amber-400/25">
               Featured
             </div>
