@@ -7,6 +7,21 @@ import type { NextConfig } from "next";
 //   例: http://192.168.x.x:3000
 
 const nextConfig: NextConfig = {
+  // 全関数・ページを Vercel Tokyo (hnd1) リージョンのみにデプロイ
+  // Supabase が ap-northeast-1 (東京) にあるため。
+  // 以前は ["hnd1", "iad1"] (東京＋US東部) だったが、
+  // iad1 からのリクエストが Supabase まで往復 ~200ms かかり、
+  // かつ接続プールを圧迫していた。
+  experimental: {
+    serverActions: {
+      allowedOrigins: [
+        // 本番環境
+        'https://tyoko-lis-wiki.vercel.app',
+        process.env.NEXT_PUBLIC_APP_URL,
+      ].filter(Boolean) as string[],
+    },
+  },
+
   images: {
     remotePatterns: [
       {
