@@ -13,6 +13,7 @@ import {
   sumViewCountBetween,
   sumPublishedViewCount,
   sumViewCountGroupedByDateSince,
+  getAdminDashboardAggregates,
 } from '@/server/repositories/statisticsRepository';
 
 export type OwnerDashboardStats = {
@@ -56,7 +57,12 @@ export async function getOwnerDashboardStats(): Promise<OwnerDashboardStats> {
   };
 }
 
-/** Admin ダッシュボード用の統計情報を取得する */
+/** Admin ダッシュボード用の統計情報を取得する。
+ *
+ * パフォーマンス: 5回の個別クエリを以下の2回に削減:
+ *   1. `getAdminDashboardAggregates()` — 4つの集計をサブクエリ統合
+ *   2. `sumViewCountGroupedByDateSince()` — 7日間チャート用
+ */
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   const monthStart = new Date();
   monthStart.setDate(1);
@@ -66,32 +72,30 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
 
   const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
   const sixtyDaysAgo = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+  const sevenDaysAgo = new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10);
 
-  const [thisMonthPosts, lastMonthPosts, last30Total, prev30Total, last7Rows] = await Promise.all([
-    countContentsSince(monthStart),
-    countContentsBetween(lastMonthStart, monthStart),
-    sumViewCountSince(thirtyDaysAgo),
-    sumViewCountBetween(sixtyDaysAgo, thirtyDaysAgo),
-    sumViewCountGroupedByDateSince(
-      new Date(Date.now() - 6 * 86400000).toISOString().slice(0, 10),
-    ),
+  const [agg, last7Rows] = await Promise.all([
+    getAdminDashboardAggregates(monthStart, lastMonthStart, thirtyDaysAgo, sixtyDaysAgo),
+    sumViewCountGroupedByDateSince(sevenDaysAgo),
   ]);
 
-  const viewTrend = prev30Total > 0 ? ((last30Total - prev30Total) / prev30Total) * 100 : 0;
+  const viewTrend = agg.prev30Total > 0
+    ? ((agg.last30Total - agg.prev30Total) / agg.prev30Total) * 100
+    : 0;
 
   // 7日間の日別ビューを配列に（データがない日は0）
   const last7Chart: number[] = [];
   for (let i = 6; i >= 0; i--) {
     const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10);
-    const row = last7Rows.find((r) => r.date === d);
-    last7Chart.push(row?.total ?? 0);
+    const found = last7Rows.find((r) => r.date === d);
+    last7Chart.push(found?.total ?? 0);
   }
 
   return {
-    thisMonthPosts,
-    lastMonthPosts,
-    last30ViewTotal: last30Total,
-    prev30ViewTotal: prev30Total,
+    thisMonthPosts: agg.thisMonthPosts,
+    lastMonthPosts: agg.lastMonthPosts,
+    last30ViewTotal: agg.last30Total,
+    prev30ViewTotal: agg.prev30Total,
     viewTrend,
     last7Chart,
   };
