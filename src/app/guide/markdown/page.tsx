@@ -1,6 +1,8 @@
 import { type Metadata } from 'next';
 import { Heading1, Bold, Italic, List, ListOrdered, Link, Image, Code, Table, Quote, FileText, Eye, Edit3 } from 'lucide-react';
 
+export const dynamic = 'force-static';
+
 /**
  * Markdownアイコン（lucide-react v1.7.0 に未収録のためカスタムSVGで提供）
  * ドキュメントに "M↓" が描かれた、Markdownを象徴するアイコン

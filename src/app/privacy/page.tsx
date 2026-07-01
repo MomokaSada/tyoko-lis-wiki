@@ -1,5 +1,8 @@
 import { type Metadata } from 'next';
 
+// 完全静的なページ（データ取得不要）
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: 'プライバシーポリシー',
   description: 'Tyokore Wiki のプライバシーポリシーです。個人情報の取扱いについての説明を掲載しています。',

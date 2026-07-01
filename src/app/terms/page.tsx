@@ -1,5 +1,8 @@
 import { type Metadata } from 'next';
 
+// 完全静的なページ（データ取得不要）
+export const dynamic = 'force-static';
+
 export const metadata: Metadata = {
   title: '利用規約',
   description: 'Tyokore Wiki の利用規約です。サービス利用時のルール・条件を掲載しています。',
