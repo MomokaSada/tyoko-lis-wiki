@@ -100,15 +100,17 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
                           'ml-0 lg:ml-10 z-10'
                       }`}
                   >
-                    {/* カード全体の背景画像 */}
-                    <div
-                      className="absolute inset-0 bg-cover bg-center"
-                      style={{
-                        backgroundImage: `url(${thumbnailUrl || '/images/no-image.png'})`,
-                      }}
-                    />
-                    {/* カード全体の暗いオーバーレイ + ぼかし */}
-                    <div className="absolute inset-0 backdrop-blur-[10px] bg-black/30" />
+                    {/* カード全体の背景画像とぼかしをラップ（ブラーのはみ出し防止） */}
+                    <div className="absolute inset-0 overflow-hidden rounded-[2rem]">
+                      <div
+                        className="absolute inset-0 bg-cover bg-center scale-105 filter blur-[10px]"
+                        style={{
+                          backgroundImage: `url(${thumbnailUrl || '/images/no-image.png'})`,
+                        }}
+                      />
+                      {/* カード全体の暗いオーバーレイ */}
+                      <div className="absolute inset-0 bg-black/30" />
+                    </div>
 
                     {/* 左: 順位エリア（透明背景・番号はオーバーレイの上に） */}
                     <div className="relative flex items-center justify-center w-[80px] shrink-0 z-10">

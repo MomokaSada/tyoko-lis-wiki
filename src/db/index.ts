@@ -11,7 +11,7 @@ if (!connectionString) {
 const globalForDb = global as unknown as { conn: postgres.Sql | undefined };
 const conn = globalForDb.conn ?? postgres(connectionString, {
   prepare: false,
-  max: 1,
+  max: 10,
   connect_timeout: 3,
   idle_timeout: 1,
 });

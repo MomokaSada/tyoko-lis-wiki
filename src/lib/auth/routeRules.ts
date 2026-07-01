@@ -21,6 +21,9 @@ export function getRequirement(pathname: string): RouteRequirement {
     pathname.startsWith('/guide/') ||
     pathname.startsWith('/error-pages/') ||
     pathname.startsWith('/_errors/') ||
+    // API Route: 各ルート内部でレート制限・認証・CRON 秘密鍵の検証を行うため
+    // proxy 層では公開扱いとし、ハンドラ側に認可を委譲する。
+    pathname.startsWith('/api/') ||
     pathname === '/privacy' ||
     pathname === '/terms'
   ) {

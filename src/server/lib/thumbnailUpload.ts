@@ -45,24 +45,63 @@ function getExtension(file: File) {
 
 let bucketVerified = false;
 
+function isHtmlJsonParseError(e: unknown): boolean {
+  return (
+    e instanceof SyntaxError &&
+    e.message.includes('Unexpected token') &&
+    (e.message.includes('<') || e.message.includes('<!DOCTYPE'))
+  );
+}
+
+function buildSupabaseUrlCheckHint(): string {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '(未設定)';
+  const hasKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return `NEXT_PUBLIC_SUPABASE_URL=${url}, SUPABASE_SERVICE_ROLE_KEY=${hasKey ? '設定済み' : '未設定'}`;
+}
+
 async function ensureBucketExists(bucket: string) {
   if (bucketVerified) {
     return;
   }
 
   const supabase = createAdminClient();
-  const { data: buckets, error } = await supabase.storage.listBuckets();
 
-  if (error) {
-    throw new Error(`Storage バケット一覧の取得に失敗しました: ${error.message}`);
+  let buckets: { name: string }[] = [];
+  try {
+    const result = await supabase.storage.listBuckets();
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+    buckets = result.data ?? [];
+  } catch (e) {
+    if (isHtmlJsonParseError(e)) {
+      throw new Error(
+        `Supabase Storage API から HTML が返されました（JSON の応答を期待）。` +
+        `環境変数の設定を確認してください: ${buildSupabaseUrlCheckHint()}`,
+      );
+    }
+    // 既に Error インスタンスならそのまま再 throw
+    throw e;
   }
 
   if (!buckets.some((item) => item.name === bucket)) {
-    const { error: createError } = await supabase.storage.createBucket(bucket, {
-      public: true,
-      fileSizeLimit: `${MAX_THUMBNAIL_SIZE}`,
-      allowedMimeTypes: [...ALLOWED_MIME_TYPES],
-    });
+    let createError: { message: string } | null = null;
+    try {
+      const result = await supabase.storage.createBucket(bucket, {
+        public: true,
+        fileSizeLimit: `${MAX_THUMBNAIL_SIZE}`,
+        allowedMimeTypes: [...ALLOWED_MIME_TYPES],
+      });
+      createError = result.error;
+    } catch (e) {
+      if (isHtmlJsonParseError(e)) {
+        throw new Error(
+          `Supabase Storage API から HTML が返されました（JSON の応答を期待）。` +
+          `環境変数の設定を確認してください: ${buildSupabaseUrlCheckHint()}`,
+        );
+      }
+      throw e;
+    }
 
     if (createError) {
       throw new Error(`Storage バケット作成に失敗しました: ${createError.message}`);
@@ -91,10 +130,32 @@ export async function uploadThumbnailFile(file: FormDataEntryValue | null) {
   const supabase = createAdminClient();
   const path = `${new Date().toISOString().slice(0, 10)}/${randomUUID()}.${getExtension(file)}`;
   const bytes = Buffer.from(await file.arrayBuffer());
-  const { error: uploadError } = await supabase.storage.from(bucket).upload(path, bytes, {
-    contentType: file.type,
-    upsert: false,
-  });
+
+  let uploadError: { message: string } | null = null;
+  try {
+    const result = await supabase.storage.from(bucket).upload(path, bytes, {
+      contentType: file.type,
+      upsert: false,
+    });
+    uploadError = result.error;
+  } catch (e) {
+    // Supabase クライアントが非 JSON レスポンス（HTML など）を受けると
+    // JSON.parse エラーが発生する。より具体的なメッセージに差し替える。
+    const isJsonParseError =
+      e instanceof SyntaxError &&
+      e.message.includes('Unexpected token') &&
+      e.message.includes('<');
+    if (isJsonParseError) {
+      throw new Error(
+        `Supabase Storage API からの応答が無効です。` +
+        `NEXT_PUBLIC_SUPABASE_URL または SUPABASE_SERVICE_ROLE_KEY が` +
+        `正しく設定されているか確認してください。`,
+      );
+    }
+    throw new Error(
+      `サムネイル画像のアップロードに失敗しました（通信エラー）: ${e instanceof Error ? e.message : '不明なエラー'}`,
+    );
+  }
 
   if (uploadError) {
     throw new Error(`サムネイル画像のアップロードに失敗しました: ${uploadError.message}`);
