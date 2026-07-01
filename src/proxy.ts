@@ -120,23 +120,14 @@ const APP_SESSION_COOKIE_NAME = process.env.APP_SESSION_COOKIE_NAME ?? 'app_sess
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const requirement = getRequirement(request.nextUrl.pathname);
 
-  // ----------------------------------------------------------------
-  // 公開ページ: Supabase Auth を完全にスキップ
-  // updateSession() は supabase.auth.getUser() を呼ぶため、
-  // アクセス毎に 3秒のタイムアウト待ちが発生しうる。
-  // 公開ルートでは認証不要なので Auth 呼び出しを回避する。
-  // ----------------------------------------------------------------
-  if (requirement.kind === 'public') {
-    const response = NextResponse.next();
-    return setSecurityHeaders(response);
-  }
-
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   let user = null;
 
-  // 認証が必要なルートでのみ updateSession を呼び Cookie のリフレッシュを行う。
+  // updateSession は全ルートで呼び Cookie のリフレッシュを行う。
   // 内部で withAuthTimeout により Supabase 停止時は 3 秒で諦める。
+  // ★ 未ログインユーザー（auth Cookie なし）の場合は、
+  //   middleware.ts 内で getUser() をスキップするため一瞬で返る。
   try {
     const result = await updateSession(request);
     response = result.response;
@@ -169,8 +160,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
   // ルート種別を Server Component に伝える（IP BAN ゲート用）
-  // ここに到達するのは public 以外のルートのみ
-  requestHeaders.set(HEADER_IS_PROTECTED, 'true');
+  requestHeaders.set(HEADER_IS_PROTECTED, requirement.kind !== 'public' ? 'true' : 'false');
 
   // updateSession がセットした Cookie（リフレッシュされたトークン等）を継承しつつ、
   // 後続の Server Components へリクエストヘッダーを渡すレスポンスを生成する
