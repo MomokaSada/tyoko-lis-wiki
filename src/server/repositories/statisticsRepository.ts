@@ -3,6 +3,43 @@ import { db } from '@/db';
 import { contents, contentViewStats, users } from '@/db/schema';
 
 // ---------------------------------------------------------------------------
+// Admin ダッシュボード用 一括取得（5クエリ→2クエリに統合）
+// ---------------------------------------------------------------------------
+
+export type AdminDashboardRaw = {
+  thisMonthPosts: number;
+  lastMonthPosts: number;
+  last30Total: number;
+  prev30Total: number;
+};
+
+/**
+ * Admin ダッシュボードの集計値を1回のSQLで取得する。
+ * 従来は個別クエリ×5回発行していたが、サブクエリに統合してラウンドトリップを削減。
+ */
+export async function getAdminDashboardAggregates(
+  monthStart: Date,
+  lastMonthStart: Date,
+  thirtyDaysAgo: string,
+  sixtyDaysAgo: string,
+): Promise<AdminDashboardRaw> {
+  const [row] = await db.execute(sql`
+    SELECT
+      (SELECT count(*) FROM "contents" WHERE "created_at" >= ${monthStart}) AS "this_month_posts",
+      (SELECT count(*) FROM "contents" WHERE "created_at" >= ${lastMonthStart} AND "created_at" < ${monthStart}) AS "last_month_posts",
+      (SELECT coalesce(sum("view_count"), 0) FROM "content_view_stats" WHERE "date" >= ${thirtyDaysAgo}) AS "last30_total",
+      (SELECT coalesce(sum("view_count"), 0) FROM "content_view_stats" WHERE "date" >= ${sixtyDaysAgo} AND "date" < ${thirtyDaysAgo}) AS "prev30_total"
+  `);
+
+  return {
+    thisMonthPosts: Number(row?.this_month_posts ?? 0),
+    lastMonthPosts: Number(row?.last_month_posts ?? 0),
+    last30Total: Number(row?.last30_total ?? 0),
+    prev30Total: Number(row?.prev30_total ?? 0),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Owner ダッシュボード用
 // ---------------------------------------------------------------------------
 
