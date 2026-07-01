@@ -23,10 +23,15 @@ export async function getAdminDashboardAggregates(
   thirtyDaysAgo: string,
   sixtyDaysAgo: string,
 ): Promise<AdminDashboardRaw> {
+  // postgres-js は Date 型をパラメータとして直接受け付けないため、
+  // ISO 文字列に変換してから渡す
+  const monthStartStr = monthStart.toISOString();
+  const lastMonthStartStr = lastMonthStart.toISOString();
+
   const [row] = await db.execute(sql`
     SELECT
-      (SELECT count(*) FROM "contents" WHERE "created_at" >= ${monthStart}) AS "this_month_posts",
-      (SELECT count(*) FROM "contents" WHERE "created_at" >= ${lastMonthStart} AND "created_at" < ${monthStart}) AS "last_month_posts",
+      (SELECT count(*) FROM "contents" WHERE "created_at" >= ${monthStartStr}::timestamptz) AS "this_month_posts",
+      (SELECT count(*) FROM "contents" WHERE "created_at" >= ${lastMonthStartStr}::timestamptz AND "created_at" < ${monthStartStr}::timestamptz) AS "last_month_posts",
       (SELECT coalesce(sum("view_count"), 0) FROM "content_view_stats" WHERE "date" >= ${thirtyDaysAgo}) AS "last30_total",
       (SELECT coalesce(sum("view_count"), 0) FROM "content_view_stats" WHERE "date" >= ${sixtyDaysAgo} AND "date" < ${thirtyDaysAgo}) AS "prev30_total"
   `);
