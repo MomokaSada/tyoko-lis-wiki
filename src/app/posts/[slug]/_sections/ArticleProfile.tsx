@@ -56,7 +56,6 @@ export function ArticleProfile({
           fill
           sizes="288px"
           className="object-cover"
-          unoptimized
         />
       </div>
 

@@ -41,7 +41,7 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
                   All Time Rank 1
                 </div>
                 <div className="absolute inset-0 z-0">
-                  <Image src={getPublicThumbnailUrl(featuredAllTime.thumbnail) || '/images/no-image.png'} alt="" fill unoptimized className="object-cover opacity-60 group-hover:scale-110 group-hover:opacity-80 transition-all duration-700" />
+                  <Image src={getPublicThumbnailUrl(featuredAllTime.thumbnail) || '/images/no-image.png'} alt="" fill className="object-cover opacity-60 group-hover:scale-110 group-hover:opacity-80 transition-all duration-700" />
                   <div className="absolute inset-0 bg-linear-to-t from-stone-900 via-stone-900/40 to-transparent" />
                 </div>
                 <div className="relative z-10 space-y-4">

@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 import { HEADER_CLIENT_IP, HEADER_IS_PROTECTED } from '@/lib/auth/constants';
-import { findActiveBlockByIp } from '@/server/repositories/ipBanRepository';
+import { isIpBanned } from '@/server/services/ipBanService';
 import { ShieldBan } from 'lucide-react';
 
 /**
@@ -22,9 +22,9 @@ export async function IpBanGate({ children }: { children: React.ReactNode }) {
   }
 
   try {
-    const ban = await findActiveBlockByIp(clientIp);
+    const banned = await isIpBanned(clientIp);
 
-    if (!ban) {
+    if (!banned) {
       return <>{children}</>;
     }
 
@@ -39,17 +39,12 @@ export async function IpBanGate({ children }: { children: React.ReactNode }) {
           <p className="text-sm text-stone-500 leading-relaxed">
             このIPアドレスは BAN されているため、管理画面にアクセスできません。
           </p>
-          {ban.reason && (
-            <div className="bg-stone-50 rounded-xl p-4 text-left">
-              <p className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-1">BAN 理由</p>
-              <p className="text-sm text-stone-700">{ban.reason}</p>
-            </div>
-          )}
         </div>
       </div>
     );
-  } catch {
-    // DB エラーなどが発生してもアクセスを妨げない
-    return <>{children}</>;
+  } catch (error) {
+    // DB エラーなどが発生してもアクセスを妨げない（可用性を優先）
+    // ただしエラーは記録しておく
+    console.error('[IpBanGate] エラー:', error);
   }
 }

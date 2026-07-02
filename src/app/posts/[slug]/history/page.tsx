@@ -5,6 +5,7 @@ import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { getContentHistory } from '@/server/services/historyService';
 import { HistoryTable } from './history-table';
+import { decodeSlugParam } from '@/lib/slug-utils';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -12,13 +13,7 @@ type Props = {
 
 export default async function PostHistoryPage({ params }: Props) {
   const { slug: rawSlug } = await params;
-  const slug = (() => {
-    try {
-      return decodeURIComponent(rawSlug);
-    } catch {
-      return rawSlug;
-    }
-  })();
+  const slug = decodeSlugParam(rawSlug);
 
   // owner 権限チェック（編集者情報の表示に使用）
   const headersList = await headers();

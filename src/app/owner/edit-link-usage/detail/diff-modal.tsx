@@ -374,7 +374,6 @@ export function DiffModal({
                                 alt="旧サムネイル"
                                 fill
                                 className="object-cover"
-                                unoptimized
                                 onError={() => setOldFailed(true)}
                               />
                             ) : (
@@ -396,7 +395,6 @@ export function DiffModal({
                                 alt="新サムネイル"
                                 fill
                                 className="object-cover"
-                                unoptimized
                                 onError={() => setNewFailed(true)}
                               />
                             ) : (

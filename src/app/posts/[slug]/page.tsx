@@ -5,7 +5,7 @@ import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { cache } from 'react';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
-import { getAccessibleContentDetail } from '@/server/services/contentService';
+import { getAccessibleContentDetail, getContentDetail } from '@/server/services/contentService';
 import {
     getFullContentTaxonomy,
     resolveCategoryPath,
@@ -28,6 +28,7 @@ import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
 import TableOfContents from './_sections/TableOfContents';
 import { BlockViewerDynamic } from '@/components/editor/BlockViewerDynamic';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
+import { decodeSlugParam } from '@/lib/slug-utils';
 
 import { PostShareActions } from './_sections/PostShareActions';
 import { ArticleProfile } from './_sections/ArticleProfile';
@@ -109,21 +110,18 @@ function generateArticleJsonLd(
 
 // React.cache でリクエスト単位での二重フェッチを防止
 const getCachedContentDetail = cache(getAccessibleContentDetail);
+// generateMetadata 用: 閲覧数カウントを行わない別キャッシュ
+const getCachedContentDetailMeta = cache(getContentDetail);
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
   const { slug: rawSlug } = await params;
-  const slug = (() => {
-    try {
-      return decodeURIComponent(rawSlug);
-    } catch {
-      return rawSlug;
-    }
-  })();
+  const slug = decodeSlugParam(rawSlug);
 
   try {
-    const post = await getCachedContentDetail(slug, null);
+    // メタデータ生成では閲覧数カウントを行わない関数を使用
+    const post = await getCachedContentDetailMeta(slug, null);
 
     if (!post) {
       return {
@@ -196,13 +194,7 @@ export default async function PostDetailPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const { slug: rawSlug } = await params;
-  const slug = (() => {
-    try {
-      return decodeURIComponent(rawSlug);
-    } catch {
-      return rawSlug;
-    }
-  })();
+  const slug = decodeSlugParam(rawSlug);
   const sp = await searchParams;
   const session = typeof sp.session === 'string' ? sp.session : null;
   const showPrivate = sp.showPrivate === '1';
@@ -366,7 +358,6 @@ export default async function PostDetailPage({
                     fill
                     sizes="(max-width: 1024px) 100vw, 800px"
                     className="object-cover"
-                    unoptimized
                   />
                 </div>
 

@@ -217,6 +217,18 @@ export async function getWeeklyPopularContentList(limitCount = 6) {
   }
 }
 
+/**
+ * スラグからコンテンツを取得する（閲覧数カウントなし）。
+ * `generateMetadata` など、メタデータ生成目的で取得する場合に使用する。
+ */
+export async function getContentDetail(slug: string, editor: EditorContext | null) {
+  const content = editor
+    ? await findEditableContentBySlug(slug)
+    : await findPublishedContentBySlug(slug);
+
+  return content ?? null;
+}
+
 export async function getAccessibleContentDetail(slug: string, editor: EditorContext | null) {
   const content = editor
     ? await findEditableContentBySlug(slug)
