@@ -18,6 +18,7 @@ import {
 
 import type { PrivilegedActor as Actor } from '@/types/actor';
 import type { ListQuery, ListResult } from '@/types/listQuery';
+import { logger } from '@/server/lib/logger';
 import {
     commonErrors,
     serviceErrors,
@@ -154,6 +155,21 @@ export async function deactivateIpBan(actor: Actor, banId: number) {
     success: true as const,
     data: updated,
   };
+}
+
+/**
+ * 指定されたIPが現在 BAN されているかを判定する。
+ * Server Component のゲートから使用することを想定。
+ */
+export async function isIpBanned(ip: string): Promise<boolean> {
+  try {
+    const ban = await findActiveBlockByIp(ip);
+    return ban !== null;
+  } catch (error) {
+    logger.error('[ipBanService] isIpBanned エラー:', error);
+    // エラー時は false を返す（fail-closed にするかは呼び出し元に委ねる）
+    return false;
+  }
 }
 
 export async function getCurrentRequestBan() {

@@ -28,6 +28,7 @@ import { TyokoreIcon } from '@/components/icons/TyokoreIcon';
 import TableOfContents from './_sections/TableOfContents';
 import { BlockViewerDynamic } from '@/components/editor/BlockViewerDynamic';
 import { getPublicThumbnailUrl } from '@/lib/thumbnail-utils';
+import { decodeSlugParam } from '@/lib/slug-utils';
 
 import { PostShareActions } from './_sections/PostShareActions';
 import { ArticleProfile } from './_sections/ArticleProfile';
@@ -111,19 +112,22 @@ function generateArticleJsonLd(
 const getCachedContentDetail = cache(getAccessibleContentDetail);
 
 export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string }> }
+  { params, searchParams }: {
+    params: Promise<{ slug: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
 ): Promise<Metadata> {
   const { slug: rawSlug } = await params;
-  const slug = (() => {
-    try {
-      return decodeURIComponent(rawSlug);
-    } catch {
-      return rawSlug;
-    }
-  })();
+  const slug = decodeSlugParam(rawSlug);
+
+  // ページ本体と同じ editor コンテキストを解決し、同じ引数で
+  // getCachedContentDetail を呼ぶことで React.cache のデデュープが効く
+  const sp = await searchParams;
+  const session = typeof sp.session === 'string' ? sp.session : null;
+  const editor = await getCurrentEditor(session);
 
   try {
-    const post = await getCachedContentDetail(slug, null);
+    const post = await getCachedContentDetail(slug, editor);
 
     if (!post) {
       return {
@@ -196,13 +200,7 @@ export default async function PostDetailPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const { slug: rawSlug } = await params;
-  const slug = (() => {
-    try {
-      return decodeURIComponent(rawSlug);
-    } catch {
-      return rawSlug;
-    }
-  })();
+  const slug = decodeSlugParam(rawSlug);
   const sp = await searchParams;
   const session = typeof sp.session === 'string' ? sp.session : null;
   const showPrivate = sp.showPrivate === '1';
@@ -359,14 +357,13 @@ export default async function PostDetailPage({
                   </h1>
                 </div>
                 {/* 項目冒頭のアイキャッチ */}
-                <div className="mb-10 md:mb-12 rounded-3xl overflow-hidden border border-stone-100 shadow-sm bg-stone-50 relative aspect-video">
+                <div className="mb-10 md:mb-12 rounded-3xl overflow-hidden border border-stone-100 shadow-sm bg-white relative aspect-video">
                   <Image
                     src={thumbnailUrl || fallbackThumbnail}
                     alt={post.title}
                     fill
                     sizes="(max-width: 1024px) 100vw, 800px"
                     className="object-cover"
-                    unoptimized
                   />
                 </div>
 

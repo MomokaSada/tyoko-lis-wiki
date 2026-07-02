@@ -7,7 +7,10 @@ import {
 } from '@/server/repositories/accountBanRepository';
 import {
     findUserById,
+    findUserByAuthUserId,
+    getUserProfile,
 } from '@/server/repositories/userRepository';
+import { getValidSessionByToken } from '@/server/repositories/appSessionRepository';
 
 import type { Actor } from '@/types/actor';
 import type { ListQuery, ListResult } from '@/types/listQuery';
@@ -15,6 +18,37 @@ import {
     commonErrors,
     serviceErrors,
 } from '@/server/errors';
+import { logger } from '@/server/lib/logger';
+
+/**
+ * 現在のリクエストのアカウントが BAN されているかを判定する。
+ * Server Component のゲートから使用することを想定。
+ *
+ * @param supabaseUserId - Supabase Auth のユーザーID（未ログイン時は null）
+ * @param appSessionToken - パスキーセッショントークン（未ログイン時は null）
+ */
+export async function isCurrentAccountBanned(
+  supabaseUserId: string | null | undefined,
+  appSessionToken: string | null | undefined,
+): Promise<boolean> {
+  try {
+    if (supabaseUserId) {
+      const appUser = await findUserByAuthUserId(supabaseUserId);
+      if (appUser && !appUser.isActive) return true;
+    }
+    if (appSessionToken) {
+      const session = await getValidSessionByToken(appSessionToken);
+      if (session) {
+        const appUser = await getUserProfile(session.userId);
+        if (appUser && !appUser.isActive) return true;
+      }
+    }
+  } catch (error) {
+    logger.error('[accountBanService] isCurrentAccountBanned エラー:', error);
+    // エラー時は安全側に倒さず BAN 状態とみなさない（→ ゲート側で fail-closed にするかは呼び出し元に委ねる）
+  }
+  return false;
+}
 
 export async function getManageableAccounts(
   actor: Actor,

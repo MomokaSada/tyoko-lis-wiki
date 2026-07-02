@@ -101,18 +101,62 @@ function normalizeCandidateIp(candidate: string | null | undefined) {
   return null;
 }
 
+/**
+ * クライアントIPをヘッダーから取得する。
+ *
+ * 信頼できるリバースプロキシがない構成では `x-forwarded-for` は
+ * クライアントが自由に送信できる値であり、そのまま信頼すると
+ * レート制限やIP BANのスプーフィングに繋がる。
+ *
+ * - TRUSTED_PROXY_COUNT が設定されている場合:
+ *   x-forwarded-for の**右端から数えて TRUSTED_PROXY_COUNT 個**を
+ *   信頼できるプロキシのホップとみなし、その1つ前をクライアントIPとする。
+ *   （例: TRUSTED_PROXY_COUNT=1 の場合、右端がプロキシ、その左がクライアント）
+ * - TRUSTED_PROXY_COUNT が未設定（既定）の場合:
+ *   x-forwarded-for を信用せず、x-real-ip のみ参照する。
+ *   どちらもなければ null を返す。
+ *   開発環境では警告ログを出力する。
+ */
 function getClientIpFromHeaders(headers: Headers) {
   const forwardedFor = headers.get('x-forwarded-for');
   const realIp = headers.get('x-real-ip');
+  const trustedProxyCount = process.env.TRUSTED_PROXY_COUNT;
 
-  const candidateIps = [
-    ...(forwardedFor ? forwardedFor.split(',') : []),
-    realIp,
-  ];
+  if (trustedProxyCount) {
+    const count = parseInt(trustedProxyCount, 10);
+    if (!isNaN(count) && count >= 0 && forwardedFor) {
+      const ips = forwardedFor
+        .split(',')
+        .map((ip) => normalizeCandidateIp(ip))
+        .filter((ip): ip is string => Boolean(ip));
+      // 右端から count 個を信頼できるプロキシとして除外
+      if (ips.length > count) {
+        return ips[ips.length - 1 - count];
+      }
+    }
+    // x-forwarded-for から取得できなかった場合のフォールバック
+    if (realIp) {
+      const normalized = normalizeCandidateIp(realIp);
+      if (normalized) return normalized;
+    }
+  } else {
+    // TRUSTED_PROXY_COUNT 未設定 → リバースプロキシ不在とみなす
+    // x-forwarded-for はクライアントが任意に設定できるため信頼しない
+    if (process.env.NODE_ENV === 'development') {
+      logger.info(
+        '[proxy] TRUSTED_PROXY_COUNT が設定されていません。' +
+        'セルフホスト構成ではリバースプロキシ（nginx等）を配置し、' +
+        'TRUSTED_PROXY_COUNT を適切に設定してください。',
+      );
+    }
+    // x-real-ip はプロキシが上書きするヘッダーなので優先的に使う
+    if (realIp) {
+      const normalized = normalizeCandidateIp(realIp);
+      if (normalized) return normalized;
+    }
+  }
 
-  return candidateIps
-    .map((candidate) => normalizeCandidateIp(candidate))
-    .find((candidate): candidate is string => Boolean(candidate));
+  return null;
 }
 
 const APP_SESSION_COOKIE_NAME = process.env.APP_SESSION_COOKIE_NAME ?? 'app_session';
@@ -256,6 +300,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     }
 
     // ----------------------------------------------------------------
+    // 公開ルート
+    // 認証不要で誰でもアクセス可能（/posts/[slug] など）
+    // ----------------------------------------------------------------
+    case 'public': {
+      return setSecurityHeaders(createForwardResponse(response));
+    }
+
+    // ----------------------------------------------------------------
     // 上記のいずれにも該当しないルート
     // routeRules.ts で未定義のパスは public 相当として通過させる
     // → 新しいルート要件が追加された場合、ここで気付けるように
@@ -263,7 +315,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // ----------------------------------------------------------------
     default: {
       if (process.env.NODE_ENV === 'development') {
-        logger.warn(`[proxy] 未処理の route requirement for path: "${request.nextUrl.pathname}"`);
+        logger.info(`[proxy] 未処理の route requirement for path: "${request.nextUrl.pathname}"`);
       }
       return setSecurityHeaders(createForwardResponse(response));
     }

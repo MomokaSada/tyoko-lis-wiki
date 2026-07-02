@@ -15,6 +15,18 @@ function shortStableHash(input: string) {
   return (hash >>> 0).toString(36);
 }
 
+/**
+ * URLパラメータから受け取ったスラグをデコードする。
+ * 不正なパーセントエンコーディングが含まれていても例外を投げずに元の値を返す。
+ */
+export function decodeSlugParam(rawSlug: string): string {
+  try {
+    return decodeURIComponent(rawSlug);
+  } catch {
+    return rawSlug;
+  }
+}
+
 export function slugify(input: string) {
   const normalized = input.normalize('NFKC').trim().toLowerCase();
   const containsNonAscii = /[^\x00-\x7f]/.test(normalized);

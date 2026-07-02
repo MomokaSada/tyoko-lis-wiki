@@ -1,8 +1,7 @@
 import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
-import { findUserByAuthUserId, getUserProfile } from '@/server/repositories/userRepository';
+import { isCurrentAccountBanned } from '@/server/services/accountBanService';
 import { getSessionTokenFromCookie } from '@/server/lib/appSessionCookie';
-import { getValidSessionByToken } from '@/server/repositories/appSessionRepository';
 import { createClient } from '@/lib/supabase/server';
 import { Ban } from 'lucide-react';
 
@@ -26,30 +25,20 @@ export async function AccountBanGate({ children }: { children: React.ReactNode }
 
   try {
     // --- Supabase セッションの場合 ---
+    let supabaseUserId: string | null = null;
     if (userRole) {
       const supabase = await createClient();
       const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        const appUser = await findUserByAuthUserId(data.user.id);
-        if (appUser && !appUser.isActive) {
-          return <BannedNotice />;
-        }
-      }
+      supabaseUserId = data?.user?.id ?? null;
     }
 
-    // --- パスキーセッション（app_session）の場合 ---
-    if (appSessionToken) {
-      const session = await getValidSessionByToken(appSessionToken);
-      if (session) {
-        const appUser = await getUserProfile(session.userId);
-        if (appUser && !appUser.isActive) {
-          return <BannedNotice />;
-        }
-      }
+    if (await isCurrentAccountBanned(supabaseUserId, appSessionToken)) {
+      return <BannedNotice />;
     }
-  } catch {
-    // エラー時もアクセスを妨げない
-    return <>{children}</>;
+  } catch (error) {
+    // エラー時もアクセスを妨げない（可用性を優先）
+    // ただしエラーは記録しておく
+    console.error('[AccountBanGate] BANチェックエラー:', error);
   }
 
   return <>{children}</>;

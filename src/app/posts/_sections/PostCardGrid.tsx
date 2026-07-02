@@ -75,14 +75,13 @@ export function PostCardGrid({
               className="group bg-white border border-stone-200 hover:border-amber-400 rounded-[2rem] flex flex-col transition-all hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 block h-full overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700"
               style={{ animationDelay: `${idx * 30}ms` }}
             >
-              <div className="relative aspect-[2/1] overflow-hidden bg-stone-100 border-b border-stone-100">
+              <div className="relative aspect-[2/1] overflow-hidden bg-white border-b border-stone-100">
                 <Image
                   src={thumbnailUrl || fallbackThumbnail}
                   alt={post.title}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                  unoptimized
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
