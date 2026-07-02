@@ -49,7 +49,7 @@ export function ArticleProfile({
       </div>
 
       {/* サムネイル (ヘッダー直下に隙間なく配置) */}
-      <div className="relative aspect-video w-full bg-stone-100 border-b border-stone-100">
+      <div className="relative aspect-video w-full bg-white border-b border-stone-100">
         <Image
           src={thumbnailUrl || fallbackThumbnail}
           alt={postTitle}

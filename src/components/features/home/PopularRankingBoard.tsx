@@ -40,7 +40,7 @@ export function PopularRankingBoard({ weeklyPosts, allTimePosts }: PopularRankin
                 <div className="absolute top-6 left-6 md:top-8 md:left-8 bg-amber-400 text-stone-900 text-[10px] md:text-xs font-black px-2.5 py-1 rounded shadow-sm shadow-amber-400/20 uppercase tracking-widest z-20">
                   All Time Rank 1
                 </div>
-                <div className="absolute inset-0 z-0">
+                <div className="absolute inset-0 z-0 bg-white">
                   <Image src={getPublicThumbnailUrl(featuredAllTime.thumbnail) || '/images/no-image.png'} alt="" fill className="object-cover opacity-60 group-hover:scale-110 group-hover:opacity-80 transition-all duration-700" />
                   <div className="absolute inset-0 bg-linear-to-t from-stone-900 via-stone-900/40 to-transparent" />
                 </div>

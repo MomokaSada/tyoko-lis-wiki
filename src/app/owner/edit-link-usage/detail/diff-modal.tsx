@@ -367,7 +367,7 @@ export function DiffModal({
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <p className="text-xs text-stone-400 font-bold">変更前</p>
-                          <div className="aspect-[1200/630] rounded-lg border border-stone-200 overflow-hidden bg-stone-50 relative">
+                          <div className="aspect-[1200/630] rounded-lg border border-stone-200 overflow-hidden bg-white relative">
                             {getPublicThumbnailUrl(diff.oldThumbnail) && !oldFailed ? (
                               <Image
                                 src={getPublicThumbnailUrl(diff.oldThumbnail)!}
@@ -388,7 +388,7 @@ export function DiffModal({
                         </div>
                         <div className="space-y-1.5">
                           <p className="text-xs text-stone-400 font-bold">変更後</p>
-                          <div className="aspect-[1200/630] rounded-lg border border-stone-200 overflow-hidden bg-stone-50 relative">
+                          <div className="aspect-[1200/630] rounded-lg border border-stone-200 overflow-hidden bg-white relative">
                             {getPublicThumbnailUrl(diff.newThumbnail) && !newFailed ? (
                               <Image
                                 src={getPublicThumbnailUrl(diff.newThumbnail)!}

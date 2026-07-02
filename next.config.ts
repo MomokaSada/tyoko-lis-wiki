@@ -23,6 +23,11 @@ const nextConfig: NextConfig = {
   },
 
   images: {
+    // 開発環境では next/image の最適化を無効化する。
+    // ローカル Supabase がホスト名解決でプライベートIPを返すため、
+    // Vercel Image Optimization がアクセスをブロックするのを避ける。
+    // 本番環境では通常通り最適化が有効になる。
+    unoptimized: process.env.NODE_ENV === 'development',
     remotePatterns: [
       {
         // Supabase Storage (ローカル開発環境: localhost)
@@ -35,6 +40,13 @@ const nextConfig: NextConfig = {
         // Supabase Storage (ローカル開発環境: 127.0.0.1)
         protocol: "http",
         hostname: "127.0.0.1",
+        port: "54321",
+        pathname: "/storage/v1/**",
+      },
+      {
+        // Supabase Storage (ローカル開発環境: .local ドメイン)
+        protocol: "http",
+        hostname: "*.local",
         port: "54321",
         pathname: "/storage/v1/**",
       },

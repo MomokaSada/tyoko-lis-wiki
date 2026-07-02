@@ -33,7 +33,7 @@ export function FeaturedPostSection({ post }: { post: PostSummary | null }) {
             <div className="absolute top-6 left-6 md:top-8 md:left-8 bg-amber-400 text-stone-900 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest z-20 shadow-sm shadow-amber-400/25">
               Featured
             </div>
-            <div className="absolute inset-0 z-0">
+            <div className="absolute inset-0 z-0 bg-white">
               <Image src={getPublicThumbnailUrl(post.thumbnail) || '/images/no-image.png'} alt={post.title} fill className="object-cover opacity-50 group-hover:opacity-70 transition-opacity duration-700" />
               <div className="absolute inset-0 bg-linear-to-t from-stone-900 via-stone-900/40 to-transparent opacity-80" />
             </div>

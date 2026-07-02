@@ -75,7 +75,7 @@ export function PostCardGrid({
               className="group bg-white border border-stone-200 hover:border-amber-400 rounded-[2rem] flex flex-col transition-all hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 block h-full overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700"
               style={{ animationDelay: `${idx * 30}ms` }}
             >
-              <div className="relative aspect-[2/1] overflow-hidden bg-stone-100 border-b border-stone-100">
+              <div className="relative aspect-[2/1] overflow-hidden bg-white border-b border-stone-100">
                 <Image
                   src={thumbnailUrl || fallbackThumbnail}
                   alt={post.title}

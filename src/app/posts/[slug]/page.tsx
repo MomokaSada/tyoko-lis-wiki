@@ -357,7 +357,7 @@ export default async function PostDetailPage({
                   </h1>
                 </div>
                 {/* 項目冒頭のアイキャッチ */}
-                <div className="mb-10 md:mb-12 rounded-3xl overflow-hidden border border-stone-100 shadow-sm bg-stone-50 relative aspect-video">
+                <div className="mb-10 md:mb-12 rounded-3xl overflow-hidden border border-stone-100 shadow-sm bg-white relative aspect-video">
                   <Image
                     src={thumbnailUrl || fallbackThumbnail}
                     alt={post.title}

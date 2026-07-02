@@ -143,7 +143,7 @@ function getClientIpFromHeaders(headers: Headers) {
     // TRUSTED_PROXY_COUNT 未設定 → リバースプロキシ不在とみなす
     // x-forwarded-for はクライアントが任意に設定できるため信頼しない
     if (process.env.NODE_ENV === 'development') {
-      logger.warn(
+      logger.info(
         '[proxy] TRUSTED_PROXY_COUNT が設定されていません。' +
         'セルフホスト構成ではリバースプロキシ（nginx等）を配置し、' +
         'TRUSTED_PROXY_COUNT を適切に設定してください。',
@@ -300,6 +300,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     }
 
     // ----------------------------------------------------------------
+    // 公開ルート
+    // 認証不要で誰でもアクセス可能（/posts/[slug] など）
+    // ----------------------------------------------------------------
+    case 'public': {
+      return setSecurityHeaders(createForwardResponse(response));
+    }
+
+    // ----------------------------------------------------------------
     // 上記のいずれにも該当しないルート
     // routeRules.ts で未定義のパスは public 相当として通過させる
     // → 新しいルート要件が追加された場合、ここで気付けるように
@@ -307,7 +315,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // ----------------------------------------------------------------
     default: {
       if (process.env.NODE_ENV === 'development') {
-        logger.warn(`[proxy] 未処理の route requirement for path: "${request.nextUrl.pathname}"`);
+        logger.info(`[proxy] 未処理の route requirement for path: "${request.nextUrl.pathname}"`);
       }
       return setSecurityHeaders(createForwardResponse(response));
     }

@@ -62,6 +62,11 @@ export function ImageCropper({ image, aspect = 16 / 9, onCropComplete, onCancel 
     canvas.width = pixelCrop.width;
     canvas.height = pixelCrop.height;
 
+    // JPEG はアルファチャンネルをサポートしないため、
+    // 元画像の透過部分が黒くなるのを防ぐために白背景で塗りつぶす
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
     ctx.drawImage(
       image,
       pixelCrop.x,
