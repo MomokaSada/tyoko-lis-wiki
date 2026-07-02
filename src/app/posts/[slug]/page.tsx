@@ -5,7 +5,7 @@ import { headers } from 'next/headers';
 import { HEADER_USER_ROLE } from '@/lib/auth/constants';
 import { cache } from 'react';
 import { getCurrentEditor } from '@/server/lib/currentEditor';
-import { getAccessibleContentDetail, getContentDetail } from '@/server/services/contentService';
+import { getAccessibleContentDetail } from '@/server/services/contentService';
 import {
     getFullContentTaxonomy,
     resolveCategoryPath,
@@ -110,18 +110,24 @@ function generateArticleJsonLd(
 
 // React.cache でリクエスト単位での二重フェッチを防止
 const getCachedContentDetail = cache(getAccessibleContentDetail);
-// generateMetadata 用: 閲覧数カウントを行わない別キャッシュ
-const getCachedContentDetailMeta = cache(getContentDetail);
 
 export async function generateMetadata(
-  { params }: { params: Promise<{ slug: string }> }
+  { params, searchParams }: {
+    params: Promise<{ slug: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
 ): Promise<Metadata> {
   const { slug: rawSlug } = await params;
   const slug = decodeSlugParam(rawSlug);
 
+  // ページ本体と同じ editor コンテキストを解決し、同じ引数で
+  // getCachedContentDetail を呼ぶことで React.cache のデデュープが効く
+  const sp = await searchParams;
+  const session = typeof sp.session === 'string' ? sp.session : null;
+  const editor = await getCurrentEditor(session);
+
   try {
-    // メタデータ生成では閲覧数カウントを行わない関数を使用
-    const post = await getCachedContentDetailMeta(slug, null);
+    const post = await getCachedContentDetail(slug, editor);
 
     if (!post) {
       return {
