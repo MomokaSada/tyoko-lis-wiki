@@ -11,6 +11,7 @@ import { userTypeEnum } from './enums';
 export const users = pgTable('users', {
     id: serial('id').primaryKey(),
     accountCreateSessionId: uuid('account_create_session_id'),
+    botTokenHash: varchar('bot_token_hash', { length: 64 }).unique(),
     authUserId: uuid('auth_user_id').unique(),
     name: varchar('name', { length: 255 }).notNull().unique(),
     password: varchar('password', { length: 255 }).notNull(),

@@ -40,6 +40,19 @@ export type RegisterResult =
   | { success: true }
   | { success: false; error: string };
 
+export type BotCreateResult =
+  | { 
+    success: true; 
+    bot: { 
+      id: number; 
+      name: string; 
+    } 
+  }
+  | { 
+    success: false; 
+    error: string;
+  };
+
 /**
  * ユーザー名 + パスワードでログインする。
  *
@@ -147,3 +160,6 @@ export async function registerAccount(input: RegisterInput): Promise<RegisterRes
 
   return { success: true };
 }
+
+
+    
