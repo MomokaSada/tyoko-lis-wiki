@@ -143,7 +143,7 @@ export async function findActiveEditSession(uuid: string) {
   return session ?? null;
 }
 
-export async function findEditSessionsByAuthor(
+export async function findActiveSessionsByAuthor(
   authorId: number,
   minRemainingEdits: number,
 ): Promise<{
