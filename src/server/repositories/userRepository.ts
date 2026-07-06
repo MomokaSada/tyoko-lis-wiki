@@ -99,3 +99,45 @@ export async function findUsersByIds(
     .from(users)
     .where(inArray(users.id, userIds));
 }
+
+export async function findUserByBotTokenHash(
+  tokenHash: string,
+): Promise<{
+  id: number;
+  name: string;
+  role: string;
+  isActive: boolean;
+} | null> {
+  const [user] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      role: users.type,
+      isActive: users.isActive,
+    })
+    .from(users)
+    .where(
+      and(
+        eq(users.botTokenHash, tokenHash),
+        eq(users.isActive, true),
+      ),
+    )
+    .limit(1);
+  return user ?? null;
+}
+
+export async function setBotTokenHash(
+  userId: number,
+  tokenHash: string,
+): Promise<void> {
+  const now = new Date();
+  await db
+    .update(users)
+    .set({
+      botTokenHash: tokenHash,
+      updatedAt: now,
+    })
+    .where(
+      eq(users.id, userId),
+    );
+}

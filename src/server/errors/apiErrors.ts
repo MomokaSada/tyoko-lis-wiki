@@ -9,4 +9,7 @@ export const apiErrors = {
     uploadPermissionDenied: 'サムネイルをアップロードする権限がありません',
     uploadFailed: 'サムネイル画像のアップロードに失敗しました',
   },
+  botEditSession: {
+    activeSessionsRemaining: 'アクティブな編集セッションが十分に残っています',
+  }
 } as const;

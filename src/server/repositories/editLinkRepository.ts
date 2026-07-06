@@ -143,6 +143,28 @@ export async function findActiveEditSession(uuid: string) {
   return session ?? null;
 }
 
+export async function findActiveSessionsByAuthor(
+  authorId: number,
+  minRemainingEdits: number,
+): Promise<{
+  uuid: string
+}[]> {
+  const sessions = await db
+    .select({
+      uuid: editSessions.uuid
+    })
+    .from(editSessions)
+    .where(
+      and(
+        eq(editSessions.authorId, authorId),
+        eq(editSessions.isActive, true),
+        sql`(${editSessions.maxEdits} - ${editSessions.editsUsed}) >= ${minRemainingEdits}`,
+        gt(editSessions.endAt, sql`now()`),
+      ),
+    )
+  return sessions;
+}
+
 export async function deactivateEditSession(uuid: string) {
   const [updated] = await db
     .update(editSessions)
