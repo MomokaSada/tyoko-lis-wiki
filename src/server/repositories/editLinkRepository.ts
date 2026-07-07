@@ -148,8 +148,8 @@ export async function findActiveSessionsByAuthor(
   minRemainingEdits: number,
 ): Promise<{
   uuid: string
-}[]> {
-  const sessions = await db
+}> {
+  const [sessions] = await db
     .select({
       uuid: editSessions.uuid
     })
@@ -162,6 +162,8 @@ export async function findActiveSessionsByAuthor(
         gt(editSessions.endAt, sql`now()`),
       ),
     )
+    .orderBy(desc(editSessions.endAt))
+    .limit(1);
   return sessions;
 }
 

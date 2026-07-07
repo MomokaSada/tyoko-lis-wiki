@@ -3,7 +3,7 @@ import {
     insertEditSession,
     findActiveSessionsByAuthor,
 } from '@/server/repositories/editLinkRepository' ;
-import { error } from 'node:console';
+
 
 export type BotEditLinkInput = {
     expiresInMinutes: number;
@@ -24,6 +24,7 @@ export type BotEditLinkSuccess = {
 export type BotEditLinkRejected = {
   success: false;
   error: 'active_sessions_remaining';
+  url: string;
 };
 
 export type BotEditLinkResult = BotEditLinkSuccess | BotEditLinkRejected;
@@ -34,11 +35,12 @@ export async function createBotEditLink(
     authorId: number,
     input: BotEditLinkInput,
 ): Promise<BotEditLinkResult> {
-    const activeSessions = await findActiveSessionsByAuthor(authorId, MIN_REMAINING_EDITS);
-    if (activeSessions.length > 0) {
+    const activeSession = await findActiveSessionsByAuthor(authorId, MIN_REMAINING_EDITS);
+    if (activeSession) {
         return {
             success: false,
-            error: 'active_sessions_remaining'
+            error: 'active_sessions_remaining',
+            url: `/posts/create?session=${activeSession.uuid}`
         };
     };
 
