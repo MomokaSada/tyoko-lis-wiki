@@ -41,8 +41,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: '/images/app-icon.webp',
-        width: 1200,
-        height: 630,
+        width: 1000,
+        height: 1000,
         alt: defaultTitle,
       },
     ],
