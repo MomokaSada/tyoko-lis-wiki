@@ -65,7 +65,7 @@ export async function POST(
         if (!result.success) {
             if (result.error === 'active_sessions_remaining') {
                 return NextResponse.json(
-                    { error: apiErrors.botEditSession.activeSessionsRemaining},
+                    { error: apiErrors.botEditSession.activeSessionsRemaining, url: result.url },
                     { status: 409 },
                 );
             }
